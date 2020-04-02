@@ -12,7 +12,7 @@ sapply(pkg,library,character.only=T)
 
 # 최근 영업일 구하기
 recentBizDay <- function(){
-  url = 'https://finance.naver.com/sise/sise_deposit.nhn'
+  url = 'https://finance.naver.com/sise/sise_index.nhn?code=KOSPI'
   biz_day = GET(url) %>%
     read_html(encoding = 'EUC-KR') %>%
     html_nodes(xpath =
@@ -263,6 +263,11 @@ getCurrentValueQualityFactorQuarter<-function(code){
   return(data_value)
 }
 
+#MVP 측정 위한 공분산 행렬 구하기
+getCovarianceMarix<-function(codeList){
+  return(cov(do.call(cbind,lapply(codeList,function(x) na.omit(Return.calculate(adjustedPriceFromNaver('day',250,x)))[-1,]))))
+}
+
 winsorizing<-function(val){
   newval<-ifelse(percent_rank(val)>0.99,
                  quantile(val,0.99,na.rm=TRUE),val)
@@ -280,13 +285,12 @@ heq.objective = function(w) {
   return( sum_w - 1 )
 }
 
-getMVPRatio<-function(resulTable){
-  covmat<-getCovarianceMarix(result$'종목코드')
-  result = slsqp( x0 = rep(0.1, 10),
+getMVPRatio<-function(resultTable){
+  result = slsqp( x0 = rep(1/nrow(resultTable), nrow(resultTable)),
                   fn = objective,
                   hin = hin.objective,
-                  heq = heq.objective)
-  resulTable$'투자비율'<-round(result$par,4)
+                  heq = heq.objective,
+                  upper=rep(0.2,nrow(resultTable)))
+  resultTable$'투자비율'<-round(result$par,4)
   return(resultTable)
 }
-
