@@ -51,8 +51,6 @@ result<-result1[as.data.table(result2),on='종목코드']
 result$Momentum<-as.double(result$Momentum)
 result$NCAV_Ratio<-result$NCAV/result$"시가총액(원)"
 
-
-
 result$PER<-winsorizing(result$PER)
 result$PBR<-winsorizing(result$PBR)
 result$PCR<-winsorizing(result$PCR)
@@ -66,11 +64,11 @@ result[,c("PER_N","PBR_N","PCR_N","PSR_N"):=
 result[,c("Value_Rank","Quality_Rank","Momentum_Rank"):=
          list(rank(PER_N+PBR_N+PCR_N+PSR_N),rank(-GPA),rank(-Momentum))]
 
-filteredResult<-result[result$'시가총액(원)'<=quantile(result$'시가총액(원)')[2]]
-filteredResult <- result[NewFScore==3 & PER>0 & PBR>0 & 
+
+filteredResult<-result[rank(-result$'시가총액(원)')>300]
+
+filteredResult <- filteredResult[NewFScore==3 & PER>0 & PBR>0 & 
                            PCR>0 & PSR>0 & NCAV_Ratio>=1]
-
-
 
 
 filteredResult[,"total_Rank":=rank(
