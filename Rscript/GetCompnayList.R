@@ -3,7 +3,7 @@ source("./RQuantFunctionList.R",encoding="utf-8")
 today<-recentBizDay()
 
 #오늘 주식시장에 등록된 기업 목록, 섹터 정보
-c<-mergeWICSKRX(today)
+corpsInfoData<-mergeWICSKRX(today)
 reducedCorpsInfoData<-subset(corpsInfoData,select=c(10,1,4,3,6,9))
 codeList<-corpsInfoData$'종목코드'
 
