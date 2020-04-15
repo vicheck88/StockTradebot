@@ -37,6 +37,9 @@ BS=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명'
 IS=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명','금액'])
 CF=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명','금액'])
 
+IS_year=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명','금액'])
+CF_year=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명','금액'])
+
 yearRange=range(2015,2020)
 quarterlist=['11013', '11012', '11014', '11011']
 callcount=0
@@ -45,39 +48,52 @@ f=open('failCorpYear.txt',mode='wt',encoding='utf-8')
 for corp in corpList:
     for year in yearRange:
         prevCF=[]
+        quarterCount = 0
         for i, q in enumerate(quarterlist):
             code=year*10+i+1
             frame=dart.finstate_all(corp,year,q)
             if callcount==10000 : 
                 time.sleep(60*60*24)
                 callcount=0
-            if frame==None:
-                f.writelines('Fail to Read: ' + corp + ', ' + str(code) + '\n')
             callcount=callcount+1
+            if frame is None:
+                f.writelines(str(code)+','+corp+'\n')
+                continue;
+            if i<3 : quarterCount=quarterCount+1
+
             frame['index']=code
             frame['stock_code']=corp
             frame=frame[['index','stock_code','sj_div','account_nm','thstrm_amount']]
             frame=frame.rename(columns={'stock_code':'종목코드','sj_div':'재무제표구분','account_nm':'계정명','thstrm_amount':'금액'})
             frame['금액'] = pd.to_numeric(frame['금액'])
             BS=pd.concat([BS,frame[frame['재무제표구분']=='BS']])
+
             istmp=pd.concat([frame[frame['재무제표구분']=='IS'],frame[frame['재무제표구분']=='CIS']])
             istmp['재무제표구분']='IS'
             istmp=istmp.drop_duplicates()
             IS=pd.concat([IS,istmp])
             CFtmp=frame[frame['재무제표구분']=='CF']
-            if i==0: CF=pd.concat([CF,CFtmp])
-            if len(prevCF)==0: prevCF = CFtmp
+
+            if i==3 and quarterCount==0:
+                IS_year=pd.concat([IS,istmp])
+                CF_year=pd.concat([CF,CFtmp])
             else:
-                CFtmp=CFtmp[['계정명','금액']]
-                newCFtmp=prevCF.merge(CFtmp,on='계정명')
-                newCFtmp['금액_x']=newCFtmp['금액_y']-newCFtmp['금액_x']
-                prevCF=newCFtmp.drop(columns='금액_x')
-                prevCF=prevCF.rename(columns={'금액_y':'금액'})
-                newCFtmp=newCFtmp.drop(columns='금액_y')
-                newCFtmp=newCFtmp.rename(columns={'금액_x':'금액'})
-                CF=pd.concat([CF,newCFtmp])
+                IS=pd.concat([IS,istmp])
+                if i==0: CF=pd.concat([CF,CFtmp])
+                if len(prevCF)==0: prevCF = CFtmp
+                else:
+                    CFtmp=CFtmp[['계정명','금액']]
+                    newCFtmp=prevCF.merge(CFtmp,on='계정명')
+                    newCFtmp['금액_x']=newCFtmp['금액_y']-newCFtmp['금액_x']
+                    prevCF=newCFtmp.drop(columns='금액_x')
+                    prevCF=prevCF.rename(columns={'금액_y':'금액'})
+                    newCFtmp=newCFtmp.drop(columns='금액_y')
+                    newCFtmp=newCFtmp.rename(columns={'금액_x':'금액'})
+                    CF=pd.concat([CF,newCFtmp])
 
 f.close()
 BS.to_sql('재무상태표',schema='meatinfo',con=conn,if_exists='replace',index=False)
 IS.to_sql('손익계산서',schema='meatinfo',con=conn,if_exists='replace',index=False)
 CF.to_sql('현금흐름표',schema='meatinfo',con=conn,if_exists='replace',index=False)
+IS_year.to_sql('손익계산서(연합계)',schema='meatinfo',con=conn,if_exists='replace',index=False)
+CF_year.to_sql('현금흐름표(연합계)',schema='meatinfo',con=conn,if_exists='replace',index=False)
