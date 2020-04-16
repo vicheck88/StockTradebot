@@ -1,14 +1,33 @@
 import psycopg2
+from sqlalchemy import create_engine
 import pandas as pd
 import OpenDartReader
 import time
+import io
 
 dart_api='0b70879ad253ac720b75b0629a25e613b92614ee'
 dart=OpenDartReader(dart_api)
 
 conn=psycopg2.connect(host="203.243.21.33",port=5432,database="stocks",user="postgres",password="12dnjftod")
+#전체 기업목록
 sql="select distinct 종목코드, 종목명 from metainfo.기업정보"
 corpList=list(pd.read_sql_query(sql,conn)["종목코드"])
+
+recordedCorpExists=True
+cur=conn.cursor()
+cur.execute("select * from information_schema.tables\
+            where table_schema='metainfo' and table_name='재무상태표'")
+if bool(cur.rowcount)==False : recordedCorpExists=False
+    
+#현재 기록되어 있는 기업 목록
+if recordedCorpExists==True:
+    sql="select max(index) as index,종목코드 from metainfo.재무상태표 group by 종목코드"
+    recordedDataFrame=pd.read_sql_query(sql,conn)
+    recordedCorpList=list(recordedDataFrame['종목코드'])
+#새로 추가할 기업 목록
+newCorpList=list(set(corpList)-set(recordedCorpList)) if recordedCorpExists==True else corpList
+
+conn.close()
 '''
 rcept_no: 접수번호
 corp_code: 사업 연도
@@ -37,63 +56,63 @@ BS=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명'
 IS=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명','금액'])
 CF=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명','금액'])
 
-IS_year=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명','금액'])
-CF_year=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명','금액'])
+now=time.localtime()
+year=now.tm_year
+mon=now.tm_mon
+quarter=int(mon/4)
 
-yearRange=range(2015,2020)
-quarterlist=['11013', '11012', '11014', '11011']
+yearRange=range(2015,year+1)
+quarterList=['11013', '11012', '11014', '11011']
+
+allRange=[y*10+c for y in yearRange for c in [1,2,3,4]]
+
 callcount=0
 f=open('failCorpYear.txt',mode='wt',encoding='utf-8')
 #1사분기
 for corp in corpList:
-    for year in yearRange:
-        prevCF=[]
-        quarterCount = 0
-        for i, q in enumerate(quarterlist):
-            code=year*10+i+1
-            frame=dart.finstate_all(corp,year,q)
-            if callcount==10000 : 
-                time.sleep(60*60*24)
-                callcount=0
-            callcount=callcount+1
-            if frame is None:
-                f.writelines(str(code)+','+corp+'\n')
-                continue;
-            if i<3 : quarterCount=quarterCount+1
+    if corp in newCorpList: corpRange=allRange
+    else:
+        recordedSet=set(recordedDataFrame(recordedDataFrame['종목코드'==corp])['index'])
+        corpRange=list(set(allRange)-recordedSet)
+    for code in corpRange:
+        year=int(code/10)
+        q=quarterList[int(code%10)-1]
 
-            frame['index']=code
-            frame['stock_code']=corp
-            frame=frame[['index','stock_code','sj_div','account_nm','thstrm_amount']]
-            frame=frame.rename(columns={'stock_code':'종목코드','sj_div':'재무제표구분','account_nm':'계정명','thstrm_amount':'금액'})
-            frame['금액'] = pd.to_numeric(frame['금액'])
-            BS=pd.concat([BS,frame[frame['재무제표구분']=='BS']])
+        frame=dart.finstate_all(corp,year,q)
+        if callcount==10000 : 
+            time.sleep(60*60*24)
+            callcount=0
+        callcount=callcount+1
+        if frame is None:
+            f.writelines(str(year)+','+corp+'\n')
+            continue;
+        frame['index']=code
+        frame['stock_code']=corp
+        frame=frame[['index','stock_code','sj_div','account_nm',
+                        'thstrm_amount','thstrm_add_amount']]
+        frame=frame.rename(columns={'stock_code':'종목코드','sj_div':'재무제표구분',
+                                    'account_nm':'계정명','thstrm_amount':'금액',
+                                    'thstrm_add_amount':'누적금액'})
+        frame['금액'] = pd.to_numeric(frame['금액'],errors='coerce')
+        frame['누적금액'] = pd.to_numeric(frame['누적금액'],errors='coerce')
+        
+        BSCFframe=frame.drop(columns='누적금액')
+        BS=pd.concat([BS,BSCFframe[BSCFframe['재무제표구분']=='BS']])
+        CF=pd.concat([CF,BSCFframe[BSCFframe['재무제표구분']=='CF']])
 
-            istmp=pd.concat([frame[frame['재무제표구분']=='IS'],frame[frame['재무제표구분']=='CIS']])
-            istmp['재무제표구분']='IS'
-            istmp=istmp.drop_duplicates()
-            IS=pd.concat([IS,istmp])
-            CFtmp=frame[frame['재무제표구분']=='CF']
-
-            if i==3 and quarterCount==0:
-                IS_year=pd.concat([IS,istmp])
-                CF_year=pd.concat([CF,CFtmp])
-            else:
-                IS=pd.concat([IS,istmp])
-                if i==0: CF=pd.concat([CF,CFtmp])
-                if len(prevCF)==0: prevCF = CFtmp
-                else:
-                    CFtmp=CFtmp[['계정명','금액']]
-                    newCFtmp=prevCF.merge(CFtmp,on='계정명')
-                    newCFtmp['금액_x']=newCFtmp['금액_y']-newCFtmp['금액_x']
-                    prevCF=newCFtmp.drop(columns='금액_x')
-                    prevCF=prevCF.rename(columns={'금액_y':'금액'})
-                    newCFtmp=newCFtmp.drop(columns='금액_y')
-                    newCFtmp=newCFtmp.rename(columns={'금액_x':'금액'})
-                    CF=pd.concat([CF,newCFtmp])
-
+        istmp=pd.concat([frame[frame['재무제표구분']=='IS'],frame[frame['재무제표구분']=='CIS']])
+        istmp['재무제표구분']='IS'
+        #istmp=istmp.drop_duplicates()
+        istmp=istmp.drop(columns='금액').drop_duplicates()
+        IS=pd.concat([IS,istmp.rename(columns={'누적금액':'금액'})])
+            
+        print("Finish: " + str(year) +" , " + corp)
 f.close()
-BS.to_sql('재무상태표',schema='meatinfo',con=conn,if_exists='replace',index=False)
-IS.to_sql('손익계산서',schema='meatinfo',con=conn,if_exists='replace',index=False)
-CF.to_sql('현금흐름표',schema='meatinfo',con=conn,if_exists='replace',index=False)
-IS_year.to_sql('손익계산서(연합계)',schema='meatinfo',con=conn,if_exists='replace',index=False)
-CF_year.to_sql('현금흐름표(연합계)',schema='meatinfo',con=conn,if_exists='replace',index=False)
+
+
+engine=create_engine('postgresql+psycopg2://postgres:12dnjftod@203.243.21.33:5432/stocks')
+
+BS.to_sql('재무상태표',schema='metainfo',con=engine,if_exists='replace',index=False)
+IS.to_sql('손익계산서',schema='metainfo',con=engine,if_exists='replace',index=False)
+CF.to_sql('현금흐름표',schema='metainfo',con=engine,if_exists='replace',index=False)
+
