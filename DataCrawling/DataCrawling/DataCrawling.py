@@ -4,11 +4,18 @@ import pandas as pd
 import OpenDartReader
 import time
 import io
+import json
 
-dart_api='0b70879ad253ac720b75b0629a25e613b92614ee'
+with open("config.json","r") as configjson:
+    config=json.load(configjson)
+
+dart_api=config["dart_api"]
 dart=OpenDartReader(dart_api)
+dbConfig=config['database']
 
-conn=psycopg2.connect(host="203.243.21.33",port=5432,database="stocks",user="postgres",password="12dnjftod")
+conn=psycopg2.connect(host=dbConfig['host'],port=dbConfig['port'],
+                      database=dbConfig['database'],
+                      user=dbConfig['user'],password=dbConfig['password'])
 #전체 기업목록
 sql="select distinct 종목코드, 종목명 from metainfo.기업정보"
 corpList=list(pd.read_sql_query(sql,conn)["종목코드"])
@@ -17,7 +24,7 @@ recordedCorpExists=True
 cur=conn.cursor()
 cur.execute("select * from information_schema.tables\
             where table_schema='metainfo' and table_name='재무상태표'")
-if bool(cur.rowcount)==False : recordedCorpExists=False
+recordedCorpExists=bool(cur.rowcount)
     
 #현재 기록되어 있는 기업 목록
 if recordedCorpExists==True:
@@ -26,7 +33,6 @@ if recordedCorpExists==True:
     recordedCorpList=list(recordedDataFrame['종목코드'])
 #새로 추가할 기업 목록
 newCorpList=list(set(corpList)-set(recordedCorpList)) if recordedCorpExists==True else corpList
-
 conn.close()
 '''
 rcept_no: 접수번호
@@ -102,17 +108,19 @@ for corp in corpList:
 
         istmp=pd.concat([frame[frame['재무제표구분']=='IS'],frame[frame['재무제표구분']=='CIS']])
         istmp['재무제표구분']='IS'
-        #istmp=istmp.drop_duplicates()
-        istmp=istmp.drop(columns='금액').drop_duplicates()
-        IS=pd.concat([IS,istmp.rename(columns={'누적금액':'금액'})])
-            
+        if q!='11011' :
+            istmp=istmp.drop(columns='금액').drop_duplicates()
+            istmp=istmp.rename(columns={'누적금액':'금액'})
+        else:
+            istmp=istmp.drop(columns='누적금액').drop_duplicates()
+        IS=pd.concat([IS,istmp])    
         print("Finish: " + str(year) +" , " + corp)
-f.close()
 
+f.close()
 
 engine=create_engine('postgresql+psycopg2://postgres:12dnjftod@203.243.21.33:5432/stocks')
 
-BS.to_sql('재무상태표',schema='metainfo',con=engine,if_exists='replace',index=False)
-IS.to_sql('손익계산서',schema='metainfo',con=engine,if_exists='replace',index=False)
-CF.to_sql('현금흐름표',schema='metainfo',con=engine,if_exists='replace',index=False)
+BS.to_sql('재무상태표',schema='metainfo',con=engine,if_exists='append',index=False)
+IS.to_sql('손익계산서',schema='metainfo',con=engine,if_exists='append',index=False)
+CF.to_sql('현금흐름표',schema='metainfo',con=engine,if_exists='append',index=False)
 

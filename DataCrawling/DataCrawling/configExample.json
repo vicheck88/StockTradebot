@@ -1,0 +1,10 @@
+{
+  "dart_api": "xxxxxxxxxxxxxxxxxxxxxxxx"
+  "database": {
+    "host": "",
+    "port": "",
+    "database": "",
+    "user": "",
+    "password": ""
+  }
+}
