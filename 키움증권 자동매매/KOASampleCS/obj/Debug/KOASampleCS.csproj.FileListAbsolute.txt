@@ -50,3 +50,4 @@ C:\Users\vicent\source\repos\StockTradebot\키움증권 자동매매\KOASampleCS
 C:\Users\vicent\source\repos\StockTradebot\키움증권 자동매매\KOASampleCS\obj\Debug\KOASampleCS.pdb
 C:\Users\vicent\source\repos\StockTradebot\키움증권 자동매매\KOASampleCS\bin\Debug\Newtonsoft.Json.dll
 C:\Users\vicent\source\repos\StockTradebot\키움증권 자동매매\KOASampleCS\bin\Debug\Newtonsoft.Json.xml
+C:\Users\vicent\source\repos\StockTradebot\키움증권 자동매매\KOASampleCS\obj\Debug\KOASampleCS.csprojAssemblyReference.cache

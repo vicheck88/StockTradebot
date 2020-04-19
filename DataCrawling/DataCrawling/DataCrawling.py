@@ -29,7 +29,7 @@ recordedCorpExists=bool(cur.rowcount)
     
 #현재 기록되어 있는 기업 목록
 if recordedCorpExists==True:
-    sql="select index,종목코드 from metainfo.재무상태표"
+    sql="select max(index) as index,종목코드 from metainfo.재무상태표 group by 종목코드"
     recordedDataFrame=pd.read_sql_query(sql,conn)
     recordedCorpList=list(recordedDataFrame['종목코드'])
 #새로 추가할 기업 목록
@@ -77,11 +77,11 @@ callcount=0
 f=open('failCorpYear.txt',mode='wt',encoding='utf-8')
 #1사분기
 for corp in corpList:
-    if callcount>8900: break
+    if callcount>9950: break
     if corp in newCorpList: corpRange=allRange
     else:
-        recordedSet=set(recordedDataFrame[recordedDataFrame['종목코드']==corp]['index'])
-        corpRange=list(set(allRange)-recordedSet)
+        recentRecordedDate=recordedDataFrame[recordedDataFrame['종목코드']==corp]['index'].values[0]
+        corpRange=[c for c in allRange if c > recentRecordedDate]
     for code in corpRange:
         year=int(code/10)
         q=quarterList[int(code%10)-1]
