@@ -15,7 +15,7 @@ for(i in 1:nrow(corpsInfoData)){
     {
       code<-codeList[i]
       result1<-rbind(result1,unlist(c(code=code,getCurrentValueQualityFactorQuarter(code))))
-      Sys.sleep(0.5)
+      Sys.sleep(0.3)
     },
     error=function(e) print(paste0("Fail to Read: ",code))
   )
@@ -24,6 +24,11 @@ result1<-as.data.table(result1)
 result2<-result1[,lapply(.SD[,2:8], as.double)]
 result2[,code:=result1$code]
 result1<-setDT(merge(reducedCorpsInfoData,result2,by.x='종목코드',by.y='code'))
+
+
+result<-result1[,c("종목코드","GPA","PBR","시가총액(원)")]
+result<-result[rank(result$"시가총액(원)")<=nrow(result)*0.2]
+setorder(result,'GPA')
 
 #모멘텀 구하기
 result2<-NULL
@@ -42,7 +47,7 @@ for(i in 1:nrow(corpsInfoData)){
       monthlyMomentum<-latestValue/monthPrice[-12:-13]-1
       avgMomentum<-(mean(monthlyMomentum))/volatility
       result2<-rbind(result2,unlist(c('종목코드'=code,Momentum=avgMomentum)))
-      Sys.sleep(0.5)
+      Sys.sleep(0.3)
     },
     error=function(e) print(paste0("Fail to Read: ",code))
   )
@@ -64,12 +69,9 @@ result[,c("PER_N","PBR_N","PCR_N","PSR_N"):=
 result[,c("Value_Rank","Quality_Rank","Momentum_Rank"):=
          list(rank(PER_N+PBR_N+PCR_N+PSR_N),rank(-GPA),rank(-Momentum))]
 
-
 filteredResult<-result[rank(-result$'시가총액(원)')>300]
-
 filteredResult <- filteredResult[NewFScore==3 & PER>0 & PBR>0 & 
                            PCR>0 & PSR>0 & NCAV_Ratio>=1]
-
 
 filteredResult[,"total_Rank":=rank(
   (Value_Rank-mean(Value_Rank,na.rm=TRUE))/sd(Value_Rank,na.rm=TRUE)+
@@ -81,8 +83,4 @@ filteredResult<-filteredResult[total_Rank<=20]
 tmpcol<-colnames(filteredResult)
 filteredResult$Date<-as.Date(today,"%Y%m%d")
 setcolorder(filteredResult,c("Date",tmpcol))
-
-
-covmat<-getCovarianceMarix(filteredResult$'종목코드')
-filteredResult<-getMVPRatio(filteredResult)
 
