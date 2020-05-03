@@ -2,6 +2,7 @@ import psycopg2
 from sqlalchemy import create_engine
 import pandas as pd
 import OpenDartReader
+from OpenDartReader import dart_finstate
 import time
 import io
 import json
@@ -58,16 +59,16 @@ bfefrmtrm_amount: 전전기금액
 ord: 계정과목 정렬순서
 '''
 
-BS=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명','금액'])
-IS=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명','금액'])
-CF=pd.DataFrame(columns=['index','종목코드','재무제표구분','계정명','금액'])
+BS=pd.DataFrame(columns=['index','일자','종목코드','재무제표구분','계정명','금액'])
+IS=pd.DataFrame(columns=['index','일자','종목코드','재무제표구분','계정명','금액'])
+CF=pd.DataFrame(columns=['index','일자','종목코드','재무제표구분','계정명','금액'])
 
 now=time.localtime()
 year=now.tm_year
 mon=now.tm_mon
 quarter=int(mon/4)
 
-yearRange=range(2015,year+1)
+yearRange=range(2015,year)
 quarterList=['11013', '11012', '11014', '11011']
 
 allRange=[y*10+c for y in yearRange for c in [1,2,3,4]]
@@ -76,31 +77,33 @@ callcount=0
 f=open('failCorpYear.txt',mode='wt',encoding='utf-8')
 #1사분기
 for corp in corpList:
+    if callcount>9950: break
     if corp in newCorpList: corpRange=allRange
     else:
-        recordedSet=set(recordedDataFrame(recordedDataFrame['종목코드'==corp])['index'])
-        corpRange=list(set(allRange)-recordedSet)
+        recentRecordedDate=recordedDataFrame[recordedDataFrame['종목코드']==corp]['index'].values[0]
+        corpRange=[c for c in allRange if c > recentRecordedDate]
     for code in corpRange:
         year=int(code/10)
         q=quarterList[int(code%10)-1]
 
         frame=dart.finstate_all(corp,year,q)
-        if callcount==10000 : 
-            time.sleep(60*60*24)
-            callcount=0
         callcount=callcount+1
+        if frame is None: 
+            frame=dart_finstate.finstate_all(dart_api, dart.find_corp_code(corp), year, q, 'OFS')
+            callcount=callcount+1
         if frame is None:
             f.writelines(str(year)+','+corp+'\n')
             continue;
         frame['index']=code
         frame['stock_code']=corp
-        frame=frame[['index','stock_code','sj_div','account_nm',
+        frame=frame[['index','rcept_no','stock_code','sj_div','account_nm',
                         'thstrm_amount','thstrm_add_amount']]
-        frame=frame.rename(columns={'stock_code':'종목코드','sj_div':'재무제표구분',
+        frame=frame.rename(columns={'rcept_no':'일자','stock_code':'종목코드','sj_div':'재무제표구분',
                                     'account_nm':'계정명','thstrm_amount':'금액',
                                     'thstrm_add_amount':'누적금액'})
         frame['금액'] = pd.to_numeric(frame['금액'],errors='coerce')
         frame['누적금액'] = pd.to_numeric(frame['누적금액'],errors='coerce')
+        frame['일자']=frame['일자'].str.slice(stop=6)
         
         BSCFframe=frame.drop(columns='누적금액')
         BS=pd.concat([BS,BSCFframe[BSCFframe['재무제표구분']=='BS']])
@@ -113,12 +116,14 @@ for corp in corpList:
             istmp=istmp.rename(columns={'누적금액':'금액'})
         else:
             istmp=istmp.drop(columns='누적금액').drop_duplicates()
+
         IS=pd.concat([IS,istmp])    
         print("Finish: " + str(year) +" , " + corp)
 
 f.close()
 
-engine=create_engine('postgresql+psycopg2://postgres:12dnjftod@203.243.21.33:5432/stocks')
+connstring='postgresql+psycopg2://%s:%s@%s/%s' % (dbConfig['user'],dbConfig['password'],dbConfig['host'],dbConfig['database'])
+engine=create_engine(connstring)
 
 BS.to_sql('재무상태표',schema='metainfo',con=engine,if_exists='append',index=False)
 IS.to_sql('손익계산서',schema='metainfo',con=engine,if_exists='append',index=False)

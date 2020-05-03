@@ -208,6 +208,20 @@ getFSFromFnGuide <- function(type, code){
   })
 }
 
+getAllCorpsCode<-function(businessDay){
+  tickerFrame<-KRXDataMerge(businessDay)
+  return(tickerFrame$'종목코드')
+}
+
+
+getAllFS<-function(businessDay){
+  data<-list()
+  for(code in getAllCorpsCode(businessDay)){
+    data[code]<-getFSFromFnGuide('Q',code)
+  }
+  return(data)
+}
+
 getCurrentPrice<-function(code){
   url = paste0('https://comp.fnguide.com/SVO2/ASP/SVD_main.asp?pGB=1&gicode=A',code)
   data = GET(url)
@@ -238,13 +252,30 @@ getCurrentOrdinaryStockNumbers<-function(code){
 getCurrentPreferredStockNumbers<-function(code){
   return(getCurrentStockNumbers(code)[2])
 }
+
+getPriceList<-function(businessDay, codeList){
+  result<-c()
+  for(code in codeList){
+    result[code]=getCurrentPrice(code)
+  }
+  return(result)
+}
+
+getStockNumberList<-function(businessDay, codeList){
+  result<-data.frame(ordinary=double(),preferred=double())
+  for(code in codeList){
+    result[code,] <- getCurrentStockNumbers(code)
+  }
+  return(result)
+}
+
+
 #PER, PBR, PCR, PSR, NCAV + 신F스코어, GPA 계산(분기)
-getCurrentValueQualityFactorQuarter<-function(code){
-  fs <- getFSFromFnGuide('Q',code)
+getCurrentValueQualityFactorQuarter<-function(code, dataList, priceList, stockNumberList){
+  fs <- dataList[[code]]
   value_type <- c('지배주주순이익','자본','영업활동으로인한현금흐름','매출액','유상증자','매출총이익')
-  
-  ordinaryStockNums<-getCurrentOrdinaryStockNumbers(code)
-  curPrice<-getCurrentPrice(code)
+  ordinaryStockNums<-stockNumberList[code,1]
+  curPrice<-priceList[code]
   
   value_index<-c()
   tmp<-rowSums(fs[value_type,])
@@ -258,14 +289,54 @@ getCurrentValueQualityFactorQuarter<-function(code){
   
   data_value['NewFScore']<-(tmp['지배주주순이익']>0) + (tmp['영업활동으로인한현금흐름']>0) + (all(is.na(tmp['유상증자'])))
   data_value['GPA']<-tmp['매출총이익']/fs['자산',4]
+  data_value['ROE']<-date_value['PBR']/data_value['PER']
   
-  data_value[data_value<0]<-NA
+  result$NCAV_Ratio<-result$NCAV/result$"시가총액(원)"
   return(data_value)
 }
 
-#MVP 측정 위한 공분산 행렬 구하기
-getCovarianceMarix<-function(codeList){
-  return(cov(do.call(cbind,lapply(codeList,function(x) na.omit(Return.calculate(adjustedPriceFromNaver('day',250,x)))[-1,]))))
+getAllFactor<-function(businessDay, codeList, dataList, priceList, stockNumberList){
+  result<-NULL
+  corpsInfoData<-mergeWICSKRX(businessDay)
+  reducedCorpsInfoData<-subset(corpsInfoData,select=c(10,1,4,3,6,9))
+  for(code in codeList){
+    tryCatch(
+      {
+        result<-rbind(result,unlist(c(code=code,
+                                      getCurrentValueQualityFactorQuarter(code, dataList,priceList,stockNumberList))))
+        Sys.sleep(0.3)
+      },
+      error=function(e) print(paste0("Fail to Read: ",code))
+    )
+  }
+  result<-as.data.table(result)
+  result2<-result[,lapply(.SD[,2:8], as.double)]
+  result2[,code:=result$code]
+  result<-setDT(merge(reducedCorpsInfoData,result2,by.x='종목코드',by.y='code'))
+  return(result)
+}
+
+addMomentum<-function(businessDay, codeList){
+  result<-NULL
+  for(code in codeList){
+    tryCatch(
+      {
+        priceList<-adjustedPriceFromNaver('day',365,code)
+        Return<-Return.calculate(priceList)
+        Return<-Return[!is.na(Return)]
+        volatility<-sd(Return)*sqrt(length(Return))
+        
+        monthPrice<-adjustedPriceFromNaver('month',14,code)[,1]
+        latestValue<-monthPrice[13]
+        monthlyMomentum<-latestValue/monthPrice[-12:-13]-1
+        avgMomentum<-(mean(monthlyMomentum))/volatility
+        result2<-rbind(result,unlist(c('종목코드'=code,Momentum=avgMomentum)))
+        Sys.sleep(0.3)
+      },
+      error=function(e) print(paste0("Fail to Read: ",code))
+    )
+  }
+  return(result)
 }
 
 winsorizing<-function(val){
@@ -273,24 +344,4 @@ winsorizing<-function(val){
                  quantile(val,0.99,na.rm=TRUE),val)
   return(newval)
 }
-objective = function(w) {
-  obj = t(w) %*% covmat %*% w
-  return(obj)
-}
-hin.objective = function(w) {
-  return(w)
-}
-heq.objective = function(w) {
-  sum_w = sum(w)
-  return( sum_w - 1 )
-}
 
-getMVPRatio<-function(resultTable){
-  result = slsqp( x0 = rep(1/nrow(resultTable), nrow(resultTable)),
-                  fn = objective,
-                  hin = hin.objective,
-                  heq = heq.objective,
-                  upper=rep(0.2,nrow(resultTable)))
-  resultTable$'투자비율'<-round(result$par,4)
-  return(resultTable)
-}
