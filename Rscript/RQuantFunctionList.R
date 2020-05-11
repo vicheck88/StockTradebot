@@ -189,23 +189,54 @@ getFSFromFnGuide <- function(type, code){
     data_BS<-data[[idxList[2]]]
     data_CF<-data[[idxList[3]]]
     data_IS<-data_IS[, 1:(ncol(data_IS)-2)]
-    data_fs<-rbind(data_IS,data_BS,data_CF)
     
+    data_IS$name<-'포괄손익계산서'
+    data_BS$name<-'재무상태표'
+    data_CF$name<-'현금흐름표'
+    data_fs<-rbind(data_IS,data_BS,data_CF)
     # 데이터 클랜징
     data_fs[, 1] = gsub('계산에 참여한 계정 펼치기','',data_fs[, 1])
     data_fs = data_fs[!duplicated(data_fs[, 1]), ]
     rownames(data_fs) = NULL
-    rownames(data_fs) = data_fs[, 1]
-    data_fs[, 1] = NULL
+    ftype<-data_fs[,1]
+    data_fs<-data_fs[,-1]
+    
+    Name<-data_fs[,length(names(data_fs))]
+    data_fs<-data_fs[,-length(names(data_fs))]
     
     data_fs = sapply(data_fs, function(x) {
       str_replace_all(x, ',', '') %>%
         as.numeric()
     }) %>%
       data.frame(., row.names = rownames(data_fs))
+    data_fs$'계정'<-ftype
+    data_fs$code<-code
+    data_fs$'항목'<-Name
+    data_fs<-subset(data_fs,select=c(6,7,5,1,2,3,4))
     
+    date<-names(data_fs)[4:7]
+    date<-str_replace_all(date,'[X]','')
+    names(data_fs)[4:7]<-date
+    if(type=='Q') {names(data_fs)[4:7]<-date} else{
+      month<-substr(date,6,7)
+      if(month[length(date)]!=month[1]) data_fs<-data_fs[,-length(names(data_fs))]
+    }
+    
+    data_fs<-as.data.table(data_fs)
+    data_fs<-melt.data.table(data_fs,1:3)
+    
+    #names(data_fs)<-c("stockcode","type","name","date","value")
+    names(data_fs)<-c("종목코드","종류","계정","일자","값")
+    #data_fs$value<-data_fs$value*100000000
+    data_fs$값<-data_fs$값*100000000
+    #data_fs<-data_fs[!is.na(data_fs$value),]
+    data_fs<-data_fs[!is.na(data_fs$값),]
     return(data_fs)
   })
+}
+
+getRecentFSFromFnGuide<-function(type,code){
+  return(getFSFromFnGuide(type,code)[,4:6])
 }
 
 getAllCorpsCode<-function(businessDay){
@@ -214,10 +245,17 @@ getAllCorpsCode<-function(businessDay){
 }
 
 
-getAllFS<-function(businessDay){
+getAllFS<-function(businessDay, type, codeList){
   data<-list()
-  for(code in getAllCorpsCode(businessDay)){
-    data[code]<-getFSFromFnGuide('Q',code)
+  for(code in codeList){
+    data[[code]]<-getFSFromFnGuide(type,code)
+  }
+  return(data)
+}
+getAllRecentFS<-function(businessDay,type,codeList){
+  data<-list()
+  for(code in codeList){
+    data[code]<-getRecentFSFromFnGuide(type,code)
   }
   return(data)
 }
