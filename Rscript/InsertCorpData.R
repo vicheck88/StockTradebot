@@ -1,46 +1,53 @@
 library(RPostgres)
 library(DBI)
 
-conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='rlghlsms1qjs!@')
-run <- postgresHasDefault()
+conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
 
 #함수 불러돌이기
 source("./RQuantFunctionList.R",encoding="utf-8")
-today<-recentBizDay()
-
-#오늘 주식시장에 등록된 기업 목록, 섹터 정보
-
-#처음 전체 update
-#year<-as.character(2000:2020)
-#availableDate<-getLastBizdayofMonth(300)
-#availableDate[availableDate>'2000-01-01']
-#availableDate<-str_remove_all(availableDate,"-")
-#availableDate<-availableDate[substr(availableDate,5,6) %in% c('03','05','08','11')]
-#availableDate<-availableDate[availableDate>'20000000']
 
 
-availableDate<-getLastBizdayofMonth(2)
+#전월 말 날짜 구하기
+availableDate<-getLastBizdayofMonth(3)
 availableDate<-str_remove_all(availableDate,"-")
-table<-NULL
-for(day in availableDate){
-  tryCatch(
-    {
-      df<-KRXDataMerge(day)
-      df<-subset(df,select=c(8,1,2,3,4,7,9))
-      table<-rbind(table,df)
-    },
-    error=function(e){
-      print(paste0("Fail to Read: ",day))
-    } 
-  )
-}
-colnames(table)[6]<-"시가총액"
+day<-availableDate[1]
 
-priceList<-getPriceList(today,corpList)
-corpList <- getAllCorpsCode(today)
-stockNumberList<-getStockNumberList(today,corpList)
-dataList<-getAllFS(today)
-fs<-getAllFactor(today,corpList,dataList,priceList,stockNumberList)
+#전달 말 등록된 기업정보
+df<-mergeWICSKRX(day)
+corpTable<-subset(df,select=c(10, 1, 4, 3, 5, 6, 7, 9, 17, 18, 11))
+colnames(corpTable)[8]<-"시가총액"
+corpTable<-as.data.table(corpTable)
+
+#지금까지 등록되어있는 기업정보 구하기
+corpList<-dbGetQuery(conn,SQL("select distinct 종목코드 from metainfo.기업정보"))$종목코드
+corpList<-unique(c(corpList,corpTable$종목코드))
+
+#데이터베이스에서 구하기
+fsQ<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.분기재무제표")))
+fsY<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.연간재무제표")))
+
+#종목별 최신기록일자
+maxQ<-fsQ[,.(최신일자=max(일자)),by=종목코드]
+maxY<-fsY[,.(최신일자=max(일자)),by=종목코드]
+
+#모든 기업의 가장 최신 재무데이터 구하기
+fsQNew<-getAllRecentFS('Q',corpList, maxQ)
+fsYNew<-getAllRecentFS('Y',corpList, maxY)
+
+#기록한 재무제표 데이터베이스 저장
+dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQ,append=TRUE,row.names=FALSE)
+dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsY,append=TRUE,row.names=FALSE)
+
+#데이터 병합
+fsQ<-rbind(fsQ,fsQNew)
+fsY<-rbind(fsY,fsYNew)
+
+## apply 함수 이용 예정
+corpTable<-corpTable[1:5,]
+
+fs<-apply(corpTable,1, function(x) getAllFactor(x,fsY,fsQ))
+
+
 
 
 dbWriteTable(conn,SQL("metainfo.기업정보"),table)
