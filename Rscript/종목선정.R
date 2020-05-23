@@ -1,4 +1,13 @@
+library(RPostgres)
+library(DBI)
+
+conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='rlghlsms1qjs!@')
+
+
+
+
 #함수 불러돌이기
+
 source()
 today<-recentBizDay()
 
