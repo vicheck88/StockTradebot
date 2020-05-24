@@ -311,7 +311,7 @@ getStockNumberList<-function(businessDay, codeList){
   return(result)
 }
 
-getAllFactor<-function(corpData, yearData, quarterData){
+cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
   result<-NULL
   tryCatch(
     {
@@ -334,22 +334,23 @@ getAllFactor<-function(corpData, yearData, quarterData){
       year(lastlastYearDate)<-year(lastYearDate)-1
       
       yData<-yData[yDate<=businessDate & yDate>=lastlastYearDate]
-      qData<-qData[qDate<=businessDate & qDate>=lastYearDate]
+      qData<-qData[qDate<=businessDate & qDate>=lastlastYearDate]
       
       yDate<-yData$일자
       qDate<-qData$일자
+      qRank<-frank(-as.double(qDate),ties.method="dense")
+      yRank<-frank(-as.double(yDate),ties.method="dense")
       
       if(nrow(yData) == 0 & nrow(qData) == 0){return(result)}
-      if(length(unique(qData$일자))>=4){
-        data<-qData[frank(qDate,ties.method="dense")<=4] 
-      } else{
-        data<-yData[frank(-yDate,ties.method="dense")==1]
-      }
-      lastYdata<-yData[frank(-yDate,ties.method="dense")==2]
-      result <- cbind(corpData,as.data.table(t(getCurrentValueQualityFactorQuarter(corpData, data, lastYdata))))
-      #scoreResult<-getFscore(corpData,Fdata)
+      if(length(unique(qDate))>=4){
+        data<-qData[qRank<=4]
+      } else{ data<-yData[yRank==1] }
+      if(length(unique(qDate))>=5){
+        previousData<-qData[qRank>=2 & qRank<=5]
+      } else { previousData<-yData[yRank==2] }
       
-        
+      result <- c(corpData,getCurrentValueQualityFactorQuarter(corpData, data, previousData))
+      #scoreResult<-getFscore(corpData,Fdata)
       Sys.sleep(0.3)
     },
     error=function(e) print(paste0("Fail to Read: ",code))
@@ -357,24 +358,7 @@ getAllFactor<-function(corpData, yearData, quarterData){
   return(result)
 }
 
-#Fscore 구하기
-getFscore<-function(corpData,data){
-  firstdata<-data[frank(-data$일자,method="dense")==1]
-  seconddata<-data[frank(-data$일자,method="dense")==2]
-  
-  if(length(unique(data$일자))>2) curData<-firstData else{
-    curData<-Data
-  }
-  
-}
-
-#PER, PBR, PCR, PSR, NCAV, GPA 계산(분기)
-getCurrentValueQualityFactorQuarter<-function(corpData, data, lastyearData){
-  
-  marketPrice<-corpData$시가총액
-  code<-corpData$종목코드
-  data<-data[data$종목코드==code]
-  
+sumQuarterData<-function(data){
   fs<-data[data$종류=='재무상태표']
   data<-data[data$종류!='재무상태표']
   fs<-fs[fs$일자==max(fs$일자)]
@@ -384,15 +368,32 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, lastyearData){
   }
   names(fs)<-names(data)
   data<-rbind(data,fs)
+  return(data)
+}
+
+#PER, PBR, PCR, PSR, NCAV, GPA 계산(분기)
+getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
+  
+  marketPrice<-corpData$시가총액
+  code<-corpData$종목코드
+  data<-data[data$종목코드==code]
+  
+  if(length(unique(data$일자))==4){
+    data<-sumQuarterData(data)
+  }
+  if(length(unique(previousData$일자))==4){
+    previousData<-sumQuarterData(data)
+  }
   
   value_index<-c()
   value_type <- c('지배주주순이익','자본','영업활동으로인한현금흐름','매출액','유상증자','매출총이익','영업이익',
-                  '유동자산','부채','유상증자','자산')
+                  '유동자산','부채','유상증자','자산','유동부채')
   
-  tmp<-lastyearData[lastyearData[,계정 %in% value_type]]$값
-  names(tmp)<-lastyearData[lastyearData[,계정 %in% value_type]]$계정
+  tmp<-previousData[previousData[,계정 %in% value_type]]$값
+  names(tmp)<-previousData[previousData[,계정 %in% value_type]]$계정
   value_index<-c()
   
+  last_value_index<-c()
   last_value_index['지배주주순이익']<-tmp['지배주주순이익'] #수익
   last_value_index['영업활동으로인한현금흐름']<-tmp['영업활동으로인한현금흐름'] #영업현금흐름
   last_value_index['ROA']<-tmp['자산']/tmp['지배주주순이익'] #ROA 증가
@@ -421,15 +422,15 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, lastyearData){
   
   fscore<-0
   newfscore<-0
-  if(tmp['지배주주순이익']>0) {fscore<-fscore+1; newfscore<-newfscore+1;}
-  if(tmp['영업활동으로인한현금흐름']>0) {fscore<-fscore+1; newfscore<-newfscore+1;}
-  if(last_value_index['ROA']<data_value['ROA']) fscore<-fscore+1
-  if(tmp['영업활동으로인한현금흐름']>tmp['지배주주순이익']) fscore<-fscore+1
-  if(last_value_index['부채비율']>tmp['부채']/tmp['자본']) fscore<-fscore+1
-  if(last_value_index['유동비율']<tmp['유동자산']/tmp['유동부채']) fscore<-fscore+1
-  if(last_value_index['자본']==tmp['자본']) {fscore<-fscore+1; newfscore<-newfscore+1;}
-  if(last_value_index['매출총이익']<tmp['매출총이익']) fscore<-fscore+1
-  if(last_value_index['자산회전율']<tmp['매출액']/tmp['자산']) fscore<-fscore+1
+  if(!is.na(tmp['지배주주순이익']) & tmp['지배주주순이익']>0) {fscore<-fscore+1; newfscore<-newfscore+1;}
+  if(!is.na(tmp['영업활동으로인한현금흐름']) & tmp['영업활동으로인한현금흐름']>0) {fscore<-fscore+1; newfscore<-newfscore+1;}
+  if(!is.na(last_value_index['ROA']) & last_value_index['ROA']<data_value['ROA']) fscore<-fscore+1
+  if(!is.na(tmp['영업활동으로인한현금흐름']) & tmp['영업활동으로인한현금흐름']>tmp['지배주주순이익']) fscore<-fscore+1
+  if(!is.na(last_value_index['부채비율']) & last_value_index['부채비율']>tmp['부채']/tmp['자본']) fscore<-fscore+1
+  if(!is.na(last_value_index['유동비율']) & last_value_index['유동비율']<tmp['유동자산']/tmp['유동부채']) fscore<-fscore+1
+  if(!is.na(last_value_index['자본']) & last_value_index['자본']==tmp['자본']) {fscore<-fscore+1; newfscore<-newfscore+1;}
+  if(!is.na(last_value_index['매출총이익']) & last_value_index['매출총이익']<tmp['매출총이익']) fscore<-fscore+1
+  if(!is.na(last_value_index['자산회전율']) & last_value_index['자산회전율']<tmp['매출액']/tmp['자산']) fscore<-fscore+1
   
   data_value['F-score']<-fscore
   data_value['New F-score']<-newfscore

@@ -43,11 +43,10 @@ fsQ<-rbind(fsQ,fsQNew)
 fsY<-rbind(fsY,fsYNew)
 
 ## apply 함수 이용 예정
-corpTable<-corpTable[1:5,]
+#corpTable<-corpTable[1:5,]
 
-fs<-apply(corpTable,1, function(x) getAllFactor(x,fsY,fsQ))
-
-
+fs<-NULL
+sapply(1:nrow(corpTable),function(x) fs<-rbind(fs,cleanDataAndGetFactor(corpTable[x,],fsY,fsQ)))
 
 
 dbWriteTable(conn,SQL("metainfo.기업정보"),table)
