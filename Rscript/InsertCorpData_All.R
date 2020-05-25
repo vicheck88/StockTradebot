@@ -43,9 +43,13 @@ fsQ<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.분기재무제�
 fsY<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.연간재무제표")))
 
 ## sapply 함수 이용 예정
-#corpTable<-corpTable[1:10,]
-
 fs<-NULL
-sapply(1:nrow(corpTable),function(x) fs<-rbind(fs,cleanDataAndGetFactor(corpTable[x,],fsY,fsQ)))
+for(i in 1:nrow(corpTable)){
+  fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ))
+}
 
-dbWriteTable(conn,SQL("metainfo.기업정보"),table)
+
+
+dbWriteTable(conn,SQL("metainfo.기업정보"),fs)
+
+
