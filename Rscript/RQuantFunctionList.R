@@ -388,24 +388,24 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
   value_index<-c()
   value_type <- c('지배주주순이익','자본','영업활동으로인한현금흐름','매출액','유상증자','매출총이익','영업이익',
                   '유동자산','부채','유상증자','자산','유동부채')
+
   
-  
-  
-  tmp<-previousData[previousData[,계정 %in% value_type]]$값
-  names(tmp)<-previousData[previousData[,계정 %in% value_type]]$계정
-  value_index<-c()
-  
-  last_value_index<-c()
-  last_value_index['지배주주순이익']<-tmp['지배주주순이익'] #수익
-  last_value_index['영업활동으로인한현금흐름']<-tmp['영업활동으로인한현금흐름'] #영업현금흐름
-  last_value_index['ROA']<-tmp['자산']/tmp['지배주주순이익'] #ROA 증가
-  last_value_index['영업활동으로인한현금흐름증가']<-tmp['영업활동으로인한현금흐름']-tmp['지배주주순이익'] #영업현금흐름크기
-  last_value_index['부채비율']<-tmp['부채']/tmp['자본'] #부채비율 증가
-  last_value_index['유동비율']<-tmp['유동자산']/tmp['유동부채'] #유동비율
-  last_value_index['자본']<-tmp['자본'] #신규주식발행
-  last_value_index['매출총이익']<-tmp['매출총이익']
-  last_value_index['자산회전율']<-tmp['매출액']/tmp['자산']
-  
+  if(!is.null(previousData)){
+    tmp<-previousData[previousData[,계정 %in% value_type]]$값
+    names(tmp)<-previousData[previousData[,계정 %in% value_type]]$계정
+    value_index<-c()
+    
+    last_value_index<-c()
+    last_value_index['지배주주순이익']<-tmp['지배주주순이익'] #수익
+    last_value_index['영업활동으로인한현금흐름']<-tmp['영업활동으로인한현금흐름'] #영업현금흐름
+    last_value_index['ROA']<-tmp['자산']/tmp['지배주주순이익'] #ROA 증가
+    last_value_index['영업활동으로인한현금흐름증가']<-tmp['영업활동으로인한현금흐름']-tmp['지배주주순이익'] #영업현금흐름크기
+    last_value_index['부채비율']<-tmp['부채']/tmp['자본'] #부채비율 증가
+    last_value_index['유동비율']<-tmp['유동자산']/tmp['유동부채'] #유동비율
+    last_value_index['자본']<-tmp['자본'] #신규주식발행
+    last_value_index['매출총이익']<-tmp['매출총이익']
+    last_value_index['자산회전율']<-tmp['매출액']/tmp['자산']
+  }
   
   tmp<-data[data[,계정 %in% value_type]]$값
   names(tmp)<-data[data[,계정 %in% value_type]]$계정
@@ -426,19 +426,25 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
   if(!is.na(tmp['자본'])) data_value['ROA']<-data_value['ROE']*tmp['자산']/tmp['자본']
   data_value['NCAV_Ratio']<-data_value['NCAV']/marketPrice
   
+  
   fscore<-0
   newfscore<-0
+
   if(!is.na(tmp['지배주주순이익']) & tmp['지배주주순이익']>0) {fscore<-fscore+1; newfscore<-newfscore+1;}
   if(!is.na(tmp['영업활동으로인한현금흐름']) & tmp['영업활동으로인한현금흐름']>0) {fscore<-fscore+1; newfscore<-newfscore+1;}
-  if(!is.na(last_value_index['ROA']) & last_value_index['ROA']<data_value['ROA']) fscore<-fscore+1
   if(!is.na(tmp['영업활동으로인한현금흐름']) & !is.na(tmp['지배주주순이익']) 
      & tmp['영업활동으로인한현금흐름']>tmp['지배주주순이익']) fscore<-fscore+1
-  if(!is.na(last_value_index['부채비율']) & !is.na(tmp['자본']) & last_value_index['부채비율']>tmp['부채']/tmp['자본']) fscore<-fscore+1
-  if(!is.na(last_value_index['유동비율']) & !is.na(tmp['유동부채'] & last_value_index['유동비율']<tmp['유동자산']/tmp['유동부채'])) fscore<-fscore+1
-  if(!is.na(last_value_index['자본']) & last_value_index['자본']==tmp['자본']) {fscore<-fscore+1; newfscore<-newfscore+1;}
-  if(!is.na(last_value_index['매출총이익']) & last_value_index['매출총이익']<tmp['매출총이익']) fscore<-fscore+1
-  if(!is.na(last_value_index['자산회전율']) & !is.na(tmp['자산']) & last_value_index['자산회전율']<tmp['매출액']/tmp['자산']) fscore<-fscore+1
   
+  if(!is.null(previousData)){
+    if(!is.na(last_value_index['ROA']) & last_value_index['ROA']<data_value['ROA']) fscore<-fscore+1
+    if(!is.na(last_value_index['부채비율']) & !is.na(tmp['자본']) & last_value_index['부채비율']>tmp['부채']/tmp['자본']) fscore<-fscore+1
+    if(!is.na(last_value_index['유동비율']) & !is.na(tmp['유동부채'] & last_value_index['유동비율']<tmp['유동자산']/tmp['유동부채'])) fscore<-fscore+1
+    if(!is.na(last_value_index['자본']) & last_value_index['자본']==tmp['자본']) {fscore<-fscore+1; newfscore<-newfscore+1;}
+    if(!is.na(last_value_index['매출총이익']) & last_value_index['매출총이익']<tmp['매출총이익']) fscore<-fscore+1
+    if(!is.na(last_value_index['자산회전율']) & !is.na(tmp['자산']) & last_value_index['자산회전율']<tmp['매출액']/tmp['자산']) fscore<-fscore+1
+    
+  }
+
   data_value['F-score']<-fscore
   data_value['New F-score']<-newfscore
   
