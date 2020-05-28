@@ -30,6 +30,8 @@ for(day in availableDate){
 colnames(corpTable)[8]<-"시가총액"
 corpTable<-as.data.table(corpTable)
 
+dbWriteTable(conn,SQL("metainfo.기업정보"),corpTable)
+corpTable<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.분기재무제표")))
 #모든 기업의 재무제표 구하기
 
 #corpList<-unique(corpTable$종목코드)
