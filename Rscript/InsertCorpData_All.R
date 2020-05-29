@@ -31,7 +31,7 @@ colnames(corpTable)[8]<-"시가총액"
 corpTable<-as.data.table(corpTable)
 
 dbWriteTable(conn,SQL("metainfo.기업정보"),corpTable)
-corpTable<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.분기재무제표")))
+corpTable<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.기업정보")))
 #모든 기업의 재무제표 구하기
 
 #corpList<-unique(corpTable$종목코드)
@@ -51,7 +51,5 @@ for(i in 1:nrow(corpTable)){
 }
 
 
-
 dbWriteTable(conn,SQL("metainfo.기업정보"),fs)
-
 
