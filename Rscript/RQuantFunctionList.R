@@ -351,7 +351,8 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
         previousData<-yData[yRank==2] } else{
           previousData<-NULL
         }
-      result <- c(corpData,getCurrentValueQualityFactorQuarter(corpData, data, previousData))
+
+      result <- unlist(c(corpData,getCurrentValueQualityFactorQuarter(corpData, data, previousData)))
     },
     error=function(e) print(paste0("Fail to Read: ",code," Date:",businessDate))
   )
