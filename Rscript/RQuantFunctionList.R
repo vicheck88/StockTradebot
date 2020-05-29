@@ -341,7 +341,7 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
       qRank<-frank(-as.double(qDate),ties.method="dense")
       yRank<-frank(-as.double(yDate),ties.method="dense")
       
-      if(nrow(yData) == 0 & nrow(qData) == 0){return(result)}
+      if(length(yRank) == 0 & length(unique(qRank)) < 4 ){return(result)}
       if(length(unique(qDate))>=4){
         data<-qData[qRank<=4]
       } else{ data<-yData[yRank==1] }
@@ -433,12 +433,23 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
      & tmp['영업활동으로인한현금흐름']>tmp['지배주주순이익']) fscore<-fscore+1
   
   if(!is.null(previousData)){
-    if(!is.na(last_value_index['ROA']) & last_value_index['ROA']<corpData$ROA) fscore<-fscore+1
-    if(!is.na(last_value_index['부채비율']) & !is.na(tmp['자본']) & last_value_index['부채비율']>tmp['부채']/tmp['자본']) fscore<-fscore+1
-    if(!is.na(last_value_index['유동비율']) & !is.na(tmp['유동부채'] & last_value_index['유동비율']<tmp['유동자산']/tmp['유동부채'])) fscore<-fscore+1
-    if(!is.na(last_value_index['자본']) & last_value_index['자본']==tmp['자본']) {fscore<-fscore+1; newfscore<-newfscore+1;}
-    if(!is.na(last_value_index['매출총이익']) & last_value_index['매출총이익']<tmp['매출총이익']) fscore<-fscore+1
-    if(!is.na(last_value_index['자산회전율']) & !is.na(tmp['자산']) & last_value_index['자산회전율']<tmp['매출액']/tmp['자산']) fscore<-fscore+1
+    if(!is.na(last_value_index['ROA']) & !is.na(corpData$ROA) &
+       last_value_index['ROA']<corpData$ROA) fscore<-fscore+1
+    
+    if(!is.na(last_value_index['부채비율']) & !is.na(tmp['자본']) & !is.na(tmp['부채']) &
+       last_value_index['부채비율']>tmp['부채']/tmp['자본']) fscore<-fscore+1
+    
+    if(!is.na(last_value_index['유동비율']) & !is.na(tmp['유동부채'] & !is.na(tmp['유동자산']) & 
+       last_value_index['유동비율']<tmp['유동자산']/tmp['유동부채'])) fscore<-fscore+1
+    
+    if(!is.na(last_value_index['자본']) & !is.na(tmp['자본']) &
+       last_value_index['자본']==tmp['자본']) {fscore<-fscore+1; newfscore<-newfscore+1;}
+    
+    if(!is.na(last_value_index['매출총이익']) & !is.na(tmp['매출총이익']) &
+       last_value_index['매출총이익']<tmp['매출총이익']) fscore<-fscore+1
+    
+    if(!is.na(last_value_index['자산회전율']) & !is.na(tmp['자산']) & !is.na(tmp['매출액']) &
+       last_value_index['자산회전율']<tmp['매출액']/tmp['자산']) fscore<-fscore+1
   }
 
   corpData[,Fscore:=fscore]
