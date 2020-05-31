@@ -253,13 +253,14 @@ getAllFS<-function(type, codeList){
   }
   return(data)
 }
-getAllRecentFS<-function(type,codeList, recentDates){
+
+getAllRecentFS<-function(type, codeList, recentData){
   data<-NULL
   for(code in codeList){
-    recentDate<-recentDates[recentDates[,종목코드==code]]$최신일자
+    recentDate<-recentData[종목코드==code]$최신일자
     dat <- getRecentFSFromFnGuide(type,code)
-    dat <- dat[dat[,일자>recentDate]]
-    data<-rbind(data,dat)
+    dat <- dat[일자>recentDate]
+    data<- rbind(data,dat)
   }
   return(data)
 }
