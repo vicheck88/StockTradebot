@@ -36,3 +36,12 @@ C:\Users\vicen\Documents\GitHub\StockTrade\StockTrade\bin\Debug\System.Text.Json
 C:\Users\vicen\Documents\GitHub\StockTrade\StockTrade\bin\Debug\System.Threading.Tasks.Extensions.xml
 C:\Users\vicen\Documents\GitHub\StockTrade\StockTrade\bin\Debug\System.ValueTuple.xml
 C:\Users\vicen\Documents\GitHub\StockTrade\StockTrade\obj\Debug\StockTrade.csproj.CopyComplete
+C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\obj\Debug\StockTrade.csprojAssemblyReference.cache
+C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\obj\Debug\Interop.KHOpenAPILib.dll
+C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\obj\Debug\AxInterop.KHOpenAPILib.dll
+C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\obj\Debug\StockTrade.csproj.ResolveComReference.cache
+C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\obj\Debug\StockTrade.Form1.resources
+C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\obj\Debug\StockTrade.Properties.Resources.resources
+C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\obj\Debug\StockTrade.csproj.GenerateResource.cache
+C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\obj\Debug\StockTrade.exe
+C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\obj\Debug\StockTrade.pdb

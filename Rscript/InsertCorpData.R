@@ -30,17 +30,19 @@ corpList<-unique(c(corpList,corpTable$종목코드))
 fsQ<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.분기재무제표")))
 fsY<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.연간재무제표")))
 
-#종목별 최신기록일자
-maxQ<-fsQ[,.(최신일자=max(일자)),by=종목코드]
-maxY<-fsY[,.(최신일자=max(일자)),by=종목코드]
+#종목별 기록일자
+recordedQ<-unique(fsQ[,c('종목코드','일자')])
+recordedY<-unique(fsY[,c('종목코드','일자')])
 
 #모든 기업의 가장 최신 재무데이터 구하기
-fsQNew<-getAllRecentFS('Q',corpList, maxQ)
-fsYNew<-getAllRecentFS('Y',corpList, maxY)
+fsQNew<-getAllRecentFS('Q',corpList, recordedQ)
+fsYNew<-getAllRecentFS('Y',corpList, recordedY)
+fsYNew$일자<-as.character(fsYNew$일자)
+fsQNew$일자<-as.character(fsQNew$일자)
 
 #기록한 재무제표 데이터베이스 저장
-dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQ,append=TRUE,row.names=FALSE)
-dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsY,append=TRUE,row.names=FALSE)
+dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQNew,append=TRUE,row.names=FALSE)
+dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsYNew,append=TRUE,row.names=FALSE)
 
 #데이터 병합
 fsQ<-rbind(fsQ,fsQNew)
@@ -51,4 +53,4 @@ for(i in 1:nrow(corpTable)){
   fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ))
 }
 
-dbWriteTable(conn,SQL("metainfo.기업정보"),table,append=TRUE)
+dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)

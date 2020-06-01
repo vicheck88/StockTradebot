@@ -10,10 +10,12 @@ namespace StockTrade
     {
         public string stockCode;
         public string stockName;
-        public stockInfo(string stockCode, string stockName)
+        public int remainingPrice;
+        public stockInfo(string stockCode, string stockName, int remainingPrice)
         {
             this.stockCode = stockCode;
             this.stockName = stockName;
+            this.remainingPrice = remainingPrice;
         }
     }
     public class outstanding
@@ -111,12 +113,14 @@ namespace StockTrade
         public int boughtPrice;
         public int boughtCount;
         public int currentPrice;
+        public int limitPrice;
 
-        public AutoTradingPurchaseStock(string stockCode, int boughtPrice, int currentPrice)
+        public AutoTradingPurchaseStock(string stockCode, int boughtPrice, int currentPrice, int limitPrice)
         {
             this.stockCode = stockCode;
             this.boughtPrice = boughtPrice;
             this.currentPrice = currentPrice;
+            this.limitPrice = limitPrice;
         }
     }
 
