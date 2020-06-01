@@ -253,13 +253,14 @@ getAllFS<-function(type, codeList){
   }
   return(data)
 }
-getAllRecentFS<-function(type,codeList, recentDates){
+
+getAllRecentFS<-function(type, codeList, recentData){
   data<-NULL
   for(code in codeList){
-    recentDate<-recentDates[recentDates[,종목코드==code]]$최신일자
+    recentDate<-recentData[종목코드==code]$최신일자
     dat <- getRecentFSFromFnGuide(type,code)
-    dat <- dat[dat[,일자>recentDate]]
-    data<-rbind(data,dat)
+    dat <- dat[일자>recentDate]
+    data<- rbind(data,dat)
   }
   return(data)
 }
@@ -311,7 +312,7 @@ getStockNumberList<-function(businessDay, codeList){
   return(result)
 }
 
-getAllFactor<-function(corpData, yearData, quarterData){
+cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
   result<-NULL
   tryCatch(
     {
@@ -334,47 +335,31 @@ getAllFactor<-function(corpData, yearData, quarterData){
       year(lastlastYearDate)<-year(lastYearDate)-1
       
       yData<-yData[yDate<=businessDate & yDate>=lastlastYearDate]
-      qData<-qData[qDate<=businessDate & qDate>=lastYearDate]
+      qData<-qData[qDate<=businessDate & qDate>=lastlastYearDate]
       
       yDate<-yData$일자
       qDate<-qData$일자
+      qRank<-frank(-as.double(qDate),ties.method="dense")
+      yRank<-frank(-as.double(yDate),ties.method="dense")
       
-      if(nrow(yData) == 0 & nrow(qData) == 0){return(result)}
-      if(length(unique(qData$일자))>=4){
-        data<-qData[frank(qDate,ties.method="dense")<=4] 
-      } else{
-        data<-yData[frank(-yDate,ties.method="dense")==1]
-      }
-      lastYdata<-yData[frank(-yDate,ties.method="dense")==2]
-      result <- cbind(corpData,as.data.table(t(getCurrentValueQualityFactorQuarter(corpData, data, lastYdata))))
-      #scoreResult<-getFscore(corpData,Fdata)
-      
-        
-      Sys.sleep(0.3)
+      if(length(yRank) == 0 & length(unique(qRank)) < 4 ){return(result)}
+      if(length(unique(qDate))>=4){
+        data<-qData[qRank<=4]
+      } else{ data<-yData[yRank==1] }
+      if(length(unique(qDate))>=5){
+        previousData<-qData[qRank>=2 & qRank<=5]
+      } else if(length(unique(yDate))>=2) { 
+        previousData<-yData[yRank==2] } else{
+          previousData<-NULL
+        }
+      result <- getCurrentValueQualityFactorQuarter(corpData, data, previousData)
     },
-    error=function(e) print(paste0("Fail to Read: ",code))
+    error=function(e) print(paste0("Fail to Read: ",code," Date:",businessDate))
   )
   return(result)
 }
 
-#Fscore 구하기
-getFscore<-function(corpData,data){
-  firstdata<-data[frank(-data$일자,method="dense")==1]
-  seconddata<-data[frank(-data$일자,method="dense")==2]
-  
-  if(length(unique(data$일자))>2) curData<-firstData else{
-    curData<-Data
-  }
-  
-}
-
-#PER, PBR, PCR, PSR, NCAV, GPA 계산(분기)
-getCurrentValueQualityFactorQuarter<-function(corpData, data, lastyearData){
-  
-  marketPrice<-corpData$시가총액
-  code<-corpData$종목코드
-  data<-data[data$종목코드==code]
-  
+sumQuarterData<-function(data){
   fs<-data[data$종류=='재무상태표']
   data<-data[data$종류!='재무상태표']
   fs<-fs[fs$일자==max(fs$일자)]
@@ -384,57 +369,94 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, lastyearData){
   }
   names(fs)<-names(data)
   data<-rbind(data,fs)
+  return(data)
+}
+
+#PER, PBR, PCR, PSR, NCAV, GPA 계산(분기)
+getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
   
-  value_index<-c()
+  marketPrice<-corpData$시가총액
+  code<-corpData$종목코드
+  data<-data[data$종목코드==code]
+  
+  if(length(unique(data$일자))==4){
+    data<-sumQuarterData(data)
+  }
+  if(!is.null(previousData) & length(unique(previousData$일자))==4){
+    previousData<-sumQuarterData(data)
+  }
+  
   value_type <- c('지배주주순이익','자본','영업활동으로인한현금흐름','매출액','유상증자','매출총이익','영업이익',
-                  '유동자산','부채','유상증자','자산')
-  
-  tmp<-lastyearData[lastyearData[,계정 %in% value_type]]$값
-  names(tmp)<-lastyearData[lastyearData[,계정 %in% value_type]]$계정
-  value_index<-c()
-  
-  last_value_index['지배주주순이익']<-tmp['지배주주순이익'] #수익
-  last_value_index['영업활동으로인한현금흐름']<-tmp['영업활동으로인한현금흐름'] #영업현금흐름
-  last_value_index['ROA']<-tmp['자산']/tmp['지배주주순이익'] #ROA 증가
-  last_value_index['영업활동으로인한현금흐름증가']<-tmp['영업활동으로인한현금흐름']-tmp['지배주주순이익'] #영업현금흐름크기
-  last_value_index['부채비율']<-tmp['부채']/tmp['자본'] #부채비율 증가
-  last_value_index['유동비율']<-tmp['유동자산']/tmp['유동부채'] #유동비율
-  last_value_index['자본']<-tmp['자본'] #신규주식발행
-  last_value_index['매출총이익']<-tmp['매출총이익']
-  last_value_index['자산회전율']<-tmp['매출액']/tmp['자산']
-  
+                  '유동자산','부채','유상증자','자산','유동부채','당기순이익')
+
+  if(!is.null(previousData)){
+    tmp<-previousData[previousData[,계정 %in% value_type]]$값
+    names(tmp)<-previousData[previousData[,계정 %in% value_type]]$계정
+    
+    last_value_index<-c()
+    last_value_index['지배주주순이익']<-tmp['지배주주순이익'] #수익
+    last_value_index['영업활동으로인한현금흐름']<-tmp['영업활동으로인한현금흐름'] #영업현금흐름
+    last_value_index['ROA']<-tmp['자산']/tmp['지배주주순이익'] #ROA 증가
+    last_value_index['영업활동으로인한현금흐름증가']<-tmp['영업활동으로인한현금흐름']-tmp['지배주주순이익'] #영업현금흐름크기
+    last_value_index['부채비율']<-tmp['부채']/tmp['자본'] #부채비율 증가
+    last_value_index['유동비율']<-tmp['유동자산']/tmp['유동부채'] #유동비율
+    last_value_index['자본']<-tmp['자본'] #신규주식발행
+    last_value_index['매출총이익']<-tmp['매출총이익']
+    last_value_index['자산회전율']<-tmp['매출액']/tmp['자산']
+  }
   
   tmp<-data[data[,계정 %in% value_type]]$값
   names(tmp)<-data[data[,계정 %in% value_type]]$계정
   
-  value_index['PER']<-tmp['지배주주순이익']
-  value_index['PBR']<-tmp['자본']
-  value_index['PCR']<-tmp['영업활동으로인한현금흐름']
-  value_index['PSR']<-tmp['매출액']
-  value_index['POR']<-tmp['영업이익']
-  data_value<-marketPrice/value_index
-  data_value['NCAV']<-tmp['유동자산']-tmp['부채']
-  data_value['GPA']<-tmp['매출총이익']/tmp['자산']
-  data_value['ROE']<-data_value['PBR']/data_value['PER']
-  data_value['ROA']<-data_value['ROE']*tmp['자산']/tmp['자본']
-  data_value['NCAV_Ratio']<-data_value['NCAV']/marketPrice
+  if(!is.na(tmp['지배주주순이익'])){
+    corpData[,PER:= marketPrice/tmp['지배주주순이익'] ]
+  } else if(!is.na(tmp['당기순이익'])){
+    corpData[,PER:= marketPrice/tmp['당기순이익'] ]
+  }
+  corpData[,PBR:=marketPrice/tmp['자본']]
+  corpData[,PCR:=marketPrice/tmp['영업활동으로인한현금흐름']]
+  corpData[,PSR:=marketPrice/tmp['매출액']]
+  corpData[,POR:=marketPrice/tmp['영업이익']]
   
-  fscore<-0
-  newfscore<-0
-  if(tmp['지배주주순이익']>0) {fscore<-fscore+1; newfscore<-newfscore+1;}
-  if(tmp['영업활동으로인한현금흐름']>0) {fscore<-fscore+1; newfscore<-newfscore+1;}
-  if(last_value_index['ROA']<data_value['ROA']) fscore<-fscore+1
-  if(tmp['영업활동으로인한현금흐름']>tmp['지배주주순이익']) fscore<-fscore+1
-  if(last_value_index['부채비율']>tmp['부채']/tmp['자본']) fscore<-fscore+1
-  if(last_value_index['유동비율']<tmp['유동자산']/tmp['유동부채']) fscore<-fscore+1
-  if(last_value_index['자본']==tmp['자본']) {fscore<-fscore+1; newfscore<-newfscore+1;}
-  if(last_value_index['매출총이익']<tmp['매출총이익']) fscore<-fscore+1
-  if(last_value_index['자산회전율']<tmp['매출액']/tmp['자산']) fscore<-fscore+1
+  corpData[,NCAV:=tmp['유동자산']-tmp['부채']]
+  if(!is.na(tmp['자산'])) corpData[,GPA:=tmp['매출총이익']/tmp['자산']]
+  if(!is.na(corpData[,PER])) corpData[,ROE:=corpData$PBR/corpData$PER]
+  if(!is.na(tmp['자본'])) corpData[,ROA:=corpData$ROE*tmp['자산']/tmp['자본']]
+  corpData[,NCAV_Ratio:=corpData[,NCAV]/marketPrice]
   
-  data_value['F-score']<-fscore
-  data_value['New F-score']<-newfscore
   
-  return(data_value)
+  fscore<-as.integer(0)
+  newfscore<-as.integer(0)
+
+  if(!is.na(tmp['지배주주순이익']) & tmp['지배주주순이익']>0) {fscore<-fscore+1; newfscore<-newfscore+1;}
+  if(!is.na(tmp['영업활동으로인한현금흐름']) & tmp['영업활동으로인한현금흐름']>0) {fscore<-fscore+1; newfscore<-newfscore+1;}
+  if(!is.na(tmp['영업활동으로인한현금흐름']) & !is.na(tmp['지배주주순이익']) 
+     & tmp['영업활동으로인한현금흐름']>tmp['지배주주순이익']) fscore<-fscore+1
+  
+  if(!is.null(previousData)){
+    if(!is.na(last_value_index['ROA']) & !is.na(corpData$ROA) &
+       last_value_index['ROA']<corpData$ROA) fscore<-fscore+1
+    
+    if(!is.na(last_value_index['부채비율']) & !is.na(tmp['자본']) & !is.na(tmp['부채']) &
+       last_value_index['부채비율']>tmp['부채']/tmp['자본']) fscore<-fscore+1
+    
+    if(!is.na(last_value_index['유동비율']) & !is.na(tmp['유동부채'] & !is.na(tmp['유동자산']) & 
+       last_value_index['유동비율']<tmp['유동자산']/tmp['유동부채'])) fscore<-fscore+1
+    
+    if(!is.na(last_value_index['자본']) & !is.na(tmp['자본']) &
+       last_value_index['자본']==tmp['자본']) {fscore<-fscore+1; newfscore<-newfscore+1;}
+    
+    if(!is.na(last_value_index['매출총이익']) & !is.na(tmp['매출총이익']) &
+       last_value_index['매출총이익']<tmp['매출총이익']) fscore<-fscore+1
+    
+    if(!is.na(last_value_index['자산회전율']) & !is.na(tmp['자산']) & !is.na(tmp['매출액']) &
+       last_value_index['자산회전율']<tmp['매출액']/tmp['자산']) fscore<-fscore+1
+  }
+
+  corpData[,Fscore:=fscore]
+  corpData[,New_Fscore:=newfscore]
+  
+  return(corpData)
 }
 
 addMomentum<-function(businessDay, codeList){

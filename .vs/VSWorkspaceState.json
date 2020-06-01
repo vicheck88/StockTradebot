@@ -1,13 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\AutoTrade",
-    "\\AutoTrade\\AutoTrade",
-    "\\Rscript",
-    "\\StockTrade",
-    "\\StockTrade\\StockTrade",
-    "\\키움증권 자동매매"
+    "\\AutoTrade\\AutoTrade"
   ],
-  "SelectedNode": "\\Rscript\\종목선정.R",
+  "SelectedNode": "\\StockTrade",
   "PreviewInSolutionExplorer": false
 }
