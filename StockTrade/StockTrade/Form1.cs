@@ -13,7 +13,7 @@ namespace StockTrade
 {
     public partial class Form1 : Form
     {
-        public List<stockInfo> stocksToBuy;
+        public Dictionary<string,stockInfo> stocksToBuy;
         public List<stockBalance> stockBalanceList;
         public List<outstanding> outstandingList;
         public List<stockInfo> stockList;
@@ -23,6 +23,7 @@ namespace StockTrade
         string currentCondition = "";
         public static string ACCOUNT_NUMBER = "";
         DBManager DB;
+        GetListFromR Rprogram;
 
         public Form1()
         {
@@ -49,6 +50,7 @@ namespace StockTrade
             axKHOpenAPI1.OnReceiveRealData += onReceiveRealData;
             axKHOpenAPI1.CommConnect();
             axKHOpenAPI1.OnEventConnect += onEventConnect;
+            Rprogram = new GetListFromR();
         }
 
         public void setBuyingPerStock(object sender, EventArgs e)
@@ -152,7 +154,6 @@ namespace StockTrade
                 orderRecordListBox.Items.Add("주문가격 : " + String.Format("{0:#,###}", orderPrice));
                 orderRecordListBox.Items.Add("주문구분 : " + orderType);
                 orderRecordListBox.Items.Add("----------------------------------------------------");
-
             }
             else if (e.sGubun == "1")//국내주식 잔고전달
             {
@@ -361,18 +362,27 @@ namespace StockTrade
             foreach(DataGridViewRow row in autoRuleDataGridView.Rows)
             {
                 if (row.Cells["거래규칙_상태"].Value.ToString() != "시작") continue;
-
-                autoTradingRuleList.Add(new AutoTradingRule(int.Parse(row.Cells[0].Value.ToString()), 
+                var newRule = new AutoTradingRule(int.Parse(row.Cells[0].Value.ToString()),
                     row.Cells[1].Value.ToString(), row.Cells[2].Value.ToString(),
-                    long.Parse(row.Cells[3].Value.ToString()),int.Parse(row.Cells[4].Value.ToString()), 
+                    long.Parse(row.Cells[3].Value.ToString()), int.Parse(row.Cells[4].Value.ToString()),
                     int.Parse(row.Cells[5].Value.ToString()), row.Cells[6].Value.ToString(),
                     row.Cells[7].Value.ToString(), double.Parse(row.Cells[8].Value.ToString()),
                     double.Parse(row.Cells[8].Value.ToString()), DateTime.Parse(row.Cells[9].ToString()),
-                    row.Cells[9].Value.ToString()));
+                    row.Cells[9].Value.ToString());
+                autoTradingRuleList.Add(newRule);
                 string autoTradingCondition = row.Cells["거래규칙_조건식"].Value.ToString();
 
                 //R 조건검색 데이터 추가
+                DataTable RcorpList = Rprogram.getCorpTable(row.Cells[1].Value.ToString());
                 //사야할 리스트에 추가
+                foreach(DataRow corp in RcorpList.Rows)
+                {
+                    string code = corp["종목코드"].ToString();
+                    string name = corp["종목이름"].ToString();
+                    int price = newRule.종목당매수금액;
+                    if (stocksToBuy.Keys.Contains(code)) stocksToBuy[code].remainingPrice += price;
+                    else stocksToBuy.Add(code, new stockInfo(code, name, price));
+                }
                 //현재 잔고 검색
                 axKHOpenAPI1.CommRqData("계좌평가현황요청", "opw00004", 0, "4000");
 
