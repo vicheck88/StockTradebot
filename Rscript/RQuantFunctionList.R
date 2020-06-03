@@ -407,7 +407,7 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
     corpData[,PER:= marketPrice/tmp['지배주주순이익'] ]
   } else if(!is.na(tmp['당기순이익'])){
     corpData[,PER:= marketPrice/tmp['당기순이익'] ]
-  }
+  } else{corpData[,PER := NA]}
   corpData[,PBR:=marketPrice/tmp['자본']]
   corpData[,PCR:=marketPrice/tmp['영업활동으로인한현금흐름']]
   corpData[,PSR:=marketPrice/tmp['매출액']]
