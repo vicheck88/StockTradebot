@@ -34,6 +34,8 @@ fsQ<-getAllFS('Q',corpList)
 fsY<-getAllFS('Y',corpList)
 
 fsQNew<-fsetdiff(fsQ,FfsQ)
+fsQNew<-fsetdiff(fsQ,FfsY)
+fsYNew<-fsetdiff(fsY,FfsY)
 fsYNew<-fsetdiff(fsY,FfsY)
 
 
