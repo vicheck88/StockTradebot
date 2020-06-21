@@ -315,6 +315,10 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
       code<-corpData[[2]]
       yData<-yearData[yearData$종목코드==code,]
       qData<-quarterData[quarterData$종목코드==code,]
+      
+      yData$일자<-as.character(yData$일자)
+      qData$일자<-as.character(qData$일자)
+      
       yDate<-as.Date(paste0(yData$일자,'.01'),format='%Y.%m.%d')
       qDate<-as.Date(paste0(qData$일자,'.01'),format='%Y.%m.%d')
       
