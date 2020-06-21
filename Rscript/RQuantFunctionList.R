@@ -242,7 +242,7 @@ getAllCorpsCode<-function(businessDay){
 getAllFS<-function(type, codeList){
   data<-NULL
   for(code in codeList){
-    rbind(data,getFSFromFnGuide(type,code))
+    data<-rbind(data,getFSFromFnGuide(type,code))
   }
   return(data)
 }
