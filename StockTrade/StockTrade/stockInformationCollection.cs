@@ -52,15 +52,15 @@ namespace StockTrade
     {
         public string 종목코드 { get; set; }
         public string 종목명 { get; set; }
-        public long 수량 { get; set; }
+        public int 수량 { get; set; }
         public string 매수금 { get; set; }
         public string 현재가 { get; set; }
-        public long 평가손익 { get; set; }
+        public int 평가손익 { get; set; }
         public string 수익률 { get; set; }
 
         public stockBalance() { }
 
-        public stockBalance(string 종목번호, string 종목명, long 수량, string 매수금, string 현재가, long 평가손익, string 수익률)
+        public stockBalance(string 종목번호, string 종목명, int 수량, string 매수금, string 현재가, int 평가손익, string 수익률)
         {
             this.종목코드 = 종목번호;
             this.종목명 = 종목명;
@@ -76,32 +76,29 @@ namespace StockTrade
         public int 번호;
         public string 분석R파일;
         public string 키움조건식;
-        public long 매입제한금액;
+        public int 매입제한금액;
         public int 제한종목개수;
         public int 종목당매수금액;
         public string 매수거래구분;
         public string 매도거래구분;
         public double 이익률;
         public double 손절률;
-        public DateTime 업데이트시간;
+        public string 업데이트시간;
         public string 상태;
 
         public List<AutoTradingPurchaseStock> autoTradingPurchaseStockList;
 
-        public AutoTradingRule(int autoTradingRuleID, string Rfile, string conditionName, long limitBuyingStockPrice,
+        public AutoTradingRule(int autoTradingRuleID, string Rfile, int limitBuyingStockPrice,
             int limitBuyingStockNumber, int limitBuyingPerStock, string autoBuyingOrderType,
-            string autoSellingOrderType, double profitRate, double lossRate, DateTime updateTime, string status)
+            string autoSellingOrderType, string updateTime, string status)
         {
             this.번호 = autoTradingRuleID;
             this.분석R파일 = Rfile;
-            this.키움조건식 = conditionName;
             this.매입제한금액 = limitBuyingStockPrice;
             this.제한종목개수 = limitBuyingStockNumber;
             this.종목당매수금액 = limitBuyingPerStock;
             this.매수거래구분 = autoBuyingOrderType;
             this.매도거래구분 = autoSellingOrderType;
-            this.이익률 = profitRate;
-            this.손절률 = lossRate;
             this.업데이트시간 = updateTime;
             this.상태 = status;
             this.autoTradingPurchaseStockList = new List<AutoTradingPurchaseStock>();
@@ -113,14 +110,12 @@ namespace StockTrade
         public int boughtPrice;
         public int boughtCount;
         public int currentPrice;
-        public int limitPrice;
 
-        public AutoTradingPurchaseStock(string stockCode, int boughtPrice, int currentPrice, int limitPrice)
+        public AutoTradingPurchaseStock(string stockCode, int boughtPrice, int currentPrice)
         {
             this.stockCode = stockCode;
             this.boughtPrice = boughtPrice;
             this.currentPrice = currentPrice;
-            this.limitPrice = limitPrice;
         }
     }
 

@@ -1,0 +1,34 @@
+pkg = c('RPostgres', 'DBI', 'jsonlite', 'data.table')
+new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
+if (length(new.pkg)) {
+  install.packages(new.pkg, dependencies = TRUE)}
+sapply(pkg,library,character.only=T)
+
+config<-fromJSON("../config.json")
+dbconfig<-config$database
+conn<-dbConnect(RPostgres::Postgres(),dbname=dbconfig$database,host=dbconfig$host,port=dbconfig$port,user=dbconfig$user,password=dbconfig$passwd)
+#함수 불러돌이기
+corpTable<-dbGetQuery(conn,SQL("select * from metainfo.기업정보 where 일자=
+                               (select max(일자) from metainfo.기업정보)"))
+setDT(corpTable)
+
+filter<-function(data){
+  dat<-data[관리여부!="관리종목"]
+  q<-quantile(dat$시가총액,probs=seq(0,1,0.2))
+  dat<-dat[시가총액<=q[2]]
+  dat<-dat[PER>=0]
+  dat<-dat[is.na(GPA)==FALSE]
+  return(dat)
+}
+orderData<-function(data){
+  data[,GPARk:=rank(-data$GPA)]
+  data[,sizeRk:=rank(data$시가총액)]
+  data[,totalRk:=GPARk+sizeRk]
+  setorder(data,totalRk)
+  return(data)
+}
+
+output<-filter(corpTable)
+output<-orderData(output)
+output<-output[1:stocknum]
+output$일자<-as.character(output$일자)

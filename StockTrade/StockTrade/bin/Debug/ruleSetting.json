@@ -1,0 +1,11 @@
+{
+  "0": {
+    "Rname": "smallCapPERFilterGPARank",
+    "limitBuyingStockPrice": "10000000",
+    "limitBuyingStockNumber": "50",
+    "limitBuyingPerStock": "200000",
+    "autoBuyingOrderType": "00:지정가",
+    "autoSellingOrderType": "00:지정가",
+    "updateTime": "09:10"
+  }
+}
