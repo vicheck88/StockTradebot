@@ -34,7 +34,6 @@ namespace StockTrade
         string updateTime;
         string buyOrderType;
         string sellOrderType;
-        bool updated;
         System.Windows.Forms.Timer t;
         string userID;
         string userName;
@@ -420,7 +419,6 @@ namespace StockTrade
                 }
                 else stocksToBuy.Add(s.종목코드, new stockInfo(s.종목코드, s.종목명, -int.Parse(s.현재가) * (int)s.수량));
             }
-            updated = false;
             var stockCodeList = String.Join(",", stocksToBuy.Keys);
             axKHOpenAPI1.CommKwRqData(stockCodeList, 0, stocksToBuy.Count, 0, "조건검색종목", "5100");
         }

@@ -81,4 +81,3 @@ C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\bin\Debug\In
 C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\bin\Debug\AxInterop.KHOpenAPILib.dll
 C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\obj\Debug\StockTrade.csproj.CopyComplete
 C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\obj\Debug\StockTrade.RFileSelection.resources
-C:\Users\vicen\Documents\GitHub\StockTradebot\StockTrade\StockTrade\obj\Debug\StockTrade.csprojAssemblyReference.cache
