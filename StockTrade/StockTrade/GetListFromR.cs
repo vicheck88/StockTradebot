@@ -13,25 +13,23 @@ namespace StockTrade
 {
     public class GetListFromR
     {
-        string ftnListPath;
         string currentPath;
         public GetListFromR()
         {
             REngine.SetEnvironmentVariables();
-            currentPath = System.AppDomain.CurrentDomain.BaseDirectory + @"\Rscript";
-            ftnListPath = "RQuantFunctionList.R";
+            currentPath = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Rscript");
         }
-        public DataTable getCorpTable(string Rname)
+        public DataTable getCorpTable(string Rname, int stocknum)
         {
             using(REngine engine = REngine.GetInstance())
             {
-                string fullRFilePath = currentPath + @"\" + Rname;
+                string fullRFilePath = Path.Combine(currentPath, Rname + ".R");
                 if (!File.Exists(fullRFilePath)) return null;
                 var curPath = engine.CreateCharacter(currentPath);
+                engine.SetSymbol("stocknum", engine.CreateInteger(stocknum));
                 engine.SetSymbol("curPath", curPath);
                 engine.Evaluate("setwd(curPath)");
-                engine.Evaluate(String.Format("source({0})", ftnListPath));
-                engine.Evaluate(String.Format("source({0})", Rname));
+                engine.Evaluate(String.Format("source(\"{0}\")", Rname + ".R"));
                 DataFrame output = engine.GetSymbol("output").AsDataFrame();
                 DataTable table = new DataTable();
                 foreach (var name in output.ColumnNames) table.Columns.Add(name);

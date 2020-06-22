@@ -1,0 +1,10 @@
+{
+
+  "database": {
+    "host": "203.243.21.33",
+    "port": "5432",
+    "user": "postgres",
+    "passwd": "12dnjftod",
+    "database": "stocks"
+  }
+}
