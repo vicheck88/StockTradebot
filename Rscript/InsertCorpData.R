@@ -16,7 +16,6 @@ if(month(Sys.Date())==month(availableDate[2])) {
 day<-str_remove_all(availableDate,"-")
 
 #전달 말 등록된 기업정보
-
 df<-KRXDataMerge(day)
 df<-subset(df,select=c("일자","종목코드", "종목명", "시장구분", "산업분류","현재가(종가)","시가총액(원)","주당배당금", "배당수익률","관리여부"))
 colnames(df)[7]<-"시가총액"
@@ -36,7 +35,7 @@ fsY<-getAllFS('Y',corpList)
 fsQNew<-fsetdiff(fsQ,FfsQ)
 fsQNew<-fsetdiff(fsQ,FfsY)
 fsYNew<-fsetdiff(fsY,FfsY)
-fsYNew<-fsetdiff(fsY,FfsY)
+fsYNew<-fsetdiff(fsY,FfsQ)
 
 
 #기록한 재무제표 데이터베이스 저장
