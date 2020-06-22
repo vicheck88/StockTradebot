@@ -168,7 +168,7 @@ getFSFromFnGuide <- function(type, code){
   data_fs = c()
   data_value = c()
   tryCatch({
-    Sys.setlocale('LC_ALL', 'English')
+    #Sys.setlocale('LC_ALL', 'English')
     # url 생성
     url = paste0(
       'https://comp.fnguide.com/SVO2/ASP/'
@@ -180,10 +180,10 @@ getFSFromFnGuide <- function(type, code){
       read_html() %>%
       html_table()
     
-    Sys.setlocale('LC_ALL', 'Korean')
+    if(length(data)==0) return(NULL)
+    #Sys.setlocale('LC_ALL', 'Korean')
     
     idxList<-0:2*2+r
-
     # 3개 재무제표를 하나로 합치기    
     data_IS<-data[[idxList[1]]]
     data_BS<-data[[idxList[2]]]
@@ -233,13 +233,6 @@ getFSFromFnGuide <- function(type, code){
   })
 }
 
-getRecentFSFromFnGuide<-function(type,code){
-  data<-getFSFromFnGuide(type,code)
-  data$일자<-as.character(data$일자)
-  data<-data[data[,일자==max(data$일자)]]
-  return(data)
-}
-
 getAllCorpsCode<-function(businessDay){
   tickerFrame<-KRXDataMerge(businessDay)
   return(tickerFrame$'종목코드')
@@ -249,7 +242,7 @@ getAllCorpsCode<-function(businessDay){
 getAllFS<-function(type, codeList){
   data<-NULL
   for(code in codeList){
-    rbind(data,getFSFromFnGuide(type,code))
+    data<-rbind(data,getFSFromFnGuide(type,code))
   }
   return(data)
 }
@@ -257,10 +250,12 @@ getAllFS<-function(type, codeList){
 getAllRecentFS<-function(type, codeList, recentData){
   data<-NULL
   for(code in codeList){
-    recentDate<-recentData[종목코드==code]$최신일자
-    dat <- getRecentFSFromFnGuide(type,code)
-    dat <- dat[일자>recentDate]
-    data<- rbind(data,dat)
+    recordedDate<-recentData[종목코드==code]$일자
+    dat <- getFSFromFnGuide(type,code)
+    if(length(dat)>0){
+      if(length(recentDate)>0 & !is.na(recentDate) & !is.null(recentDate)) dat<-dat[!(일자 %in% recordedDate)]
+      data<- rbind(data,dat)
+    }
   }
   return(data)
 }
@@ -320,6 +315,10 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
       code<-corpData[[2]]
       yData<-yearData[yearData$종목코드==code,]
       qData<-quarterData[quarterData$종목코드==code,]
+      
+      yData$일자<-as.character(yData$일자)
+      qData$일자<-as.character(qData$일자)
+      
       yDate<-as.Date(paste0(yData$일자,'.01'),format='%Y.%m.%d')
       qDate<-as.Date(paste0(qData$일자,'.01'),format='%Y.%m.%d')
       
@@ -412,7 +411,7 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
     corpData[,PER:= marketPrice/tmp['지배주주순이익'] ]
   } else if(!is.na(tmp['당기순이익'])){
     corpData[,PER:= marketPrice/tmp['당기순이익'] ]
-  }
+  } else{corpData[,PER := NA]}
   corpData[,PBR:=marketPrice/tmp['자본']]
   corpData[,PCR:=marketPrice/tmp['영업활동으로인한현금흐름']]
   corpData[,PSR:=marketPrice/tmp['매출액']]
