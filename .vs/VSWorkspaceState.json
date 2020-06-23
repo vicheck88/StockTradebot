@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\AutoTrade\\AutoTrade"
+    "\\StockTrade",
+    "\\StockTrade\\StockTrade"
   ],
-  "SelectedNode": "\\StockTrade",
+  "SelectedNode": "\\StockTrade\\StockTrade\\Form1.cs",
   "PreviewInSolutionExplorer": false
 }

@@ -7,5 +7,14 @@
     "autoBuyingOrderType": "00:지정가",
     "autoSellingOrderType": "00:지정가",
     "updateTime": "09:10"
+  },
+  "1": {
+    "Rname": "smallCapPERFilterGPARank",
+    "limitBuyingStockPrice": "10000000",
+    "limitBuyingStockNumber": "100",
+    "limitBuyingPerStock": "100000",
+    "autoBuyingOrderType": "03:시장가",
+    "autoSellingOrderType": "03:시장가",
+    "updateTime": "09:30"
   }
 }

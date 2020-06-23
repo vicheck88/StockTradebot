@@ -39,7 +39,15 @@ namespace StockTrade
                     con.Open();
                     NpgsqlCommand comm = new NpgsqlCommand(sql, con);
                     foreach(var d in param)
-                        comm.Parameters.AddWithValue(d.Key, (NpgsqlDbType)d.Value[0], d.Value[1].ToString());
+                    {
+                        NpgsqlDbType t = (NpgsqlDbType)d.Value[0];
+                        if (t.Equals(NpgsqlDbType.Integer))
+                            comm.Parameters.AddWithValue(d.Key, t, int.Parse(d.Value[1].ToString()));
+                        else if (t.Equals(NpgsqlDbType.Text))
+                            comm.Parameters.AddWithValue(d.Key, t, d.Value[1].ToString());
+                        else if (t.Equals(NpgsqlDbType.Double))
+                            comm.Parameters.AddWithValue(d.Key, t, double.Parse(d.Value[1].ToString()));
+                    }
                     comm.ExecuteNonQuery();
                 }
                 catch(Exception e)
@@ -73,7 +81,7 @@ namespace StockTrade
                 try
                 {
                     con.Open();
-                    var SQL = "DELETE FROM real.잔고 WHERE 날짜=to_date(@date,'YYYY-MM') AND 이름=@name";
+                    var SQL = "DELETE FROM real.잔고 WHERE 날짜=@date AND 주문자=@name";
                     NpgsqlCommand comm = new NpgsqlCommand(SQL, con);
                     comm.Parameters.AddWithValue("date", NpgsqlDbType.Text, date);
                     comm.Parameters.AddWithValue("name", NpgsqlDbType.Text, name);
@@ -102,3 +110,4 @@ namespace StockTrade
         }
     }
 }
+
