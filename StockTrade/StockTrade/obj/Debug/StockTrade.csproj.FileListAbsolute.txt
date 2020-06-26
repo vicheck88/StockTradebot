@@ -117,7 +117,6 @@ C:\Users\vicen\Source\Repos\StockTradebot\StockTrade\StockTrade\bin\Debug\System
 C:\Users\vicen\Source\Repos\StockTradebot\StockTrade\StockTrade\bin\Debug\System.ValueTuple.xml
 C:\Users\vicen\Source\Repos\StockTradebot\StockTrade\StockTrade\bin\Debug\Interop.KHOpenAPILib.dll
 C:\Users\vicen\Source\Repos\StockTradebot\StockTrade\StockTrade\bin\Debug\AxInterop.KHOpenAPILib.dll
-C:\Users\vicen\Source\Repos\StockTradebot\StockTrade\StockTrade\obj\Debug\StockTrade.csprojAssemblyReference.cache
 C:\Users\vicen\Source\Repos\StockTradebot\StockTrade\StockTrade\obj\Debug\Interop.KHOpenAPILib.dll
 C:\Users\vicen\Source\Repos\StockTradebot\StockTrade\StockTrade\obj\Debug\AxInterop.KHOpenAPILib.dll
 C:\Users\vicen\Source\Repos\StockTradebot\StockTrade\StockTrade\obj\Debug\StockTrade.csproj.ResolveComReference.cache

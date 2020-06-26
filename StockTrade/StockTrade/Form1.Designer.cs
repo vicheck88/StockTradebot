@@ -151,7 +151,7 @@
             this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel3, 1, 0);
             this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel2, 0, 0);
             this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel5, 3, 0);
-            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(2, 2);
             this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(2);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -843,11 +843,11 @@
             this.tableLayoutPanel7.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel7.Name = "tableLayoutPanel7";
             this.tableLayoutPanel7.RowCount = 4;
-            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 38.46153F));
-            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 23.07692F));
-            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 38.46154F));
+            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 37.5F));
+            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 62.5F));
             this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 0F));
-            this.tableLayoutPanel7.Size = new System.Drawing.Size(1246, 455);
+            this.tableLayoutPanel7.Size = new System.Drawing.Size(1246, 536);
             this.tableLayoutPanel7.TabIndex = 3;
             // 
             // autoRuleDataGridView
@@ -875,7 +875,7 @@
             this.autoRuleDataGridView.RowHeadersWidth = 62;
             this.autoRuleDataGridView.RowTemplate.Height = 23;
             this.autoRuleDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.autoRuleDataGridView.Size = new System.Drawing.Size(1240, 99);
+            this.autoRuleDataGridView.Size = new System.Drawing.Size(1240, 129);
             this.autoRuleDataGridView.TabIndex = 3;
             this.autoRuleDataGridView.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.autoRuleDataGridView_CellContentClick);
             // 
@@ -973,12 +973,12 @@
             this.tableLayoutPanel6.Controls.Add(this.tabControl2, 1, 0);
             this.tableLayoutPanel6.Controls.Add(this.tabControl1, 0, 0);
             this.tableLayoutPanel6.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel6.Location = new System.Drawing.Point(3, 282);
+            this.tableLayoutPanel6.Location = new System.Drawing.Point(3, 312);
             this.tableLayoutPanel6.Name = "tableLayoutPanel6";
             this.tableLayoutPanel6.RowCount = 1;
             this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 169F));
-            this.tableLayoutPanel6.Size = new System.Drawing.Size(1240, 169);
+            this.tableLayoutPanel6.Size = new System.Drawing.Size(1240, 220);
             this.tableLayoutPanel6.TabIndex = 2;
             // 
             // tabControl2
@@ -990,7 +990,7 @@
             this.tabControl2.Location = new System.Drawing.Point(623, 3);
             this.tabControl2.Name = "tabControl2";
             this.tabControl2.SelectedIndex = 0;
-            this.tabControl2.Size = new System.Drawing.Size(614, 163);
+            this.tabControl2.Size = new System.Drawing.Size(614, 214);
             this.tabControl2.TabIndex = 1;
             // 
             // tabPage3
@@ -999,7 +999,7 @@
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(606, 137);
+            this.tabPage3.Size = new System.Drawing.Size(606, 188);
             this.tabPage3.TabIndex = 0;
             this.tabPage3.Text = "편입종목";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -1012,7 +1012,7 @@
             this.insertListBox.Location = new System.Drawing.Point(3, 3);
             this.insertListBox.Margin = new System.Windows.Forms.Padding(2);
             this.insertListBox.Name = "insertListBox";
-            this.insertListBox.Size = new System.Drawing.Size(600, 131);
+            this.insertListBox.Size = new System.Drawing.Size(600, 182);
             this.insertListBox.TabIndex = 0;
             // 
             // tabPage4
@@ -1067,7 +1067,7 @@
             this.tabControl1.Location = new System.Drawing.Point(3, 3);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(614, 163);
+            this.tabControl1.Size = new System.Drawing.Size(614, 214);
             this.tabControl1.TabIndex = 0;
             // 
             // tabPage1
@@ -1076,7 +1076,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(606, 137);
+            this.tabPage1.Size = new System.Drawing.Size(606, 188);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "잔고";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -1091,7 +1091,7 @@
             this.balanceDataGridView.RowHeadersWidth = 62;
             this.balanceDataGridView.RowTemplate.Height = 23;
             this.balanceDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.balanceDataGridView.Size = new System.Drawing.Size(600, 131);
+            this.balanceDataGridView.Size = new System.Drawing.Size(600, 182);
             this.balanceDataGridView.TabIndex = 0;
             // 
             // tabPage2
@@ -1114,6 +1114,7 @@
             this.outstandingDataGridView.RowHeadersVisible = false;
             this.outstandingDataGridView.RowHeadersWidth = 62;
             this.outstandingDataGridView.RowTemplate.Height = 23;
+            this.outstandingDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.outstandingDataGridView.Size = new System.Drawing.Size(600, 131);
             this.outstandingDataGridView.TabIndex = 0;
             // 
@@ -1142,6 +1143,7 @@
             this.stockListDataGridView.RowHeadersVisible = false;
             this.stockListDataGridView.RowHeadersWidth = 62;
             this.stockListDataGridView.RowTemplate.Height = 30;
+            this.stockListDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.stockListDataGridView.Size = new System.Drawing.Size(602, 133);
             this.stockListDataGridView.TabIndex = 0;
             // 
@@ -1159,7 +1161,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1246, 455);
+            this.ClientSize = new System.Drawing.Size(1246, 536);
             this.Controls.Add(this.tableLayoutPanel7);
             this.Controls.Add(this.axKHOpenAPI1);
             this.Margin = new System.Windows.Forms.Padding(2);
