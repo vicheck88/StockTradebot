@@ -39,6 +39,7 @@ namespace StockTrade
         string userName;
         JObject curAutoTradingRule;
         string curTradingRulePath;
+        bool autoFlag = false;
 
         public Form1()
         {
@@ -291,6 +292,13 @@ namespace StockTrade
                     }
                     balanceDataGridView.DataSource = null;
                     balanceDataGridView.DataSource = stockBalanceList;
+                    if (autoFlag)
+                    {
+                        autoFlag = false;
+                        string curTime = DateTime.Now.ToString("HH:mm");
+                        if (updateTime == curTime) buyAutoStocks();
+                        else if (curTime == "17:00") updateBalance();
+                    }
                     break;
                 case "실시간미체결요청":
                     count = axKHOpenAPI1.GetRepeatCnt(e.sTrCode, e.sRQName);
@@ -408,17 +416,14 @@ namespace StockTrade
                 sellOrderType = newRule.매도거래구분;
                 updateTime = newRule.업데이트시간;
             }
-            buyAutoStocks();
-            updateBalance();
-            //t = new System.Windows.Forms.Timer();
-            //t.Tick += work;
-            //t.Interval = 30000;
-            //t.Start();
+            t = new System.Windows.Forms.Timer();
+            t.Tick += work;
+            t.Interval = 30000;
+            t.Start();
         }
         void buyAutoStocks()
         {
             if (buyOrderType == null || sellOrderType == null) return;
-            getBalanceInfo();
             if (stockBalanceList == null)
             {
                 MessageBox.Show("잔고조회가 완료되지 않았습니다. 조금만 뒤에 다시 시도해 주세요");
@@ -439,7 +444,6 @@ namespace StockTrade
         }
         void updateBalance()
         {
-            getBalanceInfo();
             if (stockBalanceList == null)
             {
                 MessageBox.Show("잔고조회가 완료되지 않았습니다. 조금만 뒤에 다시 시도해 주세요");
@@ -452,7 +456,7 @@ namespace StockTrade
                 SQL += string.Format(@"(@DATE{0},@USER{0},@STOCKCODE{0},@STOCKNAME{0},@BUYPRICE{0},@NUM{0},@CURPRICE{0},@PROFIT{0},@PROFITRATE{0}), ", i);
             SQL = SQL.TrimEnd(new char[] { ',',' ' });
             var balanceList = new Dictionary<string, object[]>();
-            string date = DateTime.Now.ToString("YYYY-MM");
+            string date = DateTime.Now.ToString("yyyy-MM");
             for (int i = 0; i < stockBalanceList.Count; i++)
             {
                 balanceList.Add(string.Format("DATE{0}", i), new object[] { NpgsqlDbType.Text, date });
@@ -472,9 +476,8 @@ namespace StockTrade
             string endTime = "17:00";
             string curTime = DateTime.Now.ToString("HH:mm");
             if (curTime!= endTime || curTime!=updateTime) return;
-
-            if (updateTime == curTime) buyAutoStocks();
-            else if (curTime == "17:00") updateBalance();
+            autoFlag = true;
+            getBalanceInfo();
         }
 
         void stopAutoTrading()
