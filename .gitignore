@@ -5,6 +5,8 @@
 /DataCrawling/DataCrawling/config.json
 /DataCrawling/DataCrawling/failCorpYear.txt
 /.vs
-/StockTrade/bin
-/StockTrade/obj
-/StockTrade/Properties
+/StockTrade/.vs
+/StockTrade/packages
+/StockTrade/StockTrade/bin
+/StockTrade/StockTrade/obj
+/StockTrade/StockTrade/Properties
