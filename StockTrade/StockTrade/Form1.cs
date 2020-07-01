@@ -40,6 +40,7 @@ namespace StockTrade
         JObject curAutoTradingRule;
         string curTradingRulePath;
         bool autoFlag = false;
+        bool sellAllFlag = false;
 
         public Form1()
         {
@@ -233,7 +234,7 @@ namespace StockTrade
                 orderInfo.Add("user", new object[] { NpgsqlDbType.Text, userID });
                 orderInfo.Add("orderNumber", new object[] { NpgsqlDbType.Text, orderNumber });
                 orderInfo.Add("orderStatus", new object[] { NpgsqlDbType.Text, orderStatus });
-                orderInfo.Add("orderStockCode", new object[] { NpgsqlDbType.Text, orderStockCode });
+                orderInfo.Add("orderStockCode", new object[] { NpgsqlDbType.Text, orderStockCode.Trim(new char[] { 'A', ' ' }) });
                 orderInfo.Add("orderStockName", new object[] { NpgsqlDbType.Text, orderStockName });
                 orderInfo.Add("orderStockNumber", new object[] { NpgsqlDbType.Integer, orderStockNumber });
                 orderInfo.Add("orderPrice", new object[] { NpgsqlDbType.Integer, orderPrice });
@@ -298,6 +299,17 @@ namespace StockTrade
                         string curTime = DateTime.Now.ToString("HH:mm");
                         if (updateTime == curTime) buyAutoStocks();
                         else if (curTime == "17:00") updateBalance();
+                    }
+                    else if (sellAllFlag)
+                    {
+                        sellAllFlag = false;
+                        foreach (var s in stockBalanceList)
+                        {
+                            stockCode = s.종목코드;
+                            int boughtCount = s.수량;
+                            int currentPrice = int.Parse(s.현재가);
+                            axKHOpenAPI1.SendOrder("전체청산주문", "9999", ACCOUNT_NUMBER, 2, stockCode, boughtCount, currentPrice, "03", "");
+                        }
                     }
                     break;
                 case "실시간미체결요청":
@@ -461,7 +473,7 @@ namespace StockTrade
             {
                 balanceList.Add(string.Format("DATE{0}", i), new object[] { NpgsqlDbType.Text, date });
                 balanceList.Add(string.Format("USER{0}", i), new object[] { NpgsqlDbType.Text, userID });
-                balanceList.Add(string.Format("STOCKCODE{0}", i), new object[] { NpgsqlDbType.Text, stockBalanceList[i].종목코드 });
+                balanceList.Add(string.Format("STOCKCODE{0}", i), new object[] { NpgsqlDbType.Text, stockBalanceList[i].종목코드.Trim(new char[] {'A',' '}) });
                 balanceList.Add(string.Format("STOCKNAME{0}", i), new object[] { NpgsqlDbType.Text, stockBalanceList[i].종목명 });
                 balanceList.Add(string.Format("BUYPRICE{0}", i), new object[] { NpgsqlDbType.Integer, stockBalanceList[i].매수금.Replace(",","") });
                 balanceList.Add(string.Format("NUM{0}", i), new object[] { NpgsqlDbType.Integer, stockBalanceList[i].수량 });
@@ -488,16 +500,9 @@ namespace StockTrade
         }
         void sellAllStocks()
         {
+            sellAllFlag = true;
             stopAutoTrading();
             getBalanceInfo();
-            if (stockBalanceList == null) return;
-            foreach(var s in stockBalanceList)
-            {
-                string stockCode = s.종목코드;
-                int boughtCount = s.수량;
-                int currentPrice = int.Parse(s.현재가);
-                axKHOpenAPI1.SendOrder("전체청산주문", "9999", ACCOUNT_NUMBER, 2, stockCode, boughtCount, currentPrice, "03", "");
-            }
         }
         void fixOrder()
         {
