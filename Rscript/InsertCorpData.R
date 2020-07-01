@@ -25,9 +25,15 @@ corpTable<-as.data.table(df)
 corpList<-dbGetQuery(conn,SQL("select distinct 종목코드 from metainfo.기업정보"))$종목코드
 corpList<-unique(c(corpList,corpTable$종목코드))
 
+curDate<-as.Date(availableDate)
+prevDate<-curDate
+year(prevDate)<-year(curDate)-2
+
 #데이터베이스에서 구하기
-FfsQ<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.분기재무제표")))
-FfsY<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.연간재무제표")))
+FfsQ<-as.data.table(dbGetQuery(conn,SQL(paste0("select * from metainfo.분기재무제표 where 일자>"
+                                               ,as.character(prevDate)))))
+FfsY<-as.data.table(dbGetQuery(conn,SQL(paste0("select * from metainfo.연간재무제표 where 일자>"
+                                               ,as.character(prevDate)))))
 
 fsQ<-getAllFS('Q',corpList)
 fsY<-getAllFS('Y',corpList)
