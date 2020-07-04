@@ -343,6 +343,7 @@ namespace StockTrade
                     count = axKHOpenAPI1.GetRepeatCnt(e.sTrCode, e.sRQName);//조건식으로 검색되는 종목의 개수
                     var buyType = buyOrderType.Split(':')[0].Trim();
                     var sellType = sellOrderType.Split(':')[0].Trim();
+
                     for (int i = 0; i < count; i++)
                     {
                         stockCode = axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "종목코드").Trim();
@@ -451,7 +452,8 @@ namespace StockTrade
                 }
                 else stocksToBuy.Add(s.종목코드, new stockInfo(s.종목코드, s.종목명, -int.Parse(s.현재가.Replace(",","")) * (int)s.수량));
             }
-            var stockCodeList = String.Join(";", stocksToBuy.Keys.Select(x=>"A"+x));
+            var stockCodeList = String.Join(";", 
+                stocksToBuy.OrderBy(i => i.Value.remainingPrice).Select(x => x.Key.Select(y => 'A' + y)));
             axKHOpenAPI1.CommKwRqData(stockCodeList, 0, stocksToBuy.Count, 0, "조건검색종목", "5100");
         }
         void updateBalance()
