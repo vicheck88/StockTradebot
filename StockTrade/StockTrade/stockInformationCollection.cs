@@ -57,10 +57,11 @@ namespace StockTrade
         public string 현재가 { get; set; }
         public int 평가손익 { get; set; }
         public string 수익률 { get; set; }
+        public string 전일종가 { get; set; }
 
         public stockBalance() { }
 
-        public stockBalance(string 종목번호, string 종목명, int 수량, string 매수금, string 현재가, int 평가손익, string 수익률)
+        public stockBalance(string 종목번호, string 종목명, int 수량, string 매수금, string 현재가, int 평가손익, string 수익률, string 전일종가)
         {
             this.종목코드 = 종목번호;
             this.종목명 = 종목명;
@@ -69,6 +70,7 @@ namespace StockTrade
             this.현재가 = 현재가;
             this.평가손익 = 평가손익;
             this.수익률 = 수익률;
+            this.전일종가 = 전일종가;
         }
     }
     public class AutoTradingRule

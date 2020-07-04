@@ -616,6 +616,8 @@
             this.autoSellOrderComboBox.FormattingEnabled = true;
             this.autoSellOrderComboBox.Items.AddRange(new object[] {
             "00:지정가",
+            "00:종가",
+            "00:시가",
             "03:시장가"});
             this.autoSellOrderComboBox.Location = new System.Drawing.Point(220, 169);
             this.autoSellOrderComboBox.Margin = new System.Windows.Forms.Padding(4);
@@ -665,6 +667,8 @@
             this.autoBuyOrderComboBox.FormattingEnabled = true;
             this.autoBuyOrderComboBox.Items.AddRange(new object[] {
             "00:지정가",
+            "00:종가",
+            "00:시가",
             "03:시장가"});
             this.autoBuyOrderComboBox.Location = new System.Drawing.Point(220, 136);
             this.autoBuyOrderComboBox.Margin = new System.Windows.Forms.Padding(4);
