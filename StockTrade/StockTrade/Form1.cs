@@ -263,8 +263,10 @@ namespace StockTrade
                     string stockCode;
                     string stockName;
                     int stockPrice;
-                    long totalBuyingAmount = long.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, 0, "총매입금액"));
-                    long totalEstimatedAmount = long.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, 0, "총평가금액"));
+                    long totalBuyingAmount=0;
+                    long totalEstimatedAmount=0;
+                    long.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, 0, "총매입금액"),out totalBuyingAmount);
+                    long.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, 0, "총평가금액"), out totalEstimatedAmount);
                     totalBuyLabel.Text = String.Format("{0:#,###}", totalBuyingAmount);
                     totalEstimateLabel.Text = String.Format("{0:#,###}", totalEstimatedAmount);
                     break;
@@ -432,6 +434,7 @@ namespace StockTrade
             t.Tick += work;
             t.Interval = 30000;
             t.Start();
+            MessageBox.Show("업데이트 시간: 09:30", "자동매매 시작");
         }
         void buyAutoStocks()
         {
@@ -487,7 +490,7 @@ namespace StockTrade
         {
             string endTime = "17:00";
             string curTime = DateTime.Now.ToString("HH:mm");
-            if (curTime!= endTime || curTime!=updateTime) return;
+            if (curTime!= endTime && curTime!=updateTime) return;
             autoFlag = true;
             getBalanceInfo();
         }

@@ -30,10 +30,8 @@ prevDate<-curDate
 year(prevDate)<-year(curDate)-2
 
 #데이터베이스에서 구하기
-FfsQ<-as.data.table(dbGetQuery(conn,SQL(paste0("select * from metainfo.분기재무제표 where 일자>"
-                                               ,as.character(prevDate)))))
-FfsY<-as.data.table(dbGetQuery(conn,SQL(paste0("select * from metainfo.연간재무제표 where 일자>"
-                                               ,as.character(prevDate)))))
+FfsQ<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.분기재무제표")))
+FfsY<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.연간재무제표")))
 
 fsQ<-getAllFS('Q',corpList)
 fsY<-getAllFS('Y',corpList)
@@ -45,8 +43,8 @@ fsYNew<-fsetdiff(fsY,FfsQ)
 
 
 #기록한 재무제표 데이터베이스 저장
-dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQNew,append=TRUE,row.names=FALSE)
-dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsYNew,append=TRUE,row.names=FALSE)
+#dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQNew,append=TRUE,row.names=FALSE)
+#dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsYNew,append=TRUE,row.names=FALSE)
 
 #데이터 병합
 fsQ<-rbind(FfsQ,fsQNew)
@@ -57,4 +55,4 @@ for(i in 1:nrow(corpTable)){
   fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ))
 }
 
-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)
+#dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)

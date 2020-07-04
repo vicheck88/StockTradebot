@@ -229,6 +229,7 @@ getFSFromFnGuide <- function(type, code){
     names(data_fs)<-c("종목코드","종류","계정","일자","값")
     data_fs$값<-data_fs$값*100000000
     data_fs<-data_fs[!is.na(data_fs$값),]
+    data_fs$일자<-as.character(data_fs$일자)
     return(data_fs)
   })
 }
@@ -394,6 +395,7 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
     
     last_value_index<-c()
     last_value_index['지배주주순이익']<-tmp['지배주주순이익'] #수익
+    last_value_index['당기순이익']<-tmp['당기순이익']
     last_value_index['영업활동으로인한현금흐름']<-tmp['영업활동으로인한현금흐름'] #영업현금흐름
     last_value_index['ROA']<-tmp['자산']/tmp['지배주주순이익'] #ROA 증가
     last_value_index['영업활동으로인한현금흐름증가']<-tmp['영업활동으로인한현금흐름']-tmp['지배주주순이익'] #영업현금흐름크기
@@ -426,11 +428,13 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
   
   fscore<-as.integer(0)
   newfscore<-as.integer(0)
-
-  if(!is.na(tmp['지배주주순이익']) & tmp['지배주주순이익']>0) {fscore<-fscore+1; newfscore<-newfscore+1;}
+  if(!is.na(tmp['지배주주순이익'])) tmp['순이익']<-tmp['지배주주순이익'] else{
+    if(!is.na(tmp['당기순이익'])) tmp['순이익']<-tmp['당기순이익'] else tmp['순이익'<-NA]
+  }
+  if(!is.na(tmp['순이익']) & tmp['순이익']>0) {fscore<-fscore+1; newfscore<-newfscore+1;} 
   if(!is.na(tmp['영업활동으로인한현금흐름']) & tmp['영업활동으로인한현금흐름']>0) {fscore<-fscore+1; newfscore<-newfscore+1;}
-  if(!is.na(tmp['영업활동으로인한현금흐름']) & !is.na(tmp['지배주주순이익']) 
-     & tmp['영업활동으로인한현금흐름']>tmp['지배주주순이익']) fscore<-fscore+1
+  if(!is.na(tmp['영업활동으로인한현금흐름']) & !is.na(tmp['순이익']) 
+     & tmp['영업활동으로인한현금흐름']>tmp['순이익']) fscore<-fscore+1
   
   if(!is.null(previousData)){
     if(!is.na(last_value_index['ROA']) & !is.na(corpData$ROA) &
