@@ -382,7 +382,7 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
     data<-sumQuarterData(data)
   }
   if(!is.null(previousData) & length(unique(previousData$일자))==4){
-    previousData<-sumQuarterData(data)
+    previousData<-sumQuarterData(previousData)
   }
   
   value_type <- c('지배주주순이익','자본','자본금','영업활동으로인한현금흐름','매출액','유상증자','매출총이익','영업이익',

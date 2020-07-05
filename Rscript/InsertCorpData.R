@@ -37,18 +37,18 @@ fsQ<-getAllFS('Q',corpList)
 fsY<-getAllFS('Y',corpList)
 
 fsQNew<-fsetdiff(fsQ,FfsQ)
-fsQNew<-fsetdiff(fsQ,FfsY)
+fsQNew<-fsetdiff(fsQNew,FfsY)
 fsYNew<-fsetdiff(fsY,FfsY)
-fsYNew<-fsetdiff(fsY,FfsQ)
+fsYNew<-fsetdiff(fsYNew,FfsQ)
 
 
 #기록한 재무제표 데이터베이스 저장
-#dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQNew,append=TRUE,row.names=FALSE)
-#dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsYNew,append=TRUE,row.names=FALSE)
+dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQNew,append=TRUE,row.names=FALSE)
+dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsYNew,append=TRUE,row.names=FALSE)
 
 #데이터 병합
-fsQ<-rbind(FfsQ,fsQNew)
-fsY<-rbind(FfsY,fsYNew)
+fsQ<-unique(rbind(FfsQ,fsQNew))
+fsY<-unique(rbind(FfsY,fsYNew))
 
 fs<-NULL
 for(i in 1:nrow(corpTable)){
