@@ -49,14 +49,27 @@ Qdiff<-fsetdiff(fsQ,FfsQ)
 fsQ<-funion(FfsQ,Qdiff)
 fsY<-funion(FfsY,Ydiff)
 
-dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQ,overwrite=TRUE,row.names=FALSE)
-dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsY,overwrite=TRUE,row.names=FALSE)
+res<-FALSE
+while(res==FALSE){
+  res<-dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQ,overwrite=TRUE,row.names=FALSE)
+  if(res==FALSE) Sys.sleep(5)
+}
+res<-FALSE
+while(res==FALSE){
+  res<-dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsY,overwrite=TRUE,row.names=FALSE)
+  if(res==FALSE) Sys.sleep(5)
+}
+
 
 fs<-NULL
 for(i in 1:nrow(corpTable)){
   fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ))
 }
 
+res<-FALSE
+while(res==FALSE){
+  res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,overwrite=TRUE)
+  if(res==FALSE) Sys.sleep(5)
+}
 
-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,overwrite=TRUE)
 
