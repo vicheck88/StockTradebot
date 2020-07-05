@@ -239,7 +239,7 @@ namespace StockTrade
                 orderInfo.Add("orderStockNumber", new object[] { NpgsqlDbType.Integer, orderStockNumber });
                 orderInfo.Add("orderPrice", new object[] { NpgsqlDbType.Integer, orderPrice });
                 orderInfo.Add("orderType", new object[] { NpgsqlDbType.Text, orderType });
-                //DB.writeToDB(SQL, orderInfo);
+                DB.writeToDB(SQL, orderInfo);
             }
             else if (e.sGubun == "1")//국내주식 잔고전달
             {
@@ -356,32 +356,39 @@ namespace StockTrade
                     for (int i = 0; i < count; i++)
                     {
                         stockCode = axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "종목코드").Trim();
+                        if (stocksToBuy[stockCode].curStatus == 0) continue;
+
                         int remPrice = stocksToBuy[stockCode].remainingPrice;
-                        if (remPrice > 0)
-                        {
-                            if (buyTypeName == "종가") stockPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "종가").Replace("-", ""));
-                            else if (buyTypeName == "시가") stockPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "시가").Replace("-", ""));
-                            else stockPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "현재가").Replace("-", ""));
-                        }
+                        if (stocksToBuy[stockCode].curPrice > 0) stockPrice = stocksToBuy[stockCode].curPrice;
                         else
                         {
-                            if (sellTypeName == "종가") stockPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "종가").Replace("-", ""));
-                            else if (sellTypeName == "시가") stockPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "시가").Replace("-", ""));
-                            else stockPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "현재가").Replace("-", ""));
+                            stockPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "현재가").Replace("-", ""));
+                            if (remPrice > 0)
+                            {
+                                if (buyTypeName == "종가") stockPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "종가").Replace("-", ""));
+                                else if (buyTypeName == "시가") stockPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "시가").Replace("-", ""));
+                            }
+                            else
+                            {
+                                if (sellTypeName == "종가") stockPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "종가").Replace("-", ""));
+                                else if (sellTypeName == "시가") stockPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "시가").Replace("-", ""));
+                            }
+                            stocksToBuy[stockCode].curPrice = stockPrice;
                         }
+                        
                         if (remPrice>0 && remPrice > stockPrice)
                         {
                             int orderNumber = (int)(remPrice / stockPrice * 0.9);
                             if (buyType != "00") stockPrice = 0;
                             int res = axKHOpenAPI1.SendOrder("자동거래매수주문", "5149", ACCOUNT_NUMBER, 1, stockCode, orderNumber, stockPrice, buyType, "");
-                            if (res!=0) MessageBox.Show(string.Format("매수실패: {0}",res));
+                            stocksToBuy[stockCode].curStatus = res;
                         }
                         else if (remPrice < 0)
                         {
                             int orderNumber = -remPrice / stockPrice;
                             if (sellType != "00") stockPrice = 0;
                             int res=axKHOpenAPI1.SendOrder("자동거래매도주문", "5189", ACCOUNT_NUMBER, 2, stockCode, orderNumber, stockPrice, sellType, "");
-                            if (res != 0) MessageBox.Show(string.Format("매도실패: {0}", res));
+                            stocksToBuy[stockCode].curStatus = res;
                         }
                         Thread.Sleep(250);
                     }
@@ -448,10 +455,10 @@ namespace StockTrade
                 sellOrderType = newRule.매도거래구분;
                 updateTime = newRule.업데이트시간;
             }
-            buyAutoStocks();
+            //buyAutoStocks();
             t = new System.Windows.Forms.Timer();
             t.Tick += work;
-            t.Interval = 30000;
+            t.Interval = 60000;
             t.Start();
             MessageBox.Show(String.Format("자동거래시작\n매수방법: {0}\n, 매도방법: {1}\n, 업데이트시간: {2}",
                 buyOrderType, sellOrderType, updateTime));
@@ -511,7 +518,11 @@ namespace StockTrade
         {
             string endTime = "17:00";
             string curTime = DateTime.Now.ToString("HH:mm");
-            if (curTime!= endTime || curTime!=updateTime) return;
+            if (Convert.ToDateTime(curTime) > Convert.ToDateTime(endTime)) return;
+            if (Convert.ToDateTime(curTime) < Convert.ToDateTime(updateTime)) return;
+            var dateDiff = Convert.ToDateTime(curTime) - Convert.ToDateTime(updateTime);
+            if (dateDiff.Minutes % 60 > 0) return;
+
             autoFlag = true;
             getBalanceInfo();
         }
