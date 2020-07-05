@@ -43,8 +43,17 @@ fsYNew<-fsetdiff(fsYNew,FfsQ)
 
 
 #기록한 재무제표 데이터베이스 저장
-dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQNew,append=TRUE,row.names=FALSE)
-dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsYNew,append=TRUE,row.names=FALSE)
+res<-FALSE
+while(res==FALSE){
+  res<-dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQNew,append=TRUE,row.names=FALSE)
+  if(res==FALSE) Sys.sleep(5)
+}
+res<-FALSE
+while(res==FALSE){
+  res<-dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsYNew,append=TRUE,row.names=FALSE)
+  if(res==FALSE) Sys.sleep(5)
+}
+
 
 #데이터 병합
 fsQ<-unique(rbind(FfsQ,fsQNew))
@@ -55,4 +64,8 @@ for(i in 1:nrow(corpTable)){
   fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ))
 }
 
-#dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)
+res<-FALSE
+while(res==FALSE){
+  res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)
+  if(res==FALSE) Sys.sleep(5)
+}
