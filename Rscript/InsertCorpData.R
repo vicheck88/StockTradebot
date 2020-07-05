@@ -16,7 +16,6 @@ if(month(Sys.Date())==month(availableDate[2])) {
 day<-str_remove_all(availableDate,"-")
 
 #전달 말 등록된 기업정보
-
 df<-KRXDataMerge(day)
 df<-subset(df,select=c("일자","종목코드", "종목명", "시장구분", "산업분류","현재가(종가)","시가총액(원)","주당배당금", "배당수익률","관리여부"))
 colnames(df)[7]<-"시가총액"
@@ -26,6 +25,10 @@ corpTable<-as.data.table(df)
 corpList<-dbGetQuery(conn,SQL("select distinct 종목코드 from metainfo.기업정보"))$종목코드
 corpList<-unique(c(corpList,corpTable$종목코드))
 
+curDate<-as.Date(availableDate)
+prevDate<-curDate
+year(prevDate)<-year(curDate)-2
+
 #데이터베이스에서 구하기
 FfsQ<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.분기재무제표")))
 FfsY<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.연간재무제표")))
@@ -34,9 +37,15 @@ fsQ<-getAllFS('Q',corpList)
 fsY<-getAllFS('Y',corpList)
 
 fsQNew<-fsetdiff(fsQ,FfsQ)
+<<<<<<< HEAD
 fsQNew<-fsetdiff(fsQ,FfsY)
 fsYNew<-fsetdiff(fsY,FfsY)
 fsYNew<-fsetdiff(fsY,FfsQ)
+=======
+fsQNew<-fsetdiff(fsQNew,FfsY)
+fsYNew<-fsetdiff(fsY,FfsY)
+fsYNew<-fsetdiff(fsYNew,FfsQ)
+>>>>>>> f5ac7dfb5a0ea1003234ec8bafac36d3b9d1b47a
 
 
 #기록한 재무제표 데이터베이스 저장
@@ -44,12 +53,12 @@ dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQNew,append=TRUE,row.name
 dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsYNew,append=TRUE,row.names=FALSE)
 
 #데이터 병합
-fsQ<-rbind(FfsQ,fsQNew)
-fsY<-rbind(FfsY,fsYNew)
+fsQ<-unique(rbind(FfsQ,fsQNew))
+fsY<-unique(rbind(FfsY,fsYNew))
 
 fs<-NULL
 for(i in 1:nrow(corpTable)){
   fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ))
 }
 
-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)
+#dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)

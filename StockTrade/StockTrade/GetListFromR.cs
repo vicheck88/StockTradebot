@@ -8,40 +8,59 @@ using System.Linq;
 using DynamicInterop;
 using System.Data;
 using System.IO;
+using RDotNet.Internals;
 
 namespace StockTrade
 {
     public class GetListFromR
     {
-        string ftnListPath;
         string currentPath;
+        REngine engine;
         public GetListFromR()
         {
             REngine.SetEnvironmentVariables();
-            currentPath = System.AppDomain.CurrentDomain.BaseDirectory + @"\Rscript";
-            ftnListPath = "RQuantFunctionList.R";
+            currentPath = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Rscript");
+            engine = REngine.GetInstance();
         }
-        public DataTable getCorpTable(string Rname)
+        public DataTable getCorpTable(string Rname, int stocknum)
         {
-            using(REngine engine = REngine.GetInstance())
+            engine.Initialize();
+            string fullRFilePath = Path.Combine(currentPath, Rname + ".R");
+            if (!File.Exists(fullRFilePath)) return null;
+            var curPath = engine.CreateCharacter(currentPath);
+            engine.SetSymbol("stocknum", engine.CreateInteger(stocknum));
+            engine.SetSymbol("curPath", curPath);
+            engine.Evaluate("setwd(curPath)");
+            engine.Evaluate(String.Format("source(\"{0}\")", Rname + ".R"));
+            DataFrame output = engine.GetSymbol("output").AsDataFrame();
+            DataTable table = new DataTable();
+            foreach (var name in output.ColumnNames)
             {
-                string fullRFilePath = currentPath + @"\" + Rname;
-                if (!File.Exists(fullRFilePath)) return null;
-                var curPath = engine.CreateCharacter(currentPath);
-                engine.SetSymbol("curPath", curPath);
-                engine.Evaluate("setwd(curPath)");
-                engine.Evaluate(String.Format("source({0})", ftnListPath));
-                engine.Evaluate(String.Format("source({0})", Rname));
-                DataFrame output = engine.GetSymbol("output").AsDataFrame();
-                DataTable table = new DataTable();
-                foreach (var name in output.ColumnNames) table.Columns.Add(name);
-                foreach (var row in output.GetRows())
+                Type t;
+                switch (output[name].Type)
                 {
-                    DataRow newRow = table.Rows.Add();
-                    foreach (var name in output.ColumnNames) newRow[name] = row[name];
+                    case SymbolicExpressionType.NumericVector:
+                        t = typeof(double);break;
+                    case SymbolicExpressionType.IntegerVector:
+                        t = typeof(Int32);break;
+                    case SymbolicExpressionType.CharacterVector:
+                        t = typeof(string);break;
+                    case SymbolicExpressionType.LogicalVector:
+                        t = typeof(bool);break;
+                    case SymbolicExpressionType.RawVector:
+                        t = typeof(byte);break;
+                    default: t = null;break;
                 }
-                return table;
+                table.Columns.Add(name);
+                if (t != null) table.Columns[name].DataType = t;
             }
+                
+            foreach (var row in output.GetRows())
+            {
+                DataRow newRow = table.Rows.Add();
+                foreach (var name in output.ColumnNames) newRow[name] = row[name];
+            }
+            return table;
         }
     }
 }
