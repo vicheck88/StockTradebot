@@ -381,7 +381,7 @@ namespace StockTrade
                         
                         if (remPrice>0 && remPrice > stockPrice)
                         {
-                            int orderNumber = (int)(remPrice / stockPrice * 0.9);
+                            int orderNumber = (int)(remPrice / stockPrice);
                             if (buyType != "00") stockPrice = 0;
                             int res = axKHOpenAPI1.SendOrder("자동거래매수주문", "5149", ACCOUNT_NUMBER, 1, stockCode, orderNumber, stockPrice, buyType, "");
                             stocksToBuy[stockCode].curStatus = res;
@@ -451,8 +451,7 @@ namespace StockTrade
                     int price = newRule.종목당매수금액;
 
                     newRule.autoTradingPurchaseStockList.Add(new AutoTradingPurchaseStock(code, price, 0));
-                    if (stocksToBuy.Keys.Contains(code)) 
-                        stocksToBuy[code].remainingPrice += price;
+                    if (stocksToBuy.Keys.Contains(code)) stocksToBuy[code].remainingPrice += price;
                     else stocksToBuy.Add(code, new stockInfo(code, name, price));
                 }
                 buyOrderType = newRule.매수거래구분;
@@ -464,7 +463,7 @@ namespace StockTrade
                 MessageBox.Show("매매조건을 먼저 설정하세요.");
                 return;
             }
-            //buyAutoStocks();
+            buyAutoStocks();
             t = new System.Windows.Forms.Timer();
             t.Tick += work;
             t.Interval = 60000;
