@@ -424,7 +424,7 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
   if(!is.na(tmp['자산'])) corpData[,GPA:=tmp['매출총이익']/tmp['자산']]
   if(!is.na(corpData[,PER])) corpData[,ROE:=corpData$PBR/corpData$PER]
   if(!is.na(tmp['자본'])) corpData[,ROA:=corpData$ROE*tmp['자본']/tmp['자산']]
-  corpData[,NCAV_Ratio:=corpData[,NCAV]/marketPrice]
+  corpData[,NCAV_RATIO:=corpData[,NCAV]/marketPrice]
   
   fscore<-as.integer(0)
   newfscore<-as.integer(0)
@@ -454,8 +454,8 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
        last_value_index['자산회전율']<tmp['매출액']/tmp['자산']) fscore<-fscore+1
   }
 
-  corpData[,fscore:=fscore]
-  corpData[,newfscore:=newfscore]
+  corpData[,FSCORE:=fscore]
+  corpData[,NEWFSCORE:=newfscore]
   
   return(corpData)
 }
