@@ -454,8 +454,8 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
        last_value_index['자산회전율']<tmp['매출액']/tmp['자산']) fscore<-fscore+1
   }
 
-  corpData[,Fscore:=fscore]
-  corpData[,New_Fscore:=newfscore]
+  corpData[,fscore:=fscore]
+  corpData[,newfscore:=newfscore]
   
   return(corpData)
 }
