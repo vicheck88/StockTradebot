@@ -247,8 +247,10 @@ namespace StockTrade
                 long currentPrice = long.Parse(axKHOpenAPI1.GetChejanData(10).Replace("-", ""));
 
                 string profitRate = axKHOpenAPI1.GetChejanData(8019);
-                long totalBuyingPrice = long.Parse(axKHOpenAPI1.GetChejanData(932));
-                long profitMoney = long.Parse(axKHOpenAPI1.GetChejanData(950));
+
+                int totalBuyingPrice, profitMoney;
+                int.TryParse(axKHOpenAPI1.GetChejanData(932), out totalBuyingPrice);
+                int.TryParse(axKHOpenAPI1.GetChejanData(950), out profitMoney);
 
                 todayProfitLabel.Text = String.Format("{0:#,###}", profitMoney);
                 todayProfitRateLabel.Text = profitRate;
@@ -260,50 +262,56 @@ namespace StockTrade
             switch (e.sRQName)
             {
                 case "계좌평가잔고내역요청":
-                    string stockCode;
-                    string stockName;
-                    int stockPrice;
-                    long totalBuyingAmount;
-                    long.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, 0, "총매입금액"), out totalBuyingAmount);
-                    long totalEstimatedAmount = long.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, 0, "총평가금액"));
+                    string stockCode, stockName;
+                    int stockPrice, totalBuyingAmount, totalEstimatedAmount;
+                    int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, 0, "총매입금액"), out totalBuyingAmount);
+                    int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, 0, "총평가금액"), out totalEstimatedAmount);
                     totalBuyLabel.Text = String.Format("{0:#,###}", totalBuyingAmount);
                     totalEstimateLabel.Text = String.Format("{0:#,###}", totalEstimatedAmount);
 
                     int count = axKHOpenAPI1.GetRepeatCnt(e.sTrCode, e.sRQName);
-                    stockBalanceList = new List<stockBalance>();
+                    
                     for (int i = 0; i < count; i++)
                     {
+                        int buyingMoney, currentPrice, estimatedProfit, closedPrice, number, estimatedAllPrice;
+                        double estimatedProfitRate;
                         stockCode = axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "종목번호").Trim(new char[] { 'A', ' ' });
                         stockName = axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "종목명").Trim();
-                        int number = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "보유수량"));
-                        int buyingMoney = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "매입금액"));
-                        int currentPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "현재가").Replace("-", ""));
-                        int estimatedProfit = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "평가손익"));
-                        double estimatedProfitRate = double.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "수익률(%)"));
-                        int closedPrice = int.Parse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "전일종가"));
+                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "보유수량"),out number);
+                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "매입금액"), out buyingMoney);
+                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "현재가").Replace("-", ""), out currentPrice);
+                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "평가금액").Replace("-", ""), out estimatedAllPrice);
+                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "평가손익"), out estimatedProfit);
+                        double.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "수익률(%)"), out estimatedProfitRate);
+                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "전일종가").Replace("-", ""), out closedPrice);
 
-                        stockBalanceList.Add(new stockBalance(stockCode, stockName, number, String.Format("{0:#,###}", buyingMoney), 
+
+                        stockBalanceList.Add(new stockBalance(stockCode, stockName, number, String.Format("{0:#,###}", buyingMoney),
                             String.Format("{0:#,###}", currentPrice), estimatedProfit, String.Format("{0:f2}", estimatedProfitRate),
-                            String.Format("{0:#,###}", closedPrice)));
+                            String.Format("{0:#,###}", closedPrice), String.Format("{0:#,###}", estimatedAllPrice)));
+                        //getTodayPriceInfo(stockCode, DateTime.Now.ToString("yyyyMMdd"));
                     }
-                    balanceDataGridView.DataSource = null;
-                    balanceDataGridView.DataSource = stockBalanceList;
-                    if (autoFlag)
+                    if (e.sPrevNext == "2") getContinuousBalanceInfo("계좌평가잔고내역요청");
+                    else
                     {
-                        autoFlag = false;
-                        string curTime = DateTime.Now.ToString("HH:mm");
-                        if (updateTime == curTime) buyAutoStocks();
-                        else if (curTime == "17:00") updateBalance();
-                    }
-                    else if (sellAllFlag)
-                    {
-                        sellAllFlag = false;
-                        foreach (var s in stockBalanceList)
+                        balanceDataGridView.DataSource = null;
+                        balanceDataGridView.DataSource = stockBalanceList;
+                        if (autoFlag)
                         {
-                            stockCode = s.종목코드;
-                            int boughtCount = s.수량;
-                            int currentPrice = int.Parse(s.현재가);
-                            axKHOpenAPI1.SendOrder("전체청산주문", "9999", ACCOUNT_NUMBER, 2, stockCode, boughtCount, currentPrice, "03", "");
+                            autoFlag = false;
+                            if (DateTime.Now.ToString("mm") == "00") updateBalance();
+                            else buyAutoStocks();
+                        }
+                        else if (sellAllFlag)
+                        {
+                            sellAllFlag = false;
+                            foreach (var s in stockBalanceList)
+                            {
+                                stockCode = s.종목코드;
+                                int boughtCount = s.수량;
+                                int currentPrice = int.Parse(s.현재가);
+                                axKHOpenAPI1.SendOrder("전체청산주문", "9999", ACCOUNT_NUMBER, 2, stockCode, boughtCount, currentPrice, "03", "");
+                            }
                         }
                     }
                     break;
@@ -314,7 +322,7 @@ namespace StockTrade
                     long.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, 0, "당일투자손익"), out todayProfit);
                     double todayProfitRate;
                     double.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, 0, "당일손익율"), out todayProfitRate);
-
+                    count = axKHOpenAPI1.GetRepeatCnt(e.sTrCode, e.sRQName);
                     depositLabel.Text = String.Format("{0:#,###}", deposit);
                     todayProfitLabel.Text = String.Format("{0:#,###}", todayProfit);
                     todayProfitRateLabel.Text = String.Format("{0:#.##}", todayProfitRate);
@@ -345,6 +353,15 @@ namespace StockTrade
                     orderPriceNumericUpDown.Minimum = 0;
                     orderPriceNumericUpDown.Maximum = 10000000;
                     orderPriceNumericUpDown.Value = long.Parse(currentStockPrice.Replace("-", ""));
+                    break;
+                case "종목일자가격데이터요청":
+                    string code = axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, 0, "종목코드").Trim(' ');
+                    int openPrice;
+                    if (int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, 0, "시가"), out openPrice))
+                    {
+                        var balance = stockBalanceList.Where(x => x.종목코드 == code).ToArray()[0];
+                        balance.당일시가 = String.Format("{0:#,###}", openPrice);
+                    }
                     break;
                 case "조건검색종목":
                     count = axKHOpenAPI1.GetRepeatCnt(e.sTrCode, e.sRQName);//조건식으로 검색되는 종목의 개수
@@ -378,7 +395,7 @@ namespace StockTrade
                         
                         if (remPrice>0 && remPrice > stockPrice)
                         {
-                            int orderNumber = (int)(remPrice / stockPrice * 0.9);
+                            int orderNumber = (int)(remPrice / stockPrice);
                             if (buyType != "00") stockPrice = 0;
                             int res = axKHOpenAPI1.SendOrder("자동거래매수주문", "5149", ACCOUNT_NUMBER, 1, stockCode, orderNumber, stockPrice, buyType, "");
                             stocksToBuy[stockCode].curStatus = res;
@@ -434,6 +451,7 @@ namespace StockTrade
                     row.Cells[5].Value.ToString(), row.Cells[6].Value.ToString(), 
                     row.Cells[7].Value.ToString(), row.Cells[8].Value.ToString());
                 autoTradingRuleList.Add(newRule);
+                if (newRule.종목당매수금액 == 0) newRule.종목당매수금액 = newRule.매입제한금액 / newRule.제한종목개수;
 
                 //R 조건검색 데이터 추가
                 DataTable RcorpList = Rprogram.getCorpTable(newRule.분석R파일,newRule.제한종목개수);
@@ -447,37 +465,39 @@ namespace StockTrade
                     int price = newRule.종목당매수금액;
 
                     newRule.autoTradingPurchaseStockList.Add(new AutoTradingPurchaseStock(code, price, 0));
-                    if (stocksToBuy.Keys.Contains(code)) 
-                        stocksToBuy[code].remainingPrice += price;
+                    if (stocksToBuy.Keys.Contains(code)) stocksToBuy[code].remainingPrice += price;
                     else stocksToBuy.Add(code, new stockInfo(code, name, price));
                 }
                 buyOrderType = newRule.매수거래구분;
                 sellOrderType = newRule.매도거래구분;
                 updateTime = newRule.업데이트시간;
             }
+            if (autoTradingRuleList.Count == 0)
+            {
+                MessageBox.Show("매매조건을 먼저 설정하세요.");
+                return;
+            }
             //buyAutoStocks();
             t = new System.Windows.Forms.Timer();
             t.Tick += work;
             t.Interval = 60000;
             t.Start();
-            MessageBox.Show(String.Format("자동거래시작\n매수방법: {0}\n, 매도방법: {1}\n, 업데이트시간: {2}",
+            MessageBox.Show(String.Format("자동거래시작\n매수방법: {0}\n 매도방법: {1}\n 업데이트시간: {2}",
                 buyOrderType, sellOrderType, updateTime));
         }
         void buyAutoStocks()
         {
             if (buyOrderType == null || sellOrderType == null) return;
-            if (stockBalanceList == null)
-            {
-                MessageBox.Show("잔고조회가 완료되지 않았습니다. 조금만 뒤에 다시 시도해 주세요");
-                return;
-            }
+
             foreach (var s in stockBalanceList)
             {
                 s.종목코드 = s.종목코드.Replace("A", "").Trim();
+
                 if (stocksToBuy.Keys.Contains(s.종목코드))
                 {
                     var st = stocksToBuy[s.종목코드];
-                    st.remainingPrice -= int.Parse(s.현재가.Replace(",","")) * (int)s.수량;
+                    st.remainingPrice -= int.Parse(s.총평가금액.Replace(",", ""));
+                    //st.remainingPrice -= int.Parse(s.현재가.Replace(",","")) * (int)s.수량;
                 }
                 else stocksToBuy.Add(s.종목코드, new stockInfo(s.종목코드, s.종목명, -int.Parse(s.현재가.Replace(",","")) * (int)s.수량));
             }
@@ -487,11 +507,6 @@ namespace StockTrade
         }
         void updateBalance()
         {
-            if (stockBalanceList == null)
-            {
-                MessageBox.Show("잔고조회가 완료되지 않았습니다. 조금만 뒤에 다시 시도해 주세요");
-                return;
-            }
             DB.deleteBalanceInfo(userName, DateTime.Now.ToString("YYYY-MM"));
             string SQL = string.Format(@"INSERT INTO {0}.잔고 (날짜, 주문자, 종목코드, 종목명, 매수금, 수량, 현재가, 평가손익, 수익률) VALUES ",
                 currentServerCondition == "1" ? "test" : "real");
@@ -516,6 +531,7 @@ namespace StockTrade
         }
         private void work(object sender, EventArgs e)
         {
+            //buyAutoStocks();
             string endTime = "17:00";
             string curTime = DateTime.Now.ToString("HH:mm");
             if (Convert.ToDateTime(curTime) > Convert.ToDateTime(endTime)) return;
@@ -670,11 +686,41 @@ namespace StockTrade
             axKHOpenAPI1.SetInputValue("종목코드", stockCode);
             axKHOpenAPI1.CommRqData("종목정보요청", "opt10001", 0, "5000");
         }
+        void getContinuousBalanceInfo(string name)
+        {
+            string accountNumber = accountComboBox.Text;
+            string password = passwordTextBox.Text;
+            axKHOpenAPI1.SetInputValue("계좌번호", accountNumber);
+            axKHOpenAPI1.SetInputValue("비밀번호", password);
+            switch (name)
+            {
+                case "계좌평가잔고내역요청":
+                    axKHOpenAPI1.SetInputValue("비밀번호입력매체구분", "00");
+                    axKHOpenAPI1.SetInputValue("조회구분", "1");
+                    axKHOpenAPI1.CommRqData("계좌평가잔고내역요청", "opw00018", 2, "8100"); break;
+                case "계좌평가현황요청":
+                    axKHOpenAPI1.SetInputValue("상장폐지조회구분", "0");
+                    axKHOpenAPI1.SetInputValue("비밀번호입력매체구분", "00");
+                    axKHOpenAPI1.CommRqData("계좌평가현황요청", "opw00004", 2, "4000"); break;
+                case "실시간미체결요청":
+                    axKHOpenAPI1.SetInputValue("체결구분", "1");
+                    axKHOpenAPI1.SetInputValue("매매구분", "2");
+                    axKHOpenAPI1.CommRqData("실시간미체결요청", "opt10075", 2, "5700"); break;
+            }
+        }
+        void getTodayPriceInfo(string code,string date)
+        {
+            axKHOpenAPI1.SetInputValue("종목코드", code);
+            axKHOpenAPI1.SetInputValue("기준일자", date);
+            axKHOpenAPI1.SetInputValue("수정주가구분", "0");
+            axKHOpenAPI1.CommRqData("종목일자가격데이터요청", "opt10081", 0, "9000");
+        }
         void getBalanceInfo()
         {
             if (accountComboBox.Text.Length == 0 || passwordTextBox.Text.Length == 0) return;
             string accountNumber = accountComboBox.Text;
             string password = passwordTextBox.Text;
+            stockBalanceList = new List<stockBalance>();
             axKHOpenAPI1.SetInputValue("계좌번호", accountNumber);
             axKHOpenAPI1.SetInputValue("비밀번호", password);
             axKHOpenAPI1.SetInputValue("비밀번호입력매체구분", "00");
@@ -735,6 +781,8 @@ namespace StockTrade
                 }
                 else if (button.HeaderText == "수정")
                 {
+                    if (MessageBox.Show("수정하시겠습니까?", "Question", MessageBoxButtons.YesNo)
+                        != DialogResult.Yes) return;
                     var gridRow = autoRuleDataGridView.Rows[e.RowIndex];
                     var rule = registeredRuleList[e.RowIndex];
                     rule.번호 = e.RowIndex;
