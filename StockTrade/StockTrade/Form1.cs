@@ -477,12 +477,12 @@ namespace StockTrade
                 MessageBox.Show("매매조건을 먼저 설정하세요.");
                 return;
             }
-            //buyAutoStocks();
+            buyAutoStocks();
             t = new System.Windows.Forms.Timer();
             t.Tick += work;
             t.Interval = 60000;
             t.Start();
-            MessageBox.Show(String.Format("자동거래시작\n매수방법: {0}\n 매도방법: {1}\n 업데이트시간: {2}",
+            MessageBox.Show(String.Format("자동거래시작\n매수방법: {0}\n매도방법: {1}\n업데이트시간: {2}",
                 buyOrderType, sellOrderType, updateTime));
         }
         void buyAutoStocks()
