@@ -105,6 +105,8 @@
             this.insertListBox = new System.Windows.Forms.ListBox();
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.deleteListBox = new System.Windows.Forms.ListBox();
+            this.tabPage7 = new System.Windows.Forms.TabPage();
+            this.orderListBox2 = new System.Windows.Forms.ListBox();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.balanceDataGridView = new System.Windows.Forms.DataGridView();
@@ -130,6 +132,7 @@
             this.tabPage6.SuspendLayout();
             this.tabPage3.SuspendLayout();
             this.tabPage4.SuspendLayout();
+            this.tabPage7.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.balanceDataGridView)).BeginInit();
@@ -789,6 +792,7 @@
             this.passwordTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.passwordTextBox.Location = new System.Drawing.Point(155, 26);
             this.passwordTextBox.Name = "passwordTextBox";
+            this.passwordTextBox.PasswordChar = '*';
             this.passwordTextBox.Size = new System.Drawing.Size(146, 21);
             this.passwordTextBox.TabIndex = 4;
             // 
@@ -990,6 +994,7 @@
             this.tabControl2.Controls.Add(this.tabPage6);
             this.tabControl2.Controls.Add(this.tabPage3);
             this.tabControl2.Controls.Add(this.tabPage4);
+            this.tabControl2.Controls.Add(this.tabPage7);
             this.tabControl2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl2.Location = new System.Drawing.Point(623, 3);
             this.tabControl2.Name = "tabControl2";
@@ -1005,7 +1010,7 @@
             this.tabPage6.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage6.Size = new System.Drawing.Size(606, 188);
             this.tabPage6.TabIndex = 2;
-            this.tabPage6.Text = "주문기록";
+            this.tabPage6.Text = "주문기록(체결)";
             this.tabPage6.UseVisualStyleBackColor = true;
             // 
             // orderRecordListBox
@@ -1061,6 +1066,26 @@
             this.deleteListBox.Name = "deleteListBox";
             this.deleteListBox.Size = new System.Drawing.Size(600, 182);
             this.deleteListBox.TabIndex = 0;
+            // 
+            // tabPage7
+            // 
+            this.tabPage7.Controls.Add(this.orderListBox2);
+            this.tabPage7.Location = new System.Drawing.Point(4, 22);
+            this.tabPage7.Name = "tabPage7";
+            this.tabPage7.Size = new System.Drawing.Size(606, 188);
+            this.tabPage7.TabIndex = 3;
+            this.tabPage7.Text = "Debug";
+            this.tabPage7.UseVisualStyleBackColor = true;
+            // 
+            // orderListBox2
+            // 
+            this.orderListBox2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.orderListBox2.FormattingEnabled = true;
+            this.orderListBox2.ItemHeight = 12;
+            this.orderListBox2.Location = new System.Drawing.Point(0, 0);
+            this.orderListBox2.Name = "orderListBox2";
+            this.orderListBox2.Size = new System.Drawing.Size(606, 188);
+            this.orderListBox2.TabIndex = 1;
             // 
             // tabControl1
             // 
@@ -1201,6 +1226,7 @@
             this.tabPage6.ResumeLayout(false);
             this.tabPage3.ResumeLayout(false);
             this.tabPage4.ResumeLayout(false);
+            this.tabPage7.ResumeLayout(false);
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.balanceDataGridView)).EndInit();
@@ -1299,6 +1325,8 @@
         private System.Windows.Forms.ListBox insertListBox;
         private System.Windows.Forms.TabPage tabPage4;
         private System.Windows.Forms.ListBox deleteListBox;
+        private System.Windows.Forms.TabPage tabPage7;
+        private System.Windows.Forms.ListBox orderListBox2;
     }
 }
 
