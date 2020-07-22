@@ -292,15 +292,15 @@ namespace StockTrade
                         stockName = axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "종목명").Trim();
                         int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "보유수량"),out number);
                         int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "매입금액"), out buyingMoney);
-                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "현재가").Replace("-", ""), out currentPrice);
-                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "평가금액").Replace("-", ""), out estimatedAllPrice);
-                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "평가손익").Replace("-",""), out estimatedProfit);
+                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "현재가"), out currentPrice);
+                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "평가금액"), out estimatedAllPrice);
+                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "평가손익"), out estimatedProfit);
                         double.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "수익률(%)"), out estimatedProfitRate);
-                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "전일종가").Replace("-", ""), out closedPrice);
+                        int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "전일종가"), out closedPrice);
 
 
                         stockBalanceList.Add(new stockBalance(stockCode, stockName, number, String.Format("{0:#,###}", buyingMoney),
-                            String.Format("{0:#,###}", currentPrice), String.Format("{0:#,###}", estimatedProfit), String.Format("{0:f2}", estimatedProfitRate),
+                            String.Format("{0:#,###}", currentPrice), String.Format("{0:#,###}", estimatedProfit), String.Format("{0:f2}", estimatedProfitRate/100),
                             String.Format("{0:#,###}", closedPrice), String.Format("{0:#,###}", estimatedAllPrice)));
                         //getTodayPriceInfo(stockCode, DateTime.Now.ToString("yyyyMMdd"));
                     }
@@ -496,7 +496,7 @@ namespace StockTrade
                 MessageBox.Show("매매조건을 먼저 설정하세요.");
                 return;
             }
-            //buyAutoStocks();
+            //updateBalance();
             t = new System.Windows.Forms.Timer();
             t.Tick += work;
             t.Interval = 30000;
@@ -528,7 +528,8 @@ namespace StockTrade
         }
         void updateBalance()
         {
-            DB.deleteBalanceInfo(userName, DateTime.Now.ToString("YYYY-MM"));
+            DB.deleteBalanceInfo(userID, DateTime.Now.ToString("yyyy-MM"),
+                currentServerCondition == "1" ? "test" : "real");
             string SQL = string.Format(@"INSERT INTO {0}.잔고 (날짜, 주문자, 종목코드, 종목명, 매수금, 수량, 현재가, 평가손익, 수익률) VALUES ",
                 currentServerCondition == "1" ? "test" : "real");
             for (int i = 0; i < stockBalanceList.Count; i++)

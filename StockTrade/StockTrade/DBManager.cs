@@ -74,14 +74,14 @@ namespace StockTrade
                 }
             }
         }
-        public void deleteBalanceInfo(string name, string date)
+        public void deleteBalanceInfo(string name, string date, string curServer)
         {
             using (var con = config.connect())
             {
                 try
                 {
                     con.Open();
-                    var SQL = "DELETE FROM real.잔고 WHERE 날짜=@date AND 주문자=@name";
+                    var SQL =string.Format("DELETE FROM {0}.잔고 WHERE 날짜=@date AND 주문자=@name",curServer);
                     NpgsqlCommand comm = new NpgsqlCommand(SQL, con);
                     comm.Parameters.AddWithValue("date", NpgsqlDbType.Text, date);
                     comm.Parameters.AddWithValue("name", NpgsqlDbType.Text, name);
