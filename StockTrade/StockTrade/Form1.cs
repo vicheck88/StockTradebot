@@ -69,8 +69,19 @@ namespace StockTrade
             Rmanager = new RscriptManager(DB);
             stocksToBuy = new Dictionary<string, stockInfo>();
             readCurTradeRule();
+            readDefaultAccountSetting();
         }
-
+        void readDefaultAccountSetting()
+        {
+            var defaultAccountPath= Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "accountSetting.json");
+            if (File.Exists(defaultAccountPath))
+            {
+                var json = JObject.Parse(File.ReadAllText(defaultAccountPath));
+                ACCOUNT_NUMBER = json["account"].ToString();
+                passwordTextBox.Text = json["password"].ToString();
+                accountComboBox.Text = ACCOUNT_NUMBER;
+            }
+        }
         private void readCurTradeRule() //curTradingRulePath의 데이터를 registeredRuleList에 입력
         {
             registeredRuleList = new List<AutoTradingRule>();
@@ -157,8 +168,10 @@ namespace StockTrade
                     currentPrice = currentPrice + currentPriceArray[i];
                 }
                 stockCodeLabel.Text = stockCode;
-                orderPriceNumericUpDown.Value = long.Parse(currentPrice);
-                orderNumberNumericUpDown.Value = long.Parse(stockNumber);
+                long price;
+                long number;
+                if(long.TryParse(currentPrice,out price)) orderPriceNumericUpDown.Value = price;
+                if(long.TryParse(stockNumber,out number)) orderNumberNumericUpDown.Value = number;
             }
             else if (sender.Equals(outstandingDataGridView))
             {
@@ -445,6 +458,7 @@ namespace StockTrade
                 MessageBox.Show("계좌를 먼저 설정하세요.");
                 return;
             }
+            if (t != null) t.Stop();
             stocksToBuy = new Dictionary<string, stockInfo>();
             autoTradingRuleList = new List<AutoTradingRule>();
             foreach(DataGridViewRow row in autoRuleDataGridView.Rows)
