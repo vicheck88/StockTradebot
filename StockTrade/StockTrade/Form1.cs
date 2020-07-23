@@ -406,21 +406,17 @@ namespace StockTrade
                             stocksToBuy[stockCode].curPrice = stockPrice;
                         }
 
-                        if (remPrice > 0 && remPrice > stockPrice)
+                        if (Math.Abs(remPrice) > stockPrice)
                         {
-                            int orderNumber = (int)(remPrice / stockPrice);
-                            if (buyType != "00") stockPrice = 0;
-                            int res = axKHOpenAPI1.SendOrder("자동거래매수주문", "5149", ACCOUNT_NUMBER, 1, stockCode, orderNumber, stockPrice, buyType, "");
+                            int orderNumber = (int)(Math.Abs(remPrice) / stockPrice);
+                            if (remPrice > 0 && buyType != "00") stockPrice = 0;
+                            else if (remPrice < 0 && sellType != "00") stockPrice = 0;
+                            int res = -1;
+                            if(remPrice > 0) res = axKHOpenAPI1.SendOrder("자동거래매수주문", "5149", ACCOUNT_NUMBER, 1, stockCode, orderNumber, stockPrice, buyType, "");
+                            else res = axKHOpenAPI1.SendOrder("자동거래매도주문", "5189", ACCOUNT_NUMBER, 2, stockCode, orderNumber, stockPrice, sellType, "");
                             stocksToBuy[stockCode].curStatus = res;
                         }
-                        else if (remPrice < 0 && -remPrice > stockPrice)
-                        {
-                            int orderNumber = -remPrice / stockPrice;
-                            if (sellType != "00") stockPrice = 0;
-                            int res = axKHOpenAPI1.SendOrder("자동거래매도주문", "5189", ACCOUNT_NUMBER, 2, stockCode, orderNumber, stockPrice, sellType, "");
-                            stocksToBuy[stockCode].curStatus = res;
-                        }
-                        else stocksToBuy[stockCode].curPrice = 0;
+                        else stocksToBuy[stockCode].curStatus = 0;
                         orderListBox2.Items.Add("날짜 : " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " | " + "종목코드 : " + stockCode + " | " + 
                                                     "종목명 : " + stocksToBuy[stockCode].stockName + " | 주문가격 : " + stocksToBuy[stockCode].remainingPrice
                                                     + " | 주문결과 : " + stocksToBuy[stockCode].curStatus);
@@ -529,7 +525,7 @@ namespace StockTrade
                 isPriceUpdated = true;
             }
             var stockCodeList = String.Join(";", 
-                stocksToBuy.OrderBy(i => i.Value.remainingPrice).Select(x => 'A' + x.Key));
+                stocksToBuy.OrderBy(i => i.Value.remainingPrice).Select(x => "A" + x.Key));
             axKHOpenAPI1.CommKwRqData(stockCodeList, 0, stocksToBuy.Count, 0, "조건검색종목", "5100");
         }
         void updateBalance()
@@ -563,17 +559,20 @@ namespace StockTrade
             string endTime = "17:00";
             string curTime = DateTime.Now.ToString("HH:mm");
             //curTime = "10:00";
-            //if (curTime.CompareTo(endTime) > 0)
-            //{
-            //    if (isPriceUpdated) isPriceUpdated = false;
-            //    return;
-            //}
-            //if (curTime.CompareTo(updateTime) < 0) return;
+
+            if (curTime.CompareTo(endTime) > 0)
+            {
+                if (isPriceUpdated) isPriceUpdated = false;
+                return;
+            }
+            if (curTime.CompareTo(updateTime) < 0) return;
             var diff = DateTime.Parse(curTime) - DateTime.Parse(updateTime);
+
             //orderListBox2.Items.Add(string.Format("current Time: {0}, timespan: {1}, minutes: {2}", 
             //    curTime, diff.ToString(), diff.Minutes));
             //orderListBox2.Items.Add("-----------------------------------");
-            //if (diff.Minutes % 60 != 0) return;
+
+            if (diff.Minutes % 60 != 0) return;
 
             //orderListBox2.Items.Add(string.Format("Trade start"));
             //orderListBox2.Items.Add("-----------------------------------");
