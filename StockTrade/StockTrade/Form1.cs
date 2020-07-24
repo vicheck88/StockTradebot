@@ -14,6 +14,7 @@ using NpgsqlTypes;
 using Npgsql;
 using System.IO;
 using Newtonsoft.Json.Linq;
+using System.Runtime.Remoting.Lifetime;
 
 namespace StockTrade
 {
@@ -42,6 +43,7 @@ namespace StockTrade
         bool autoFlag = false;
         bool sellAllFlag = false;
         bool isPriceUpdated = false;
+        DataTable RcorpLists;
 
         public Form1()
         {
@@ -315,6 +317,7 @@ namespace StockTrade
                             updateBalance();
                             buyAutoStocks();
                         }
+                        else if (!autoFlag) seeTodayStockDeal();
                         else if (sellAllFlag)
                         {
                             sellAllFlag = false;
@@ -447,7 +450,40 @@ namespace StockTrade
             if (selectionWindow.ShowDialog() != DialogResult.OK) return;
             RFileName.Text = selectionWindow.selectedRscript;
         }
+        void initStocksToBuy()
+        {
+            if (autoTradingRuleList == null) return;
+            stocksToBuy = new Dictionary<string, stockInfo>();
+            
+            foreach (var rule in autoTradingRuleList)
+            {
+                DataTable RcorpList = Rprogram.getCorpTable(rule.분석R파일, rule.제한종목개수);
+                if (RcorpLists == null) RcorpLists = RcorpList;
+                else
+                {
+                    foreach (DataRow row in RcorpList.Rows)
+                    {
+                        DataRow[] rows = RcorpLists.Select(string.Format("종목코드='{0}'", row["종목코드"].ToString()));
+                        if(rows.Count() == 0) RcorpLists.Rows.Add(row);
+                    }
+                }
+                foreach (DataRow corp in RcorpList.Rows)
+                {
+                    string code = corp[1].ToString();
+                    string name = corp[2].ToString();
+                    int price = rule.종목당매수금액;
 
+                    rule.autoTradingPurchaseStockList.Add(new AutoTradingPurchaseStock(code, price, 0));
+                    if (stocksToBuy.Keys.Contains(code)) stocksToBuy[code].remainingPrice += price;
+                    else stocksToBuy.Add(code, new stockInfo(code, name, price));
+                }
+                buyOrderType = rule.매수거래구분;
+                sellOrderType = rule.매도거래구분;
+                updateTime = rule.업데이트시간;
+            }
+            stockListDataGridView.DataSource = null;
+            stockListDataGridView.DataSource = RcorpLists;
+        }
         void startAutoTrading()
         {
             if (ACCOUNT_NUMBER == "")
@@ -458,6 +494,7 @@ namespace StockTrade
             if (t != null) t.Stop();
             stocksToBuy = new Dictionary<string, stockInfo>();
             autoTradingRuleList = new List<AutoTradingRule>();
+            
             foreach(DataGridViewRow row in autoRuleDataGridView.Rows)
             {
                 if (row.Cells["거래규칙_상태"].Value.ToString() != "시작") continue;
@@ -468,26 +505,8 @@ namespace StockTrade
                     row.Cells[7].Value.ToString(), row.Cells[8].Value.ToString());
                 autoTradingRuleList.Add(newRule);
                 if (newRule.종목당매수금액 == 0) newRule.종목당매수금액 = newRule.매입제한금액 / newRule.제한종목개수;
-
-                //R 조건검색 데이터 추가
-                DataTable RcorpList = Rprogram.getCorpTable(newRule.분석R파일,newRule.제한종목개수);
-                stockListDataGridView.DataSource = null;
-                stockListDataGridView.DataSource = RcorpList;
-                //사야할 리스트에 추가
-                foreach(DataRow corp in RcorpList.Rows)
-                {
-                    string code = corp[1].ToString();
-                    string name = corp[2].ToString();
-                    int price = newRule.종목당매수금액;
-
-                    newRule.autoTradingPurchaseStockList.Add(new AutoTradingPurchaseStock(code, price, 0));
-                    if (stocksToBuy.Keys.Contains(code)) stocksToBuy[code].remainingPrice += price;
-                    else stocksToBuy.Add(code, new stockInfo(code, name, price));
-                }
-                buyOrderType = newRule.매수거래구분;
-                sellOrderType = newRule.매도거래구분;
-                updateTime = newRule.업데이트시간;
             }
+            initStocksToBuy();
             if (autoTradingRuleList.Count == 0)
             {
                 MessageBox.Show("매매조건을 먼저 설정하세요.");
@@ -504,24 +523,31 @@ namespace StockTrade
             orderListBox2.Items.Add("자동거래 시작");
             orderListBox2.Items.Add("---------------------------------");
         }
+        void seeTodayStockDeal()
+        {
+            if (stockBalanceList == null) return;
+            if (stocksToBuy == null) return;
+            initStocksToBuy();
+            foreach (var s in stockBalanceList)
+            {
+                s.종목코드 = s.종목코드.Replace("A", "").Trim();
+
+                if (stocksToBuy.Keys.Contains(s.종목코드))
+                {
+                    var st = stocksToBuy[s.종목코드];
+                    st.remainingPrice -= int.Parse(s.총평가금액.Replace(",", ""));
+                }
+                else stocksToBuy.Add(s.종목코드, new stockInfo(s.종목코드, s.종목명, -int.Parse(s.총평가금액.Replace(",", ""))));
+                orderListBox2.Items.Add(string.Format("종목코드:{0}, 종목명:{1}, 매입금액:{2}", s.종목코드, s.종목명, stocksToBuy[s.종목코드].remainingPrice));
+                orderListBox2.Items.Add("--------------------------------------------------");
+            }
+        }
         void buyAutoStocks()
         {
             if (buyOrderType == null || sellOrderType == null) return;
             if (!isPriceUpdated)
             {
-                foreach (var s in stockBalanceList)
-                {
-                    s.종목코드 = s.종목코드.Replace("A", "").Trim();
-
-                    if (stocksToBuy.Keys.Contains(s.종목코드))
-                    {
-                        var st = stocksToBuy[s.종목코드];
-                        st.remainingPrice -= int.Parse(s.총평가금액.Replace(",", ""));
-                    }
-                    else stocksToBuy.Add(s.종목코드, new stockInfo(s.종목코드, s.종목명, -int.Parse(s.총평가금액.Replace(",", ""))));
-                    orderListBox2.Items.Add(string.Format("종목코드:{0}, 종목명:{1}, 매입금액:{2}", s.종목코드, s.종목명, stocksToBuy[s.종목코드].remainingPrice));
-                    orderListBox2.Items.Add("--------------------------------------------------");
-                }
+                seeTodayStockDeal();
                 isPriceUpdated = true;
             }
             var stockCodeList = String.Join(";", 

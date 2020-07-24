@@ -20,14 +20,21 @@ namespace StockTrade
         }
         public DataTable readFromDB(string sql)
         {
-            using(var con = config.connect())
+            using (var con = config.connect()) 
             {
-                con.Open();
-                NpgsqlCommand comm = new NpgsqlCommand(sql, con);
-                NpgsqlDataReader reader = comm.ExecuteReader();
-                DataTable table = new DataTable();
-                table.Load(reader);
-                return table;
+                try
+                {
+                    con.Open();
+                    NpgsqlCommand comm = new NpgsqlCommand(sql, con);
+                    NpgsqlDataReader reader = comm.ExecuteReader();
+                    DataTable table = new DataTable();
+                    table.Load(reader);
+                    return table;
+                }
+                catch (Exception e)
+                {
+                    return null;
+                }
             }
         }
         public void writeToDB(string sql, Dictionary<string,object[]> param)

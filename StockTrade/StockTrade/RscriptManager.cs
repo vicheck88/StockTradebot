@@ -28,6 +28,7 @@ namespace StockTrade
         public void syncScriptList()
         {
             scriptList = readRScripList();
+            if (scriptList == null) return;
             DirectoryInfo di = new DirectoryInfo(currentPath);
             if (!di.Exists) di.Create();
             foreach (var d in di.GetDirectories()) d.Delete(true);
