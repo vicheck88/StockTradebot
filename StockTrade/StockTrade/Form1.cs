@@ -526,7 +526,7 @@ namespace StockTrade
         void seeTodayStockDeal()
         {
             if (stockBalanceList == null) return;
-            if (stocksToBuy == null) return;
+            if (stocksToBuy.Count == 0) return;
             initStocksToBuy();
             foreach (var s in stockBalanceList)
             {
@@ -538,7 +538,10 @@ namespace StockTrade
                     st.remainingPrice -= int.Parse(s.총평가금액.Replace(",", ""));
                 }
                 else stocksToBuy.Add(s.종목코드, new stockInfo(s.종목코드, s.종목명, -int.Parse(s.총평가금액.Replace(",", ""))));
-                orderListBox2.Items.Add(string.Format("종목코드:{0}, 종목명:{1}, 매입금액:{2}", s.종목코드, s.종목명, stocksToBuy[s.종목코드].remainingPrice));
+            }
+            foreach(var s in stocksToBuy)
+            {
+                orderListBox2.Items.Add(string.Format("종목코드:{0}, 종목명:{1}, 매입금액:{2}", s.Value.stockCode, s.Value.stockCode, s.Value.remainingPrice));
                 orderListBox2.Items.Add("--------------------------------------------------");
             }
         }
