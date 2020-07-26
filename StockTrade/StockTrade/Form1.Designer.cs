@@ -184,7 +184,7 @@
             this.tableLayoutPanel4.Controls.Add(this.stockNameLabel, 1, 1);
             this.tableLayoutPanel4.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel4.Location = new System.Drawing.Point(890, 4);
-            this.tableLayoutPanel4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tableLayoutPanel4.Margin = new System.Windows.Forms.Padding(4);
             this.tableLayoutPanel4.Name = "tableLayoutPanel4";
             this.tableLayoutPanel4.RowCount = 7;
             this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.66667F));
@@ -253,7 +253,7 @@
             "00:지정가",
             "03:시장가"});
             this.orderComboBox.Location = new System.Drawing.Point(220, 89);
-            this.orderComboBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.orderComboBox.Margin = new System.Windows.Forms.Padding(4);
             this.orderComboBox.Name = "orderComboBox";
             this.orderComboBox.Size = new System.Drawing.Size(208, 26);
             this.orderComboBox.TabIndex = 2;
@@ -262,7 +262,7 @@
             // 
             this.orderPriceNumericUpDown.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.orderPriceNumericUpDown.Location = new System.Drawing.Point(220, 129);
-            this.orderPriceNumericUpDown.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.orderPriceNumericUpDown.Margin = new System.Windows.Forms.Padding(4);
             this.orderPriceNumericUpDown.Maximum = new decimal(new int[] {
             1000000000,
             0,
@@ -276,7 +276,7 @@
             // 
             this.orderNumberNumericUpDown.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.orderNumberNumericUpDown.Location = new System.Drawing.Point(220, 170);
-            this.orderNumberNumericUpDown.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.orderNumberNumericUpDown.Margin = new System.Windows.Forms.Padding(4);
             this.orderNumberNumericUpDown.Maximum = new decimal(new int[] {
             1000000000,
             0,
@@ -290,7 +290,7 @@
             // 
             this.buyButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.buyButton.Location = new System.Drawing.Point(4, 212);
-            this.buyButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buyButton.Margin = new System.Windows.Forms.Padding(4);
             this.buyButton.Name = "buyButton";
             this.buyButton.Size = new System.Drawing.Size(208, 27);
             this.buyButton.TabIndex = 3;
@@ -301,7 +301,7 @@
             // 
             this.sellButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.sellButton.Location = new System.Drawing.Point(220, 212);
-            this.sellButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.sellButton.Margin = new System.Windows.Forms.Padding(4);
             this.sellButton.Name = "sellButton";
             this.sellButton.Size = new System.Drawing.Size(208, 27);
             this.sellButton.TabIndex = 3;
@@ -312,7 +312,7 @@
             // 
             this.stockSearchButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.stockSearchButton.Location = new System.Drawing.Point(220, 7);
-            this.stockSearchButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.stockSearchButton.Margin = new System.Windows.Forms.Padding(4);
             this.stockSearchButton.Name = "stockSearchButton";
             this.stockSearchButton.Size = new System.Drawing.Size(208, 27);
             this.stockSearchButton.TabIndex = 3;
@@ -323,7 +323,7 @@
             // 
             this.stockTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.stockTextBox.Location = new System.Drawing.Point(4, 6);
-            this.stockTextBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.stockTextBox.Margin = new System.Windows.Forms.Padding(4);
             this.stockTextBox.Name = "stockTextBox";
             this.stockTextBox.Size = new System.Drawing.Size(208, 28);
             this.stockTextBox.TabIndex = 4;
@@ -357,7 +357,7 @@
             this.tableLayoutPanel3.Controls.Add(this.selectRFileButton, 0, 1);
             this.tableLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel3.Location = new System.Drawing.Point(447, 4);
-            this.tableLayoutPanel3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tableLayoutPanel3.Margin = new System.Windows.Forms.Padding(4);
             this.tableLayoutPanel3.Name = "tableLayoutPanel3";
             this.tableLayoutPanel3.RowCount = 6;
             this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
@@ -373,7 +373,7 @@
             // 
             this.numericUpDown4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.numericUpDown4.Location = new System.Drawing.Point(436, 10);
-            this.numericUpDown4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.numericUpDown4.Margin = new System.Windows.Forms.Padding(4);
             this.numericUpDown4.Name = "numericUpDown4";
             this.numericUpDown4.Size = new System.Drawing.Size(1, 28);
             this.numericUpDown4.TabIndex = 4;
@@ -395,7 +395,7 @@
             this.setAutoTradingRuleButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel3.SetColumnSpan(this.setAutoTradingRuleButton, 2);
             this.setAutoTradingRuleButton.Location = new System.Drawing.Point(4, 105);
-            this.setAutoTradingRuleButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.setAutoTradingRuleButton.Margin = new System.Windows.Forms.Padding(4);
             this.setAutoTradingRuleButton.Name = "setAutoTradingRuleButton";
             this.setAutoTradingRuleButton.Size = new System.Drawing.Size(424, 34);
             this.setAutoTradingRuleButton.TabIndex = 3;
@@ -406,7 +406,7 @@
             // 
             this.orderFixButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.orderFixButton.Location = new System.Drawing.Point(4, 154);
-            this.orderFixButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.orderFixButton.Margin = new System.Windows.Forms.Padding(4);
             this.orderFixButton.Name = "orderFixButton";
             this.orderFixButton.Size = new System.Drawing.Size(208, 34);
             this.orderFixButton.TabIndex = 3;
@@ -417,7 +417,7 @@
             // 
             this.balanceCheckButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.balanceCheckButton.Location = new System.Drawing.Point(220, 154);
-            this.balanceCheckButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.balanceCheckButton.Margin = new System.Windows.Forms.Padding(4);
             this.balanceCheckButton.Name = "balanceCheckButton";
             this.balanceCheckButton.Size = new System.Drawing.Size(208, 34);
             this.balanceCheckButton.TabIndex = 3;
@@ -428,7 +428,7 @@
             // 
             this.orderCancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.orderCancelButton.Location = new System.Drawing.Point(4, 203);
-            this.orderCancelButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.orderCancelButton.Margin = new System.Windows.Forms.Padding(4);
             this.orderCancelButton.Name = "orderCancelButton";
             this.orderCancelButton.Size = new System.Drawing.Size(208, 34);
             this.orderCancelButton.TabIndex = 3;
@@ -439,7 +439,7 @@
             // 
             this.sellAllStockButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.sellAllStockButton.Location = new System.Drawing.Point(220, 203);
-            this.sellAllStockButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.sellAllStockButton.Margin = new System.Windows.Forms.Padding(4);
             this.sellAllStockButton.Name = "sellAllStockButton";
             this.sellAllStockButton.Size = new System.Drawing.Size(208, 34);
             this.sellAllStockButton.TabIndex = 3;
@@ -450,7 +450,7 @@
             // 
             this.updateTimeTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.updateTimeTextBox.Location = new System.Drawing.Point(220, 4);
-            this.updateTimeTextBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.updateTimeTextBox.Margin = new System.Windows.Forms.Padding(4);
             this.updateTimeTextBox.Name = "updateTimeTextBox";
             this.updateTimeTextBox.Size = new System.Drawing.Size(208, 28);
             this.updateTimeTextBox.TabIndex = 4;
@@ -460,7 +460,7 @@
             this.selectRFileButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel3.SetColumnSpan(this.selectRFileButton, 2);
             this.selectRFileButton.Location = new System.Drawing.Point(4, 56);
-            this.selectRFileButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.selectRFileButton.Margin = new System.Windows.Forms.Padding(4);
             this.selectRFileButton.Name = "selectRFileButton";
             this.selectRFileButton.Size = new System.Drawing.Size(424, 34);
             this.selectRFileButton.TabIndex = 3;
@@ -490,7 +490,7 @@
             this.tableLayoutPanel2.Controls.Add(this.autoBuyOrderComboBox, 1, 4);
             this.tableLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel2.Location = new System.Drawing.Point(4, 4);
-            this.tableLayoutPanel2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tableLayoutPanel2.Margin = new System.Windows.Forms.Padding(4);
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
             this.tableLayoutPanel2.RowCount = 8;
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 13.51344F));
@@ -555,7 +555,7 @@
             // 
             this.limitPriceNumericUpDown.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.limitPriceNumericUpDown.Location = new System.Drawing.Point(220, 37);
-            this.limitPriceNumericUpDown.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.limitPriceNumericUpDown.Margin = new System.Windows.Forms.Padding(4);
             this.limitPriceNumericUpDown.Maximum = new decimal(new int[] {
             1316134912,
             2328,
@@ -569,7 +569,7 @@
             // 
             this.limitNumberNumericUpDown.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.limitNumberNumericUpDown.Location = new System.Drawing.Point(220, 70);
-            this.limitNumberNumericUpDown.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.limitNumberNumericUpDown.Margin = new System.Windows.Forms.Padding(4);
             this.limitNumberNumericUpDown.Maximum = new decimal(new int[] {
             1410065408,
             2,
@@ -583,7 +583,7 @@
             // 
             this.startAutoTradingButton.Dock = System.Windows.Forms.DockStyle.Fill;
             this.startAutoTradingButton.Location = new System.Drawing.Point(4, 202);
-            this.startAutoTradingButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.startAutoTradingButton.Margin = new System.Windows.Forms.Padding(4);
             this.startAutoTradingButton.Name = "startAutoTradingButton";
             this.startAutoTradingButton.Size = new System.Drawing.Size(208, 38);
             this.startAutoTradingButton.TabIndex = 3;
@@ -594,7 +594,7 @@
             // 
             this.stopAutoTradingButton.Dock = System.Windows.Forms.DockStyle.Fill;
             this.stopAutoTradingButton.Location = new System.Drawing.Point(220, 202);
-            this.stopAutoTradingButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.stopAutoTradingButton.Margin = new System.Windows.Forms.Padding(4);
             this.stopAutoTradingButton.Name = "stopAutoTradingButton";
             this.stopAutoTradingButton.Size = new System.Drawing.Size(208, 38);
             this.stopAutoTradingButton.TabIndex = 3;
@@ -623,7 +623,7 @@
             "00:시가",
             "03:시장가"});
             this.autoSellOrderComboBox.Location = new System.Drawing.Point(220, 169);
-            this.autoSellOrderComboBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.autoSellOrderComboBox.Margin = new System.Windows.Forms.Padding(4);
             this.autoSellOrderComboBox.Name = "autoSellOrderComboBox";
             this.autoSellOrderComboBox.Size = new System.Drawing.Size(208, 26);
             this.autoSellOrderComboBox.TabIndex = 1;
@@ -674,7 +674,7 @@
             "00:시가",
             "03:시장가"});
             this.autoBuyOrderComboBox.Location = new System.Drawing.Point(220, 136);
-            this.autoBuyOrderComboBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.autoBuyOrderComboBox.Margin = new System.Windows.Forms.Padding(4);
             this.autoBuyOrderComboBox.Name = "autoBuyOrderComboBox";
             this.autoBuyOrderComboBox.Size = new System.Drawing.Size(208, 26);
             this.autoBuyOrderComboBox.TabIndex = 1;
@@ -702,7 +702,7 @@
             this.tableLayoutPanel5.Controls.Add(this.depositLabel, 1, 2);
             this.tableLayoutPanel5.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel5.Location = new System.Drawing.Point(1333, 4);
-            this.tableLayoutPanel5.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tableLayoutPanel5.Margin = new System.Windows.Forms.Padding(4);
             this.tableLayoutPanel5.Name = "tableLayoutPanel5";
             this.tableLayoutPanel5.RowCount = 8;
             this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 14.28531F));
@@ -733,7 +733,7 @@
             this.accountComboBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.accountComboBox.FormattingEnabled = true;
             this.accountComboBox.Location = new System.Drawing.Point(221, 4);
-            this.accountComboBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.accountComboBox.Margin = new System.Windows.Forms.Padding(4);
             this.accountComboBox.Name = "accountComboBox";
             this.accountComboBox.Size = new System.Drawing.Size(209, 26);
             this.accountComboBox.TabIndex = 2;
@@ -839,7 +839,7 @@
             // 
             this.passwordTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.passwordTextBox.Location = new System.Drawing.Point(221, 39);
-            this.passwordTextBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.passwordTextBox.Margin = new System.Windows.Forms.Padding(4);
             this.passwordTextBox.Name = "passwordTextBox";
             this.passwordTextBox.PasswordChar = '*';
             this.passwordTextBox.Size = new System.Drawing.Size(209, 28);
@@ -901,7 +901,7 @@
             this.tableLayoutPanel7.Controls.Add(this.tableLayoutPanel1, 0, 0);
             this.tableLayoutPanel7.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel7.Location = new System.Drawing.Point(0, 0);
-            this.tableLayoutPanel7.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tableLayoutPanel7.Margin = new System.Windows.Forms.Padding(4);
             this.tableLayoutPanel7.Name = "tableLayoutPanel7";
             this.tableLayoutPanel7.RowCount = 4;
             this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle());
@@ -931,7 +931,7 @@
             this.수정});
             this.autoRuleDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.autoRuleDataGridView.Location = new System.Drawing.Point(4, 265);
-            this.autoRuleDataGridView.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.autoRuleDataGridView.Margin = new System.Windows.Forms.Padding(4);
             this.autoRuleDataGridView.Name = "autoRuleDataGridView";
             this.autoRuleDataGridView.RowHeadersVisible = false;
             this.autoRuleDataGridView.RowHeadersWidth = 62;
@@ -1036,11 +1036,11 @@
             this.tableLayoutPanel6.Controls.Add(this.tabControl1, 0, 0);
             this.tableLayoutPanel6.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel6.Location = new System.Drawing.Point(4, 468);
-            this.tableLayoutPanel6.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tableLayoutPanel6.Margin = new System.Windows.Forms.Padding(4);
             this.tableLayoutPanel6.Name = "tableLayoutPanel6";
             this.tableLayoutPanel6.RowCount = 1;
             this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 330F));
+            this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 331F));
             this.tableLayoutPanel6.Size = new System.Drawing.Size(1772, 331);
             this.tableLayoutPanel6.TabIndex = 2;
             // 
@@ -1052,7 +1052,7 @@
             this.tabControl2.Controls.Add(this.tabPage7);
             this.tabControl2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl2.Location = new System.Drawing.Point(890, 4);
-            this.tabControl2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tabControl2.Margin = new System.Windows.Forms.Padding(4);
             this.tabControl2.Name = "tabControl2";
             this.tabControl2.SelectedIndex = 0;
             this.tabControl2.Size = new System.Drawing.Size(878, 323);
@@ -1062,9 +1062,9 @@
             // 
             this.tabPage6.Controls.Add(this.orderRecordListBox);
             this.tabPage6.Location = new System.Drawing.Point(4, 28);
-            this.tabPage6.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tabPage6.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage6.Name = "tabPage6";
-            this.tabPage6.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tabPage6.Padding = new System.Windows.Forms.Padding(4);
             this.tabPage6.Size = new System.Drawing.Size(870, 291);
             this.tabPage6.TabIndex = 2;
             this.tabPage6.Text = "주문기록(체결)";
@@ -1076,7 +1076,7 @@
             this.orderRecordListBox.FormattingEnabled = true;
             this.orderRecordListBox.ItemHeight = 18;
             this.orderRecordListBox.Location = new System.Drawing.Point(4, 4);
-            this.orderRecordListBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.orderRecordListBox.Margin = new System.Windows.Forms.Padding(4);
             this.orderRecordListBox.Name = "orderRecordListBox";
             this.orderRecordListBox.Size = new System.Drawing.Size(862, 283);
             this.orderRecordListBox.TabIndex = 0;
@@ -1085,10 +1085,10 @@
             // 
             this.tabPage3.Controls.Add(this.insertListBox);
             this.tabPage3.Location = new System.Drawing.Point(4, 28);
-            this.tabPage3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tabPage3.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.tabPage3.Size = new System.Drawing.Size(869, 289);
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(4);
+            this.tabPage3.Size = new System.Drawing.Size(870, 291);
             this.tabPage3.TabIndex = 0;
             this.tabPage3.Text = "편입종목";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -1100,17 +1100,17 @@
             this.insertListBox.ItemHeight = 18;
             this.insertListBox.Location = new System.Drawing.Point(4, 4);
             this.insertListBox.Name = "insertListBox";
-            this.insertListBox.Size = new System.Drawing.Size(861, 281);
+            this.insertListBox.Size = new System.Drawing.Size(862, 283);
             this.insertListBox.TabIndex = 0;
             // 
             // tabPage4
             // 
             this.tabPage4.Controls.Add(this.deleteListBox);
             this.tabPage4.Location = new System.Drawing.Point(4, 28);
-            this.tabPage4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tabPage4.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.tabPage4.Size = new System.Drawing.Size(869, 289);
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(4);
+            this.tabPage4.Size = new System.Drawing.Size(870, 291);
             this.tabPage4.TabIndex = 1;
             this.tabPage4.Text = "이탈종목";
             this.tabPage4.UseVisualStyleBackColor = true;
@@ -1122,16 +1122,16 @@
             this.deleteListBox.ItemHeight = 18;
             this.deleteListBox.Location = new System.Drawing.Point(4, 4);
             this.deleteListBox.Name = "deleteListBox";
-            this.deleteListBox.Size = new System.Drawing.Size(861, 281);
+            this.deleteListBox.Size = new System.Drawing.Size(862, 283);
             this.deleteListBox.TabIndex = 0;
             // 
             // tabPage7
             // 
             this.tabPage7.Controls.Add(this.orderListBox2);
             this.tabPage7.Location = new System.Drawing.Point(4, 28);
-            this.tabPage7.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tabPage7.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage7.Name = "tabPage7";
-            this.tabPage7.Size = new System.Drawing.Size(869, 289);
+            this.tabPage7.Size = new System.Drawing.Size(870, 291);
             this.tabPage7.TabIndex = 3;
             this.tabPage7.Text = "Debug";
             this.tabPage7.UseVisualStyleBackColor = true;
@@ -1142,9 +1142,9 @@
             this.orderListBox2.FormattingEnabled = true;
             this.orderListBox2.ItemHeight = 18;
             this.orderListBox2.Location = new System.Drawing.Point(0, 0);
-            this.orderListBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.orderListBox2.Margin = new System.Windows.Forms.Padding(4);
             this.orderListBox2.Name = "orderListBox2";
-            this.orderListBox2.Size = new System.Drawing.Size(869, 289);
+            this.orderListBox2.Size = new System.Drawing.Size(870, 291);
             this.orderListBox2.TabIndex = 1;
             // 
             // tabControl1
@@ -1154,7 +1154,7 @@
             this.tabControl1.Controls.Add(this.tabPage5);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(4, 4);
-            this.tabControl1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tabControl1.Margin = new System.Windows.Forms.Padding(4);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(878, 323);
@@ -1164,9 +1164,9 @@
             // 
             this.tabPage1.Controls.Add(this.balanceDataGridView);
             this.tabPage1.Location = new System.Drawing.Point(4, 28);
-            this.tabPage1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tabPage1.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(4);
             this.tabPage1.Size = new System.Drawing.Size(870, 291);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "잔고";
@@ -1179,7 +1179,7 @@
             this.balanceDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.balanceDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.balanceDataGridView.Location = new System.Drawing.Point(4, 4);
-            this.balanceDataGridView.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.balanceDataGridView.Margin = new System.Windows.Forms.Padding(4);
             this.balanceDataGridView.Name = "balanceDataGridView";
             this.balanceDataGridView.ReadOnly = true;
             this.balanceDataGridView.RowHeadersVisible = false;
@@ -1193,10 +1193,10 @@
             // 
             this.tabPage2.Controls.Add(this.outstandingDataGridView);
             this.tabPage2.Location = new System.Drawing.Point(4, 28);
-            this.tabPage2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tabPage2.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.tabPage2.Size = new System.Drawing.Size(869, 289);
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(4);
+            this.tabPage2.Size = new System.Drawing.Size(870, 291);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "미체결";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -1209,14 +1209,14 @@
             this.outstandingDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.outstandingDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.outstandingDataGridView.Location = new System.Drawing.Point(4, 4);
-            this.outstandingDataGridView.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.outstandingDataGridView.Margin = new System.Windows.Forms.Padding(4);
             this.outstandingDataGridView.Name = "outstandingDataGridView";
             this.outstandingDataGridView.ReadOnly = true;
             this.outstandingDataGridView.RowHeadersVisible = false;
             this.outstandingDataGridView.RowHeadersWidth = 62;
             this.outstandingDataGridView.RowTemplate.Height = 23;
             this.outstandingDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.outstandingDataGridView.Size = new System.Drawing.Size(861, 281);
+            this.outstandingDataGridView.Size = new System.Drawing.Size(862, 283);
             this.outstandingDataGridView.TabIndex = 0;
             // 
             // tabPage5
@@ -1224,8 +1224,8 @@
             this.tabPage5.Controls.Add(this.stockListDataGridView);
             this.tabPage5.Location = new System.Drawing.Point(4, 28);
             this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
-            this.tabPage5.Size = new System.Drawing.Size(869, 289);
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage5.Size = new System.Drawing.Size(870, 291);
             this.tabPage5.TabIndex = 2;
             this.tabPage5.Text = "종목리스트";
             this.tabPage5.UseVisualStyleBackColor = true;
@@ -1244,7 +1244,7 @@
             this.stockListDataGridView.RowHeadersWidth = 62;
             this.stockListDataGridView.RowTemplate.Height = 30;
             this.stockListDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.stockListDataGridView.Size = new System.Drawing.Size(863, 283);
+            this.stockListDataGridView.Size = new System.Drawing.Size(864, 285);
             this.stockListDataGridView.TabIndex = 0;
             // 
             // axKHOpenAPI1
