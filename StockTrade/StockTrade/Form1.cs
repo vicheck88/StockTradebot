@@ -526,7 +526,7 @@ namespace StockTrade
         void seeTodayStockDeal()
         {
             if (stockBalanceList == null) return;
-            if (stocksToBuy == null) return;
+            if (stocksToBuy == null  || stocksToBuy.Count == 0) return;
             initStocksToBuy();
             foreach (var s in stockBalanceList)
             {

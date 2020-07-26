@@ -313,8 +313,8 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
     {
       businessDate<-as.Date(corpData[[1]],format='%Y-%m-%d')
       code<-corpData[[2]]
-      yData<-yearData[yearData$종목코드==code,]
-      qData<-quarterData[quarterData$종목코드==code,]
+      yData<-yearData[종목코드==code]
+      qData<-quarterData[종목코드==code]
       
       yData$일자<-as.character(yData$일자)
       qData$일자<-as.character(qData$일자)
