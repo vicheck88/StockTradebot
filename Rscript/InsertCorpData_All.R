@@ -49,17 +49,21 @@ Qdiff<-fsetdiff(fsQ,FfsQ)
 fsQ<-funion(FfsQ,Qdiff)
 fsY<-funion(FfsY,Ydiff)
 
+#기록한 재무제표 데이터베이스 저장
 res<-FALSE
 while(res==FALSE){
-  res<-dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQ,overwrite=TRUE,row.names=FALSE)
-  if(res==FALSE) Sys.sleep(5)
+  tryCatch(
+    res = dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQNew,append=TRUE,row.names=FALSE),
+    error=function(e){print(e);res=FALSE;Sys.sleep(5)}
+  )
 }
 res<-FALSE
 while(res==FALSE){
-  res<-dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsY,overwrite=TRUE,row.names=FALSE)
-  if(res==FALSE) Sys.sleep(5)
+  tryCatch(
+    res = dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsQNew,append=TRUE,row.names=FALSE),
+    error=function(e){print(e);res=FALSE;Sys.sleep(5)}
+  )
 }
-
 
 fs<-NULL
 for(i in 1:nrow(corpTable)){
@@ -68,8 +72,8 @@ for(i in 1:nrow(corpTable)){
 
 res<-FALSE
 while(res==FALSE){
-  res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,overwrite=TRUE)
-  if(res==FALSE) Sys.sleep(5)
+  tryCatch(
+    res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE),
+    error=function(e){print(e);res<-FALSE;Sys.sleep(5)}
+  )
 }
-
-
