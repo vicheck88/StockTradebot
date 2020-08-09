@@ -329,9 +329,9 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
       month(yDate)<-month(yDate)+4
       month(qDate)<-month(qDate)+monthTerm[month(qDate)]
       lastYearDate<-businessDate
-      year(lastYearDate)<-year(businessDate)-1
-      lastlastYearDate<-lastYearDate
-      year(lastlastYearDate)<-year(lastYearDate)-1
+      lastlastYearDate<-businessDate
+      year(lastlastYearDate)<-year(businessDate)-2
+      lastYearDate<-lastYearDate %m-% months(16)
       
       yData<-yData[yDate<=businessDate & yDate>=lastlastYearDate]
       qData<-qData[qDate<=businessDate & qDate>=lastYearDate]
