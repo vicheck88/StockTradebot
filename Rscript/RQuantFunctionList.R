@@ -334,7 +334,7 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
       year(lastlastYearDate)<-year(lastYearDate)-1
       
       yData<-yData[yDate<=businessDate & yDate>=lastlastYearDate]
-      qData<-qData[qDate<=businessDate & qDate>=lastlastYearDate]
+      qData<-qData[qDate<=businessDate & qDate>=lastYearDate]
       
       yDate<-yData$일자
       qDate<-qData$일자

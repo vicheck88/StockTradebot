@@ -71,6 +71,7 @@ namespace StockTrade
             Rprogram = new GetListFromR();
             Rmanager = new RscriptManager(DB);
             stocksToBuy = new Dictionary<string, stockInfo>();
+            stockBalanceList = new List<stockBalance>();
             readCurTradeRule();
             readDefaultAccountSetting();
         }
@@ -301,7 +302,6 @@ namespace StockTrade
                         double.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "수익률(%)"), out estimatedProfitRate);
                         int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "전일종가"), out closedPrice);
 
-
                         stockBalanceList.Add(new stockBalance(stockCode, stockName, number, String.Format("{0:#,###}", buyingMoney),
                             String.Format("{0:#,###}", currentPrice), String.Format("{0:#,###}", estimatedProfit), String.Format("{0:f2}", estimatedProfitRate/100),
                             String.Format("{0:#,###}", closedPrice), String.Format("{0:#,###}", estimatedAllPrice)));
@@ -512,8 +512,6 @@ namespace StockTrade
                 MessageBox.Show("매매조건을 먼저 설정하세요.");
                 return;
             }
-            //updateBalance();
-            //buyAutoStocks();
             t = new System.Windows.Forms.Timer();
             t.Tick += work;
             t.Interval = 30000;
@@ -525,19 +523,21 @@ namespace StockTrade
         }
         void seeTodayStockDeal()
         {
-            if (stockBalanceList == null) return;
             if (stocksToBuy == null  || stocksToBuy.Count == 0) return;
-            initStocksToBuy();
-            foreach (var s in stockBalanceList)
+            if (stocksToBuy.Values.Where(x => x.curStatus == 0).Count() == 0)
             {
-                s.종목코드 = s.종목코드.Replace("A", "").Trim();
-
-                if (stocksToBuy.Keys.Contains(s.종목코드))
+                initStocksToBuy();
+                foreach (var s in stockBalanceList)
                 {
-                    var st = stocksToBuy[s.종목코드];
-                    st.remainingPrice -= int.Parse(s.총평가금액.Replace(",", ""));
+                    s.종목코드 = s.종목코드.Replace("A", "").Trim();
+
+                    if (stocksToBuy.Keys.Contains(s.종목코드))
+                    {
+                        var st = stocksToBuy[s.종목코드];
+                        st.remainingPrice -= int.Parse(s.총평가금액.Replace(",", ""));
+                    }
+                    else stocksToBuy.Add(s.종목코드, new stockInfo(s.종목코드, s.종목명, -int.Parse(s.총평가금액.Replace(",", ""))));
                 }
-                else stocksToBuy.Add(s.종목코드, new stockInfo(s.종목코드, s.종목명, -int.Parse(s.총평가금액.Replace(",", ""))));
             }
             foreach(var s in stocksToBuy)
             {
