@@ -45,16 +45,16 @@ fsYNew<-fsetdiff(fsYNew,FfsQ)
 #기록한 재무제표 데이터베이스 저장
 res<-FALSE
 while(res==FALSE){
-  TryCatch(
+  tryCatch(
     res = dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQNew,append=TRUE,row.names=FALSE),
-    error=function(e){res=FALSE;Sys.sleep(5)}
+    error=function(e){print(e);res=FALSE;Sys.sleep(5)}
   )
 }
 res<-FALSE
 while(res==FALSE){
-  TryCatch(
+  tryCatch(
     res = dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsQNew,append=TRUE,row.names=FALSE),
-    error=function(e){res=FALSE;Sys.sleep(5)}
+    error=function(e){print(e);res=FALSE;Sys.sleep(5)}
   )
 }
 
@@ -70,8 +70,8 @@ for(i in 1:nrow(corpTable)){
 
 res<-FALSE
 while(res==FALSE){
-  TryCatch(
+  tryCatch(
     res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE),
-    error=function(e){res<-FALSE;Sys.sleep(5)}
+    error=function(e){print(e);res<-FALSE;Sys.sleep(5)}
   )
 }
