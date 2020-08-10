@@ -65,7 +65,7 @@ fsY<-unique(rbind(FfsY,fsYNew))
 
 fs<-NULL
 for(i in 1:nrow(corpTable)){
-  fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ))
+  fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
 }
 
 res<-FALSE

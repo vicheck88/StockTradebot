@@ -307,7 +307,7 @@ getStockNumberList<-function(businessDay, codeList){
   return(result)
 }
 
-cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
+cleanDataAndGetFactor<-function(corpData, yearData, quarterData, isNew){
   result<-NULL
   tryCatch(
     {
@@ -333,8 +333,13 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
       year(lastlastYearDate)<-year(businessDate)-2
       lastYearDate<-lastYearDate %m-% months(16)
       
-      yData<-yData[yDate<=businessDate & yDate>=lastlastYearDate]
-      qData<-qData[qDate<=businessDate & qDate>=lastYearDate]
+      yData<-yData[yDate>=lastlastYearDate]
+      qData<-qData[qDate>=lastYearDate]
+      
+      if(!isNew){
+        yData<-yData[yDate<=businessDate]
+        qData<-qData[qDate<=businessDate]
+      }
       
       yDate<-yData$일자
       qDate<-qData$일자
@@ -342,10 +347,11 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
       qRank<-frank(-as.double(qDate),ties.method="dense")
       yRank<-frank(-as.double(yDate),ties.method="dense")
       
+      if(length(yRank) == 0 & length(unique(qRank)) < 4 ){return(result)}
+      
       curQRange<-diff(range(as.double(qDate)[qRank<5]))
       prevQRange<-diff(range(as.double(qDate)[qRank>1 & qRank<=5]))
       
-      if(length(yRank) == 0 & length(unique(qRank)) < 4 ){return(result)}
       if(length(unique(qDate))>=4 & curQRange<=1){
         data<-qData[qRank<=4]
       } else{ data<-yData[yRank==1] }
