@@ -67,7 +67,7 @@ while(res==FALSE){
 
 fs<-NULL
 for(i in 1:nrow(corpTable)){
-  fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ))
+  fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,FALSE))
 }
 
 res<-FALSE
