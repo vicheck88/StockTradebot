@@ -338,14 +338,18 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
       
       yDate<-yData$일자
       qDate<-qData$일자
+      
       qRank<-frank(-as.double(qDate),ties.method="dense")
       yRank<-frank(-as.double(yDate),ties.method="dense")
       
+      curQRange<-diff(range(as.double(qDate)[qRank<5]))
+      prevQRange<-diff(range(as.double(qDate)[qRank>1 & qRank<=5]))
+      
       if(length(yRank) == 0 & length(unique(qRank)) < 4 ){return(result)}
-      if(length(unique(qDate))>=4){
+      if(length(unique(qDate))>=4 & curQRange<=1){
         data<-qData[qRank<=4]
       } else{ data<-yData[yRank==1] }
-      if(length(unique(qDate))>=5){
+      if(length(unique(qDate))>=5 & prevQRange<=1){
         previousData<-qData[qRank>=2 & qRank<=5]
       } else if(length(unique(yDate))>=2) { 
         previousData<-yData[yRank==2] } else{
