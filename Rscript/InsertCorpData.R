@@ -37,15 +37,9 @@ fsQ<-getAllFS('Q',corpList)
 fsY<-getAllFS('Y',corpList)
 
 fsQNew<-fsetdiff(fsQ,FfsQ)
-<<<<<<< HEAD
-fsQNew<-fsetdiff(fsQ,FfsY)
-fsYNew<-fsetdiff(fsY,FfsY)
-fsYNew<-fsetdiff(fsY,FfsQ)
-=======
 fsQNew<-fsetdiff(fsQNew,FfsY)
 fsYNew<-fsetdiff(fsY,FfsY)
 fsYNew<-fsetdiff(fsYNew,FfsQ)
->>>>>>> f5ac7dfb5a0ea1003234ec8bafac36d3b9d1b47a
 
 
 #기록한 재무제표 데이터베이스 저장
