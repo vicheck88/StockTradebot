@@ -313,8 +313,8 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
     {
       businessDate<-as.Date(corpData[[1]],format='%Y-%m-%d')
       code<-corpData[[2]]
-      yData<-yearData[yearData$종목코드==code,]
-      qData<-quarterData[quarterData$종목코드==code,]
+      yData<-yearData[종목코드==code]
+      qData<-quarterData[종목코드==code]
       
       yData$일자<-as.character(yData$일자)
       qData$일자<-as.character(qData$일자)
@@ -329,23 +329,27 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
       month(yDate)<-month(yDate)+4
       month(qDate)<-month(qDate)+monthTerm[month(qDate)]
       lastYearDate<-businessDate
-      year(lastYearDate)<-year(businessDate)-1
-      lastlastYearDate<-lastYearDate
-      year(lastlastYearDate)<-year(lastYearDate)-1
+      lastlastYearDate<-businessDate
+      year(lastlastYearDate)<-year(businessDate)-2
+      lastYearDate<-lastYearDate %m-% months(16)
       
       yData<-yData[yDate<=businessDate & yDate>=lastlastYearDate]
-      qData<-qData[qDate<=businessDate & qDate>=lastlastYearDate]
+      qData<-qData[qDate<=businessDate & qDate>=lastYearDate]
       
       yDate<-yData$일자
       qDate<-qData$일자
+      
       qRank<-frank(-as.double(qDate),ties.method="dense")
       yRank<-frank(-as.double(yDate),ties.method="dense")
       
+      curQRange<-diff(range(as.double(qDate)[qRank<5]))
+      prevQRange<-diff(range(as.double(qDate)[qRank>1 & qRank<=5]))
+      
       if(length(yRank) == 0 & length(unique(qRank)) < 4 ){return(result)}
-      if(length(unique(qDate))>=4){
+      if(length(unique(qDate))>=4 & curQRange<=1){
         data<-qData[qRank<=4]
       } else{ data<-yData[yRank==1] }
-      if(length(unique(qDate))>=5){
+      if(length(unique(qDate))>=5 & prevQRange<=1){
         previousData<-qData[qRank>=2 & qRank<=5]
       } else if(length(unique(yDate))>=2) { 
         previousData<-yData[yRank==2] } else{
