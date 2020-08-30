@@ -459,14 +459,7 @@ namespace StockTrade
             {
                 DataTable RcorpList = Rprogram.getCorpTable(rule.분석R파일, rule.제한종목개수);
                 if (RcorpLists == null) RcorpLists = RcorpList;
-                else
-                {
-                    foreach (DataRow row in RcorpList.Rows)
-                    {
-                        DataRow[] rows = RcorpLists.Select(string.Format("종목코드='{0}'", row["종목코드"].ToString()));
-                        if(rows.Count() == 0) RcorpLists.Rows.Add(row);
-                    }
-                }
+                else RcorpLists = RcorpLists.AsEnumerable().Union(RcorpList.AsEnumerable()).CopyToDataTable();
                 foreach (DataRow corp in RcorpList.Rows)
                 {
                     string code = corp[1].ToString();
@@ -492,6 +485,7 @@ namespace StockTrade
                 return;
             }
             if (t != null) t.Stop();
+            if(RcorpLists!=null) RcorpLists=null;
             stocksToBuy = new Dictionary<string, stockInfo>();
             autoTradingRuleList = new List<AutoTradingRule>();
             
