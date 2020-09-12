@@ -142,7 +142,7 @@ namespace StockTrade
                 if (limitPrice > 0 && limitNumber > 0)
                 {
                     long limitBuyingPerStock = limitPrice / limitNumber;
-                    limitBuyingPerStockLabel.Text = limitBuyingPerStock.ToString();
+                    limitBuyingPerStockTextBox.Text = limitBuyingPerStock.ToString();
                 }
             }
             else if (sender.Equals(limitNumberNumericUpDown))
@@ -152,7 +152,7 @@ namespace StockTrade
                 if (limitPrice > 0 && limitNumber > 0)
                 {
                     long limitBuyingPerStock = limitPrice / limitNumber;
-                    limitBuyingPerStockLabel.Text = limitBuyingPerStock.ToString();
+                    limitBuyingPerStockTextBox.Text = limitBuyingPerStock.ToString();
                 }
             }
         }
@@ -681,11 +681,11 @@ namespace StockTrade
         void setAutoTradingRule()
         {
             if (RFileName.Text == "" || limitPriceNumericUpDown.Value == 0 || limitNumberNumericUpDown.Value == 0 ||
-                limitBuyingPerStockLabel.Text == "" || autoBuyOrderComboBox.Text == "" || autoSellOrderComboBox.Text == "") return;
+                limitBuyingPerStockTextBox.Text == "" || autoBuyOrderComboBox.Text == "" || autoSellOrderComboBox.Text == "") return;
             string RName = RFileName.Text;//조건식 선택
             int limitBuyingStockPrice = int.Parse(limitPriceNumericUpDown.Value.ToString());//매입제한 금액
             int limitBuyingStockNumber = int.Parse(limitNumberNumericUpDown.Value.ToString());//매입 제한 종목개수
-            int limitBuyingPerStock = int.Parse(limitBuyingPerStockLabel.Text.ToString());//종목당 매수금액
+            int limitBuyingPerStock = int.Parse(limitBuyingPerStockTextBox.Text.ToString());//종목당 매수금액
             string autoBuyingOrderType = autoBuyOrderComboBox.Text;//매수 거래구분
             string autoSellingOrderType = autoSellOrderComboBox.Text;//매도 거래구분
             string updateTime = updateTimeTextBox.Text;

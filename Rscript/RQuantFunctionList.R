@@ -168,6 +168,7 @@ getFSFromFnGuide <- function(type, code){
   data_fs = c()
   data_value = c()
   tryCatch({
+    
     #Sys.setlocale('LC_ALL', 'English')
     # url 생성
     url = paste0(
@@ -243,6 +244,8 @@ getAllFS<-function(type, codeList){
   data<-NULL
   for(code in codeList){
     data<-rbind(data,getFSFromFnGuide(type,code))
+    print(paste0("Success: ",code,", ",type))
+    Sys.sleep(0.5)
   }
   return(data)
 }
@@ -395,7 +398,7 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
     previousData<-sumQuarterData(previousData)
   }
   
-  value_type <- c('지배주주순이익','자본','자본금','영업활동으로인한현금흐름','매출액','유상증자','매출총이익','영업이익',
+  value_type <- c('지배주주순이익','자본','자본금','영업활동으로인한현금흐름','매출액','매출총이익','영업이익',
                   '유동자산','부채','유상증자','자산','유동부채','당기순이익')
 
   if(!is.null(previousData)){
