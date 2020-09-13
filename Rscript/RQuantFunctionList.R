@@ -174,9 +174,10 @@ getFSHtmlFromFnGuide<-function(codeList){
     data = GET(url) %>%
       read_html() %>%
       html_table()
-    htmlData[code]<-data
+    htmlData[[code]]<-data
     print(paste0("Success: ",code))
   }
+  return(htmlData)
 }
 cleanFSHtmlToDataFrame<-function(type,htmlData){
   if(length(htmlData)==0) return(NULL)

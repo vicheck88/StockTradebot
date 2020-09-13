@@ -30,8 +30,8 @@ if(latestDate!=availableDate){
   #최신 재무제표 받기
   htmlData<-getFSHtmlFromFnGuide(corpList)
   
-  fsQ<-rbindlist(cleanFSHtmlToDataFrame('Q',htmlData))
-  fsY<-rbindlist(cleanFsHtmlToDataFrame('Y',htmlData))
+  fsQ<-rbindlist(lapply(htmlData,function(x) cleanFSHtmlToDataFrame('Q',x)))
+  fsY<-rbindlist(lapply(htmlData,function(x) cleanFSHtmlToDataFrame('Y',x)))
   
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
