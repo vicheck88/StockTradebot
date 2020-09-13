@@ -1,3 +1,5 @@
+print(paste0(Sys.time()," : Starting Script"))
+
 library(RPostgres)
 library(DBI)
 
@@ -6,6 +8,8 @@ conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port=
 source("./RQuantFunctionList.R",encoding="utf-8")
 
 #전월 말 날짜 구하기
+print(paste0(Sys.time()," : Starting to get date"))
+
 availableDate<-getLastBizdayofMonth(3)
 if(month(Sys.Date())==month(availableDate[2])) {
   availableDate<-availableDate[1]
@@ -14,7 +18,10 @@ if(month(Sys.Date())==month(availableDate[2])) {
 }
 latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보"))[,1]
 
+
 if(latestDate!=availableDate){
+  
+  print(paste0(Sys.time()," : Starting to get current coporation list"))
   
   day<-str_remove_all(availableDate,"-")
   #전달 말 등록된 기업정보
@@ -27,6 +34,7 @@ if(latestDate!=availableDate){
   corpList<-dbGetQuery(conn,SQL("select distinct 종목코드 from metainfo.기업정보"))$종목코드
   corpList<-unique(c(corpList,corpTable$종목코드))
 
+  print(paste0(Sys.time()," : Starting to get FS"))
   #최신 재무제표 받기
   htmlData<-getFSHtmlFromFnGuide(corpList)
   
@@ -40,6 +48,7 @@ if(latestDate!=availableDate){
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
   
+  print(paste0(Sys.time()," : Starting to write FS"))
   FfsY<-data.table(dbGetQuery(conn,SQL("SELECT * from metainfo.연간재무제표")))
   FfsQ<-data.table(dbGetQuery(conn,SQL("SELECT * from metainfo.분기재무제표")))
   
@@ -49,16 +58,18 @@ if(latestDate!=availableDate){
   dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQ,overwrite=TRUE,row.names=FALSE)
   dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsY,overwrite=TRUE,row.names=FALSE)
   
+  print(paste0(Sys.time()," : Starting to get factor data"))
   fs<-NULL
   for(i in 1:nrow(corpTable)){
     fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
-    print(paste0("[",i,"/",nrow(corpTable),"] success: calculating Factors of code: ",code))
+    print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",code))
   }
   
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
   
   res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)
+  print(paste0(Sys.time()," : Fisished"))
 }
 
-
+print(paste0(Sys.time()," : Already updated. Script finished"))
