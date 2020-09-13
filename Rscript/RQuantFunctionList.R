@@ -176,14 +176,14 @@ getFSHtmlFromFnGuide<-function(codeList){
       read_html() %>%
       html_table()
     htmlData[[code]]<-data
-    print(paste0("[",i,"/",length(codeList),"] Success: code: ",code))
+    print(paste0("[",i,"/",length(codeList),"] Success: ",code))
     i<-i+1
   }
   return(htmlData)
 }
 cleanFSHtmlToDataFrame<-function(type,htmlData){
   if(length(htmlData)==0) return(NULL)
-  data<-htmlData
+  data<-htmlData[[1]]
   if(type=="Y") r=1 else r=2
   idxList<-0:2*2+r
   # 3개 재무제표를 하나로 합치기    
@@ -213,7 +213,7 @@ cleanFSHtmlToDataFrame<-function(type,htmlData){
     data.frame(., row.names = rownames(data_fs))
   
   data_fs$'계정'<-ftype
-  data_fs$code<-code
+  data_fs$code<-names(htmlData)
   data_fs$'항목'<-Name
   data_fs<-subset(data_fs,select=c(6,7,5,1,2,3,4))
   
