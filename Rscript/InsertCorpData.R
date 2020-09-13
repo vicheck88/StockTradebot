@@ -12,7 +12,7 @@ if(month(Sys.Date())==month(availableDate[2])) {
 } else{
   availableDate<-availableDate[2]
 }
-latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보"))$일자
+latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보"))[,1]
 if(latestDate!=availableDate){
   
   day<-str_remove_all(availableDate,"-")

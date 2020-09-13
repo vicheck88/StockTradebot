@@ -12,8 +12,7 @@ if(month(Sys.Date())==month(availableDate[2])) {
 } else{
   availableDate<-availableDate[2]
 }
-latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보"))$일자
-if(latestDate!=availableDate){
+latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보"))[,1]
   
   day<-str_remove_all(availableDate,"-")
   #전달 말 등록된 기업정보
@@ -26,12 +25,11 @@ if(latestDate!=availableDate){
   corpList<-dbGetQuery(conn,SQL("select distinct 종목코드 from metainfo.기업정보"))$종목코드
   corpList<-unique(c(corpList,corpTable$종목코드))
   
-  curDate<-as.Date(availableDate)
-  prevDate<-curDate
-  
   #최신 재무제표 받기
-  fsQ<-getAllFS('Q',corpList)
-  fsY<-getAllFS('Y',corpList)
+  htmlData<-getFSHtmlFromFnGuide(corpList)
+
+  fsQ<-rbindlist(cleanFSHtmlToDataFrame('Q',htmlData))
+  fsY<-rbindlist(cleanFsHtmlToDataFrame('Y',htmlData))
   
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
@@ -54,7 +52,6 @@ if(latestDate!=availableDate){
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
   
-  res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)
-}
+  res<-dbWriteTable(conn,SQL("test.기업정보"),fs,overwrite=TRUE)
 
 
