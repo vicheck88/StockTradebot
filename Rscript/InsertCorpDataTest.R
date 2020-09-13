@@ -27,9 +27,8 @@ latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보")
   
   #최신 재무제표 받기
   htmlData<-getFSHtmlFromFnGuide(corpList)
-
-  fsQ<-rbindlist(cleanFSHtmlToDataFrame('Q',htmlData))
-  fsY<-rbindlist(cleanFsHtmlToDataFrame('Y',htmlData))
+  fsQ<-rbindlist(lapply(htmlData,function(x) cleanFSHtmlToDataFrame('Q',x)))
+  fsY<-rbindlist(lapply(htmlData,function(x) cleanFSHtmlToDataFrame('Y',x)))
   
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
@@ -46,7 +45,7 @@ latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보")
   fs<-NULL
   for(i in 1:nrow(corpTable)){
     fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
-    print(paste0("success: calculating Factors of ",code))
+    print(paste0("[",i,"/",nrow(corpTable),"] success: calculating Factors of code: ",code))
   }
   
   dbDisconnect(conn)

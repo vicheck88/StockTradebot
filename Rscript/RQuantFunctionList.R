@@ -164,6 +164,7 @@ getLastBizdayofMonth<-function(cnt){
 
 getFSHtmlFromFnGuide<-function(codeList){
   htmlData<-list()
+  i<-1
   for(code in codeList){
     url = paste0(
       'https://comp.fnguide.com/SVO2/ASP/'
@@ -175,7 +176,8 @@ getFSHtmlFromFnGuide<-function(codeList){
       read_html() %>%
       html_table()
     htmlData[[code]]<-data
-    print(paste0("Success: ",code))
+    print(paste0("[",i,"/",length(codeList),"] Success: code: ",code))
+    i<-i+1
   }
   return(htmlData)
 }
