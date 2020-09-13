@@ -19,7 +19,6 @@ if(month(Sys.Date())==month(availableDate[2])) {
 latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보"))[,1]
 
 
-  
   print(paste0(Sys.time()," : Starting to get current coporation list"))
   
   day<-str_remove_all(availableDate,"-")
@@ -60,7 +59,7 @@ latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보")
   fs<-NULL
   for(i in 1:nrow(corpTable)){
     fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
-    print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",code))
+    print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",corpTable[i,]$종목코드))
   }
   
   dbDisconnect(conn)
@@ -68,4 +67,8 @@ latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보")
   
   res<-dbWriteTable(conn,SQL("test.기업정보"),fs,overwrite=TRUE)
   print(paste0(Sys.time()," : Fisished"))
+<<<<<<< HEAD
+=======
+
+>>>>>>> e044380f9f4368d683ecd2d0c301f237dcebc65f
 
