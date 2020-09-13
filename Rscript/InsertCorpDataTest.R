@@ -19,8 +19,6 @@ if(month(Sys.Date())==month(availableDate[2])) {
 latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보"))[,1]
 
 
-if(latestDate!=availableDate){
-  
   print(paste0(Sys.time()," : Starting to get current coporation list"))
   
   day<-str_remove_all(availableDate,"-")
@@ -62,14 +60,13 @@ if(latestDate!=availableDate){
   fs<-NULL
   for(i in 1:nrow(corpTable)){
     fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
-    print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",code))
+    print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",corpTable[i,]$종목코드))
   }
   
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
   
-  res<-dbWriteTable(conn,SQL("test.기업정보"),fs,append=TRUE)
+  res<-dbWriteTable(conn,SQL("test.기업정보"),fs,overwrite=TRUE)
   print(paste0(Sys.time()," : Fisished"))
-}
 
 

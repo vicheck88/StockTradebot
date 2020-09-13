@@ -62,7 +62,7 @@ if(latestDate!=availableDate){
   fs<-NULL
   for(i in 1:nrow(corpTable)){
     fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
-    print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",code))
+    print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",corpTable[i,]$종목코드))
   }
   
   dbDisconnect(conn)
@@ -72,4 +72,4 @@ if(latestDate!=availableDate){
   print(paste0(Sys.time()," : Fisished"))
 }
 
-
+print(paste0(Sys.time()," : Already updated. Script finished"))
