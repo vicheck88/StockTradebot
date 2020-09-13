@@ -30,8 +30,12 @@ if(latestDate!=availableDate){
   #최신 재무제표 받기
   htmlData<-getFSHtmlFromFnGuide(corpList)
   
-  fsQ<-rbindlist(lapply(htmlData,function(x) cleanFSHtmlToDataFrame('Q',x)))
-  fsY<-rbindlist(lapply(htmlData,function(x) cleanFSHtmlToDataFrame('Y',x)))
+  fsQ<-rbindlist(lapply(corpList,function(x){
+    cleanFSHtmlToDataFrame('Q',htmlData[x])
+  }))
+  fsY<-rbindlist(lapply(corpList,function(x){
+    cleanFSHtmlToDataFrame('Y',htmlData[x])
+  }))
   
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
@@ -48,7 +52,7 @@ if(latestDate!=availableDate){
   fs<-NULL
   for(i in 1:nrow(corpTable)){
     fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
-    print(paste0("success: calculating Factors of ",code))
+    print(paste0("[",i,"/",nrow(corpTable),"] success: calculating Factors of code: ",code))
   }
   
   dbDisconnect(conn)
