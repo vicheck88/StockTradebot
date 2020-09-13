@@ -12,7 +12,8 @@ if(month(Sys.Date())==month(availableDate[2])) {
 } else{
   availableDate<-availableDate[2]
 }
-latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보"))$일자
+latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보"))[,1]
+
 if(latestDate!=availableDate){
   
   day<-str_remove_all(availableDate,"-")
@@ -25,13 +26,12 @@ if(latestDate!=availableDate){
   #지금까지 등록되어있는 기업정보 구하기
   corpList<-dbGetQuery(conn,SQL("select distinct 종목코드 from metainfo.기업정보"))$종목코드
   corpList<-unique(c(corpList,corpTable$종목코드))
-  
-  curDate<-as.Date(availableDate)
-  prevDate<-curDate
-  
+
   #최신 재무제표 받기
-  fsQ<-getAllFS('Q',corpList)
-  fsY<-getAllFS('Y',corpList)
+  htmlData<-getFSHtmlFromFnGuide(corpList)
+  
+  fsQ<-rbindlist(cleanFSHtmlToDataFrame('Q',htmlData))
+  fsY<-rbindlist(cleanFsHtmlToDataFrame('Y',htmlData))
   
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
