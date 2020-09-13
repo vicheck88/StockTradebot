@@ -162,15 +162,9 @@ getLastBizdayofMonth<-function(cnt){
   return(rownames(adjustedPriceFromNaver('month',cnt,'005930')))
 }
 
-
-getFSFromFnGuide <- function(type, code){
-  if(type=="Y") r=1 else r=2
-  data_fs = c()
-  data_value = c()
-  tryCatch({
-    
-    #Sys.setlocale('LC_ALL', 'English')
-    # url 생성
+getFSHtmlFromFnGuide<-function(codeList){
+  htmlData<-list()
+  for(code in codeList){
     url = paste0(
       'https://comp.fnguide.com/SVO2/ASP/'
       ,'SVD_Finance.asp?pGB=1&gicode=A',
@@ -180,87 +174,62 @@ getFSFromFnGuide <- function(type, code){
     data = GET(url) %>%
       read_html() %>%
       html_table()
-    
-    if(length(data)==0) return(NULL)
-    #Sys.setlocale('LC_ALL', 'Korean')
-    
-    idxList<-0:2*2+r
-    # 3개 재무제표를 하나로 합치기    
-    data_IS<-data[[idxList[1]]]
-    data_BS<-data[[idxList[2]]]
-    data_CF<-data[[idxList[3]]]
-    data_IS<-data_IS[, 1:(ncol(data_IS)-2)]
-    
-    data_IS$name<-'포괄손익계산서'
-    data_BS$name<-'재무상태표'
-    data_CF$name<-'현금흐름표'
-    data_fs<-rbind(data_IS,data_BS,data_CF)
-    # 데이터 클랜징
-    data_fs[, 1] = gsub('계산에 참여한 계정 펼치기','',data_fs[, 1])
-    data_fs = data_fs[!duplicated(data_fs[, 1]), ]
-    rownames(data_fs) = NULL
-    ftype<-data_fs[,1]
-    data_fs<-data_fs[,-1]
-    
-    Name<-data_fs[,length(names(data_fs))]
-    data_fs<-data_fs[,-length(names(data_fs))]
-    
-    data_fs = sapply(data_fs, function(x) {
-      str_replace_all(x, ',', '') %>%
-        as.numeric()
-    }) %>%
-      data.frame(., row.names = rownames(data_fs))
-    
-    data_fs$'계정'<-ftype
-    data_fs$code<-code
-    data_fs$'항목'<-Name
-    data_fs<-subset(data_fs,select=c(6,7,5,1,2,3,4))
-    
-    date<-names(data_fs)[4:7]
-    date<-str_replace_all(date,'[X]','')
-    names(data_fs)[4:7]<-date
-    if(type=='Q') {names(data_fs)[4:7]<-date} else{
-      month<-substr(date,6,7)
-      if(month[length(date)]!=month[1]) data_fs<-data_fs[,-length(names(data_fs))]
-    }
-    
-    data_fs<-as.data.table(data_fs)
-    data_fs<-melt.data.table(data_fs,1:3)
-    
-    names(data_fs)<-c("종목코드","종류","계정","일자","값")
-    data_fs$값<-data_fs$값*100000000
-    data_fs<-data_fs[!is.na(data_fs$값),]
-    return(data_fs)
-  })
-}
-
-getAllCorpsCode<-function(businessDay){
-  tickerFrame<-KRXDataMerge(businessDay)
-  return(tickerFrame$'종목코드')
-}
-
-
-getAllFS<-function(type, codeList){
-  data<-NULL
-  for(code in codeList){
-    data<-rbind(data,getFSFromFnGuide(type,code))
-    print(paste0("Success: ",code,", ",type))
-    Sys.sleep(0.5)
+    htmlData[[code]]<-data
+    print(paste0("Success: ",code))
   }
-  return(data)
+  return(htmlData)
 }
-
-getAllRecentFS<-function(type, codeList, recentData){
-  data<-NULL
-  for(code in codeList){
-    recordedDate<-recentData[종목코드==code]$일자
-    dat <- getFSFromFnGuide(type,code)
-    if(length(dat)>0){
-      if(length(recentDate)>0 & !is.na(recentDate) & !is.null(recentDate)) dat<-dat[!(일자 %in% recordedDate)]
-      data<- rbind(data,dat)
-    }
+cleanFSHtmlToDataFrame<-function(type,htmlData){
+  if(length(htmlData)==0) return(NULL)
+  data<-htmlData
+  if(type=="Y") r=1 else r=2
+  idxList<-0:2*2+r
+  # 3개 재무제표를 하나로 합치기    
+  data_IS<-data[[idxList[1]]]
+  data_BS<-data[[idxList[2]]]
+  data_CF<-data[[idxList[3]]]
+  data_IS<-data_IS[, 1:(ncol(data_IS)-2)]
+  
+  data_IS$name<-'포괄손익계산서'
+  data_BS$name<-'재무상태표'
+  data_CF$name<-'현금흐름표'
+  data_fs<-rbind(data_IS,data_BS,data_CF)
+  # 데이터 클랜징
+  data_fs[, 1] = gsub('계산에 참여한 계정 펼치기','',data_fs[, 1])
+  data_fs = data_fs[!duplicated(data_fs[, 1]), ]
+  rownames(data_fs) = NULL
+  ftype<-data_fs[,1]
+  data_fs<-data_fs[,-1]
+  
+  Name<-data_fs[,length(names(data_fs))]
+  data_fs<-data_fs[,-length(names(data_fs))]
+  
+  data_fs = sapply(data_fs, function(x) {
+    str_replace_all(x, ',', '') %>%
+      as.numeric()
+  }) %>%
+    data.frame(., row.names = rownames(data_fs))
+  
+  data_fs$'계정'<-ftype
+  data_fs$code<-code
+  data_fs$'항목'<-Name
+  data_fs<-subset(data_fs,select=c(6,7,5,1,2,3,4))
+  
+  date<-names(data_fs)[4:7]
+  date<-str_replace_all(date,'[X]','')
+  names(data_fs)[4:7]<-date
+  if(type=='Q') {names(data_fs)[4:7]<-date} else{
+    month<-substr(date,6,7)
+    if(month[length(date)]!=month[1]) data_fs<-data_fs[,-length(names(data_fs))]
   }
-  return(data)
+  
+  data_fs<-as.data.table(data_fs)
+  data_fs<-melt.data.table(data_fs,1:3)
+  
+  names(data_fs)<-c("종목코드","종류","계정","일자","값")
+  data_fs$값<-data_fs$값*100000000
+  data_fs<-data_fs[!is.na(data_fs$값),]
+  return(data_fs)
 }
 
 getCurrentPrice<-function(code){
