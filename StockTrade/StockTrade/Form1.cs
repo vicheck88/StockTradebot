@@ -541,6 +541,7 @@ namespace StockTrade
             }
             foreach(var s in stocksToBuy)
             {
+
                 orderListBox2.Items.Add(string.Format("종목코드:{0}, 종목명:{1}, 매입금액:{2}", s.Value.stockCode, s.Value.stockName, s.Value.remainingPrice));
                 orderListBox2.Items.Add("--------------------------------------------------");
             }
