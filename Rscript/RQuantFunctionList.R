@@ -162,6 +162,7 @@ getLastBizdayofMonth<-function(cnt){
   return(rownames(adjustedPriceFromNaver('month',cnt,'005930')))
 }
 
+#Fnguide에서 데이터 받기
 getFSHtmlFromFnGuide<-function(codeList){
   htmlData<-list()
   i<-1
@@ -181,6 +182,7 @@ getFSHtmlFromFnGuide<-function(codeList){
   }
   return(htmlData)
 }
+#Fnguide에서 받은 데이터 정리하기
 cleanFSHtmlToDataFrame<-function(type,htmlData){
   if(length(htmlData)==0) return(NULL)
   data<-htmlData[[1]]
@@ -281,6 +283,95 @@ getStockNumberList<-function(businessDay, codeList){
   return(result)
 }
 
+cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew){
+  result<-NULL
+  tryCatch(
+    {
+      businessDate<-as.Date(corpData[[1]],format='%Y-%m-%d')
+      code<-corpData[[2]]
+      yData<-yearData[종목코드==code]
+      qData<-quarterData[종목코드==code]
+      
+      yData$일자<-as.character(yData$일자)
+      qData$일자<-as.character(qData$일자)
+      
+      yDate<-as.Date(paste0(yData$일자,'.01'),format='%Y.%m.%d')
+      qDate<-as.Date(paste0(qData$일자,'.01'),format='%Y.%m.%d')
+      
+      monthCrit<-month(yDate[1])
+      monthTerm<-rep(3,12)
+      monthTerm[monthCrit]<-4
+      
+      month(yDate)<-month(yDate)+4
+      month(qDate)<-month(qDate)+monthTerm[month(qDate)]
+      lastYearDate<-businessDate %m-% months(12)
+      
+      yData<-yData[yDate>=lastYearDate]
+      qData<-qData[qDate>=lastYearDate]
+      
+      if(!isNew){
+        yData<-yData[yDate<=as.character(businessDate),]
+        qData<-qData[qDate<=as.character(businessDate),]
+      }
+      
+      yDate<-yData$일자
+      qDate<-qData$일자
+      
+      qRank<-frank(-as.double(qDate),ties.method="dense")
+      yRank<-frank(-as.double(yDate),ties.method="dense")
+      
+      if(length(yRank) == 0 & length(unique(qRank)) < 4 ){return(result)}
+      
+      curQRange<-diff(range(as.double(qDate)[qRank<5]))
+      prevQRange<-diff(range(as.double(qDate)[qRank>1 & qRank<=5]))
+      
+      if(length(unique(qDate))>=4 & curQRange<=1){
+        data<-qData[qRank<=4]
+      } else{ data<-yData[yRank==1] }
+      
+      result <- extractFSEntities(corpData, data)
+    },
+    error=function(e) print(paste0("Fail to Read: ",code," Date:",businessDate))
+  )
+  return(result)
+}
+
+sumQuarterData<-function(data){
+  fs<-data[data$종류=='재무상태표']
+  data<-data[data$종류!='재무상태표']
+  fs<-fs[일자==max(일자)]
+  fs<-fs[,-'일자']
+  if(length(unique(data$일자))>1) data<-data[,.(값=sum(값)),by=c('종목코드','종류','계정')] else{
+    data<-data[,-'일자']
+  }
+  names(fs)<-names(data)
+  data<-rbind(data,fs)
+  return(data)
+}
+
+extractFSEntities<-function(corpData,data){
+  marketPrice<-corpData$시가총액
+  code<-corpData$종목코드
+  data<-data[data$종목코드==code]
+  
+  if(length(unique(data$일자))==4){
+    data<-sumQuarterData(data)
+  }
+  
+  value_type <- c('지배주주순이익','자본','자본금','영업활동으로인한현금흐름','매출액','매출총이익','영업이익',
+                  '유동자산','부채','유상증자','자산','유동부채','당기순이익')
+  
+  tmp<-data[data[,계정 %in% value_type]]$값
+  names(tmp)<-data[data[,계정 %in% value_type]]$계정
+  
+  corpData[,':='(자산=tmp['자산'],유동자산=tmp['유동자산'],부채=tmp['부채'],유동부채=tmp['유동부채'],
+                   자본=tmp['자본'],자본금=tmp['자본금'],매출액=tmp['매출액'],매출총이익=tmp['매출총이익'],
+                   영업이익=tmp['영업이익'],지배주주순이익=tmp['지배주주순이익'],당기순이익=tmp['당기순이익'],
+                   영업활동으로인한현금흐름=tmp['영업활동으로인한현금흐름'],유상증자=tmp['유상증자'])]
+  
+  return(corpData)
+}
+
 cleanDataAndGetFactor<-function(corpData, yearData, quarterData, isNew){
   result<-NULL
   tryCatch(
@@ -342,18 +433,7 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData, isNew){
   return(result)
 }
 
-sumQuarterData<-function(data){
-  fs<-data[data$종류=='재무상태표']
-  data<-data[data$종류!='재무상태표']
-  fs<-fs[fs$일자==max(fs$일자)]
-  fs<-fs[,-'일자']
-  if(length(unique(data$일자))>1) data<-data[,.(값=sum(값)),by=c('종목코드','종류','계정')] else{
-    data<-data[,-'일자']
-  }
-  names(fs)<-names(data)
-  data<-rbind(data,fs)
-  return(data)
-}
+
 
 #PER, PBR, PCR, PSR, NCAV, GPA 계산(분기)
 getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
