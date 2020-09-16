@@ -59,8 +59,7 @@ latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보")
   print(paste0(Sys.time()," : Starting to get factor data"))
   fs<-NULL
   for(i in 1:nrow(corpTable)){
-    fs<-rbind(cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsY,TRUE))
-    #fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
+    fs<-rbind(cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,TRUE))
     print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",corpTable[i,]$종목코드))
   }
   

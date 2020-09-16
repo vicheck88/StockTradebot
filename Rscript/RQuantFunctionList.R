@@ -304,14 +304,14 @@ cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew)
       
       month(yDate)<-month(yDate)+4
       month(qDate)<-month(qDate)+monthTerm[month(qDate)]
-      lastYearDate<-businessDate
+      lastYearDate<-businessDate %m-% months(12)
       
       yData<-yData[yDate>=lastYearDate]
       qData<-qData[qDate>=lastYearDate]
       
       if(!isNew){
-        yData<-yData[yDate<=businessDate]
-        qData<-qData[qDate<=businessDate]
+        yData<-yData[yDate<=as.character(businessDate),]
+        qData<-qData[qDate<=as.character(businessDate),]
       }
       
       yDate<-yData$일자
@@ -339,7 +339,7 @@ cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew)
 sumQuarterData<-function(data){
   fs<-data[data$종류=='재무상태표']
   data<-data[data$종류!='재무상태표']
-  fs<-fs[fs$일자==max(fs$일자)]
+  fs<-fs[일자==max(일자)]
   fs<-fs[,-'일자']
   if(length(unique(data$일자))>1) data<-data[,.(값=sum(값)),by=c('종목코드','종류','계정')] else{
     data<-data[,-'일자']
