@@ -67,8 +67,4 @@ latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보")
   
   res<-dbWriteTable(conn,SQL("test.기업정보"),fs,overwrite=TRUE)
   print(paste0(Sys.time()," : Fisished"))
-<<<<<<< HEAD
-=======
-
->>>>>>> e044380f9f4368d683ecd2d0c301f237dcebc65f
 

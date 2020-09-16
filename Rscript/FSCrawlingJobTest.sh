@@ -1,3 +1,3 @@
 #! /bin/bash
 cd /home/pi/stockInfoCrawler/StockTradebot/Rscript
-Rscript InsertCorpDataTest.R
+/usr/local/bin/Rscript InsertCorpDataTest.R
