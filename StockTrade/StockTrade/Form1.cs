@@ -71,6 +71,7 @@ namespace StockTrade
             Rprogram = new GetListFromR();
             Rmanager = new RscriptManager(DB);
             stocksToBuy = new Dictionary<string, stockInfo>();
+            stockBalanceList = new List<stockBalance>();
             readCurTradeRule();
             readDefaultAccountSetting();
         }
@@ -141,7 +142,7 @@ namespace StockTrade
                 if (limitPrice > 0 && limitNumber > 0)
                 {
                     long limitBuyingPerStock = limitPrice / limitNumber;
-                    limitBuyingPerStockLabel.Text = limitBuyingPerStock.ToString();
+                    limitBuyingPerStockTextBox.Text = limitBuyingPerStock.ToString();
                 }
             }
             else if (sender.Equals(limitNumberNumericUpDown))
@@ -151,7 +152,7 @@ namespace StockTrade
                 if (limitPrice > 0 && limitNumber > 0)
                 {
                     long limitBuyingPerStock = limitPrice / limitNumber;
-                    limitBuyingPerStockLabel.Text = limitBuyingPerStock.ToString();
+                    limitBuyingPerStockTextBox.Text = limitBuyingPerStock.ToString();
                 }
             }
         }
@@ -300,7 +301,6 @@ namespace StockTrade
                         int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "평가손익"), out estimatedProfit);
                         double.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "수익률(%)"), out estimatedProfitRate);
                         int.TryParse(axKHOpenAPI1.GetCommData(e.sTrCode, e.sRQName, i, "전일종가"), out closedPrice);
-
 
                         stockBalanceList.Add(new stockBalance(stockCode, stockName, number, String.Format("{0:#,###}", buyingMoney),
                             String.Format("{0:#,###}", currentPrice), String.Format("{0:#,###}", estimatedProfit), String.Format("{0:f2}", estimatedProfitRate/100),
@@ -459,14 +459,7 @@ namespace StockTrade
             {
                 DataTable RcorpList = Rprogram.getCorpTable(rule.분석R파일, rule.제한종목개수);
                 if (RcorpLists == null) RcorpLists = RcorpList;
-                else
-                {
-                    foreach (DataRow row in RcorpList.Rows)
-                    {
-                        DataRow[] rows = RcorpLists.Select(string.Format("종목코드='{0}'", row["종목코드"].ToString()));
-                        if(rows.Count() == 0) RcorpLists.Rows.Add(row);
-                    }
-                }
+                else RcorpLists = RcorpLists.AsEnumerable().Union(RcorpList.AsEnumerable()).CopyToDataTable();
                 foreach (DataRow corp in RcorpList.Rows)
                 {
                     string code = corp[1].ToString();
@@ -492,6 +485,7 @@ namespace StockTrade
                 return;
             }
             if (t != null) t.Stop();
+            if(RcorpLists!=null) RcorpLists=null;
             stocksToBuy = new Dictionary<string, stockInfo>();
             autoTradingRuleList = new List<AutoTradingRule>();
             
@@ -512,8 +506,6 @@ namespace StockTrade
                 MessageBox.Show("매매조건을 먼저 설정하세요.");
                 return;
             }
-            //updateBalance();
-            //buyAutoStocks();
             t = new System.Windows.Forms.Timer();
             t.Tick += work;
             t.Interval = 30000;
@@ -525,19 +517,21 @@ namespace StockTrade
         }
         void seeTodayStockDeal()
         {
-            if (stockBalanceList == null) return;
             if (stocksToBuy == null  || stocksToBuy.Count == 0) return;
-            initStocksToBuy();
-            foreach (var s in stockBalanceList)
+            if (stocksToBuy.Values.Where(x => x.curStatus == 0).Count() == 0)
             {
-                s.종목코드 = s.종목코드.Replace("A", "").Trim();
-
-                if (stocksToBuy.Keys.Contains(s.종목코드))
+                initStocksToBuy();
+                foreach (var s in stockBalanceList)
                 {
-                    var st = stocksToBuy[s.종목코드];
-                    st.remainingPrice -= int.Parse(s.총평가금액.Replace(",", ""));
+                    s.종목코드 = s.종목코드.Replace("A", "").Trim();
+
+                    if (stocksToBuy.Keys.Contains(s.종목코드))
+                    {
+                        var st = stocksToBuy[s.종목코드];
+                        st.remainingPrice -= int.Parse(s.총평가금액.Replace(",", ""));
+                    }
+                    else stocksToBuy.Add(s.종목코드, new stockInfo(s.종목코드, s.종목명, -int.Parse(s.총평가금액.Replace(",", ""))));
                 }
-                else stocksToBuy.Add(s.종목코드, new stockInfo(s.종목코드, s.종목명, -int.Parse(s.총평가금액.Replace(",", ""))));
             }
             foreach(var s in stocksToBuy)
             {
@@ -688,11 +682,11 @@ namespace StockTrade
         void setAutoTradingRule()
         {
             if (RFileName.Text == "" || limitPriceNumericUpDown.Value == 0 || limitNumberNumericUpDown.Value == 0 ||
-                limitBuyingPerStockLabel.Text == "" || autoBuyOrderComboBox.Text == "" || autoSellOrderComboBox.Text == "") return;
+                limitBuyingPerStockTextBox.Text == "" || autoBuyOrderComboBox.Text == "" || autoSellOrderComboBox.Text == "") return;
             string RName = RFileName.Text;//조건식 선택
             int limitBuyingStockPrice = int.Parse(limitPriceNumericUpDown.Value.ToString());//매입제한 금액
             int limitBuyingStockNumber = int.Parse(limitNumberNumericUpDown.Value.ToString());//매입 제한 종목개수
-            int limitBuyingPerStock = int.Parse(limitBuyingPerStockLabel.Text.ToString());//종목당 매수금액
+            int limitBuyingPerStock = int.Parse(limitBuyingPerStockTextBox.Text.ToString());//종목당 매수금액
             string autoBuyingOrderType = autoBuyOrderComboBox.Text;//매수 거래구분
             string autoSellingOrderType = autoSellOrderComboBox.Text;//매도 거래구분
             string updateTime = updateTimeTextBox.Text;

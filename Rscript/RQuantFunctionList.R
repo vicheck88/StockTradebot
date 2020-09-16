@@ -162,14 +162,11 @@ getLastBizdayofMonth<-function(cnt){
   return(rownames(adjustedPriceFromNaver('month',cnt,'005930')))
 }
 
-
-getFSFromFnGuide <- function(type, code){
-  if(type=="Y") r=1 else r=2
-  data_fs = c()
-  data_value = c()
-  tryCatch({
-    #Sys.setlocale('LC_ALL', 'English')
-    # url 생성
+#Fnguide에서 데이터 받기
+getFSHtmlFromFnGuide<-function(codeList){
+  htmlData<-list()
+  i<-1
+  for(code in codeList){
     url = paste0(
       'https://comp.fnguide.com/SVO2/ASP/'
       ,'SVD_Finance.asp?pGB=1&gicode=A',
@@ -179,85 +176,64 @@ getFSFromFnGuide <- function(type, code){
     data = GET(url) %>%
       read_html() %>%
       html_table()
-    
-    if(length(data)==0) return(NULL)
-    #Sys.setlocale('LC_ALL', 'Korean')
-    
-    idxList<-0:2*2+r
-    # 3개 재무제표를 하나로 합치기    
-    data_IS<-data[[idxList[1]]]
-    data_BS<-data[[idxList[2]]]
-    data_CF<-data[[idxList[3]]]
-    data_IS<-data_IS[, 1:(ncol(data_IS)-2)]
-    
-    data_IS$name<-'포괄손익계산서'
-    data_BS$name<-'재무상태표'
-    data_CF$name<-'현금흐름표'
-    data_fs<-rbind(data_IS,data_BS,data_CF)
-    # 데이터 클랜징
-    data_fs[, 1] = gsub('계산에 참여한 계정 펼치기','',data_fs[, 1])
-    data_fs = data_fs[!duplicated(data_fs[, 1]), ]
-    rownames(data_fs) = NULL
-    ftype<-data_fs[,1]
-    data_fs<-data_fs[,-1]
-    
-    Name<-data_fs[,length(names(data_fs))]
-    data_fs<-data_fs[,-length(names(data_fs))]
-    
-    data_fs = sapply(data_fs, function(x) {
-      str_replace_all(x, ',', '') %>%
-        as.numeric()
-    }) %>%
-      data.frame(., row.names = rownames(data_fs))
-    
-    data_fs$'계정'<-ftype
-    data_fs$code<-code
-    data_fs$'항목'<-Name
-    data_fs<-subset(data_fs,select=c(6,7,5,1,2,3,4))
-    
-    date<-names(data_fs)[4:7]
-    date<-str_replace_all(date,'[X]','')
-    names(data_fs)[4:7]<-date
-    if(type=='Q') {names(data_fs)[4:7]<-date} else{
-      month<-substr(date,6,7)
-      if(month[length(date)]!=month[1]) data_fs<-data_fs[,-length(names(data_fs))]
-    }
-    
-    data_fs<-as.data.table(data_fs)
-    data_fs<-melt.data.table(data_fs,1:3)
-    
-    names(data_fs)<-c("종목코드","종류","계정","일자","값")
-    data_fs$값<-data_fs$값*100000000
-    data_fs<-data_fs[!is.na(data_fs$값),]
-    return(data_fs)
-  })
-}
-
-getAllCorpsCode<-function(businessDay){
-  tickerFrame<-KRXDataMerge(businessDay)
-  return(tickerFrame$'종목코드')
-}
-
-
-getAllFS<-function(type, codeList){
-  data<-NULL
-  for(code in codeList){
-    data<-rbind(data,getFSFromFnGuide(type,code))
+    htmlData[[code]]<-data
+    print(paste0(Sys.time()," : [",i,"/",length(codeList),"] Success: ",code))
+    i<-i+1
   }
-  return(data)
+  return(htmlData)
 }
-
-getAllRecentFS<-function(type, codeList, recentData){
-  data<-NULL
-  for(code in codeList){
-    recordedDate<-recentData[종목코드==code]$일자
-    dat <- getFSFromFnGuide(type,code)
-    if(length(dat)>0){
-      if(length(recentDate)>0 & !is.na(recentDate) & !is.null(recentDate)) dat<-dat[!(일자 %in% recordedDate)]
-      data<- rbind(data,dat)
-    }
+#Fnguide에서 받은 데이터 정리하기
+cleanFSHtmlToDataFrame<-function(type,htmlData){
+  if(length(htmlData)==0) return(NULL)
+  data<-htmlData[[1]]
+  if(type=="Y") r=1 else r=2
+  idxList<-0:2*2+r
+  # 3개 재무제표를 하나로 합치기    
+  data_IS<-data[[idxList[1]]]
+  data_BS<-data[[idxList[2]]]
+  data_CF<-data[[idxList[3]]]
+  data_IS<-data_IS[, 1:(ncol(data_IS)-2)]
+  
+  data_IS$name<-'포괄손익계산서'
+  data_BS$name<-'재무상태표'
+  data_CF$name<-'현금흐름표'
+  data_fs<-rbind(data_IS,data_BS,data_CF)
+  # 데이터 클랜징
+  data_fs[, 1] = gsub('계산에 참여한 계정 펼치기','',data_fs[, 1])
+  data_fs = data_fs[!duplicated(data_fs[, 1]), ]
+  rownames(data_fs) = NULL
+  ftype<-data_fs[,1]
+  data_fs<-data_fs[,-1]
+  
+  Name<-data_fs[,length(names(data_fs))]
+  data_fs<-data_fs[,-length(names(data_fs))]
+  
+  data_fs = sapply(data_fs, function(x) {
+    str_replace_all(x, ',', '') %>%
+      as.numeric()
+  }) %>%
+    data.frame(., row.names = rownames(data_fs))
+  
+  data_fs$'계정'<-ftype
+  data_fs$code<-names(htmlData)
+  data_fs$'항목'<-Name
+  data_fs<-subset(data_fs,select=c(6,7,5,1,2,3,4))
+  
+  date<-names(data_fs)[4:7]
+  date<-str_replace_all(date,'[X]','')
+  names(data_fs)[4:7]<-date
+  if(type=='Q') {names(data_fs)[4:7]<-date} else{
+    month<-substr(date,6,7)
+    if(month[length(date)]!=month[1]) data_fs<-data_fs[,-length(names(data_fs))]
   }
-  return(data)
+  
+  data_fs<-as.data.table(data_fs)
+  data_fs<-melt.data.table(data_fs,1:3)
+  
+  names(data_fs)<-c("종목코드","종류","계정","일자","값")
+  data_fs$값<-data_fs$값*100000000
+  data_fs<-data_fs[!is.na(data_fs$값),]
+  return(data_fs)
 }
 
 getCurrentPrice<-function(code){
@@ -307,7 +283,7 @@ getStockNumberList<-function(businessDay, codeList){
   return(result)
 }
 
-cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
+cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew){
   result<-NULL
   tryCatch(
     {
@@ -329,29 +305,31 @@ cleanDataAndGetFactor<-function(corpData, yearData, quarterData){
       month(yDate)<-month(yDate)+4
       month(qDate)<-month(qDate)+monthTerm[month(qDate)]
       lastYearDate<-businessDate
-      year(lastYearDate)<-year(businessDate)-1
-      lastlastYearDate<-lastYearDate
-      year(lastlastYearDate)<-year(lastYearDate)-1
       
-      yData<-yData[yDate<=businessDate & yDate>=lastlastYearDate]
-      qData<-qData[qDate<=businessDate & qDate>=lastlastYearDate]
+      yData<-yData[yDate>=lastYearDate]
+      qData<-qData[qDate>=lastYearDate]
+      
+      if(!isNew){
+        yData<-yData[yDate<=businessDate]
+        qData<-qData[qDate<=businessDate]
+      }
       
       yDate<-yData$일자
       qDate<-qData$일자
+      
       qRank<-frank(-as.double(qDate),ties.method="dense")
       yRank<-frank(-as.double(yDate),ties.method="dense")
       
       if(length(yRank) == 0 & length(unique(qRank)) < 4 ){return(result)}
-      if(length(unique(qDate))>=4){
+      
+      curQRange<-diff(range(as.double(qDate)[qRank<5]))
+      prevQRange<-diff(range(as.double(qDate)[qRank>1 & qRank<=5]))
+      
+      if(length(unique(qDate))>=4 & curQRange<=1){
         data<-qData[qRank<=4]
       } else{ data<-yData[yRank==1] }
-      if(length(unique(qDate))>=5){
-        previousData<-qData[qRank>=2 & qRank<=5]
-      } else if(length(unique(yDate))>=2) { 
-        previousData<-yData[yRank==2] } else{
-          previousData<-NULL
-        }
-      result <- getCurrentValueQualityFactorQuarter(corpData, data, previousData)
+      
+      result <- extractFSEntities(corpData, data)
     },
     error=function(e) print(paste0("Fail to Read: ",code," Date:",businessDate))
   )
@@ -371,6 +349,92 @@ sumQuarterData<-function(data){
   return(data)
 }
 
+extractFSEntities<-function(corpData,data){
+  marketPrice<-corpData$시가총액
+  code<-corpData$종목코드
+  data<-data[data$종목코드==code]
+  
+  if(length(unique(data$일자))==4){
+    data<-sumQuarterData(data)
+  }
+  
+  value_type <- c('지배주주순이익','자본','자본금','영업활동으로인한현금흐름','매출액','매출총이익','영업이익',
+                  '유동자산','부채','유상증자','자산','유동부채','당기순이익')
+  
+  tmp<-data[data[,계정 %in% value_type]]$값
+  names(tmp)<-data[data[,계정 %in% value_type]]$계정
+  
+  corpData[,':='(자산=tmp['자산'],유동자산=tmp['유동자산'],부채=tmp['부채'],유동부채=tmp['유동부채'],
+                   자본=tmp['자본'],자본금=tmp['자본금'],매출액=tmp['매출액'],매출총이익=tmp['매출총이익'],
+                   영업이익=tmp['영업이익'],지배주주순이익=tmp['지배주주순이익'],당기순이익=tmp['당기순이익'],
+                   영업활동으로인한현금흐름=tmp['영업활동으로인한현금흐름'],유상증자=tmp['유상증자'])]
+  
+  return(corpData)
+}
+
+cleanDataAndGetFactor<-function(corpData, yearData, quarterData, isNew){
+  result<-NULL
+  tryCatch(
+    {
+      businessDate<-as.Date(corpData[[1]],format='%Y-%m-%d')
+      code<-corpData[[2]]
+      yData<-yearData[종목코드==code]
+      qData<-quarterData[종목코드==code]
+      
+      yData$일자<-as.character(yData$일자)
+      qData$일자<-as.character(qData$일자)
+      
+      yDate<-as.Date(paste0(yData$일자,'.01'),format='%Y.%m.%d')
+      qDate<-as.Date(paste0(qData$일자,'.01'),format='%Y.%m.%d')
+      
+      monthCrit<-month(yDate[1])
+      monthTerm<-rep(3,12)
+      monthTerm[monthCrit]<-4
+      
+      month(yDate)<-month(yDate)+4
+      month(qDate)<-month(qDate)+monthTerm[month(qDate)]
+      lastYearDate<-businessDate
+      lastlastYearDate<-businessDate
+      year(lastlastYearDate)<-year(businessDate)-2
+      lastYearDate<-lastYearDate %m-% months(16)
+      
+      yData<-yData[yDate>=lastlastYearDate]
+      qData<-qData[qDate>=lastYearDate]
+      
+      if(!isNew){
+        yData<-yData[yDate<=businessDate]
+        qData<-qData[qDate<=businessDate]
+      }
+      
+      yDate<-yData$일자
+      qDate<-qData$일자
+      
+      qRank<-frank(-as.double(qDate),ties.method="dense")
+      yRank<-frank(-as.double(yDate),ties.method="dense")
+      
+      if(length(yRank) == 0 & length(unique(qRank)) < 4 ){return(result)}
+      
+      curQRange<-diff(range(as.double(qDate)[qRank<5]))
+      prevQRange<-diff(range(as.double(qDate)[qRank>1 & qRank<=5]))
+      
+      if(length(unique(qDate))>=4 & curQRange<=1){
+        data<-qData[qRank<=4]
+      } else{ data<-yData[yRank==1] }
+      if(length(unique(qDate))>=5 & prevQRange<=1){
+        previousData<-qData[qRank>=2 & qRank<=5]
+      } else if(length(unique(yDate))>=2) { 
+        previousData<-yData[yRank==2] } else{
+          previousData<-NULL
+        }
+      result <- getCurrentValueQualityFactorQuarter(corpData, data, previousData)
+    },
+    error=function(e) print(paste0("Fail to Read: ",code," Date:",businessDate))
+  )
+  return(result)
+}
+
+
+
 #PER, PBR, PCR, PSR, NCAV, GPA 계산(분기)
 getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
   
@@ -385,7 +449,7 @@ getCurrentValueQualityFactorQuarter<-function(corpData, data, previousData){
     previousData<-sumQuarterData(previousData)
   }
   
-  value_type <- c('지배주주순이익','자본','자본금','영업활동으로인한현금흐름','매출액','유상증자','매출총이익','영업이익',
+  value_type <- c('지배주주순이익','자본','자본금','영업활동으로인한현금흐름','매출액','매출총이익','영업이익',
                   '유동자산','부채','유상증자','자산','유동부채','당기순이익')
 
   if(!is.null(previousData)){

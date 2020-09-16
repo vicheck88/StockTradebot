@@ -34,21 +34,24 @@ namespace StockTrade
         private void UpdateRscripButton_Click(object sender, EventArgs e)
         {
             if(RscriptList.SelectedRows.Count>0 && 
-                RscriptList.SelectedRows[0].Cells[0].Value.ToString() == RscriptNameText.Text) updateCurrentScript();
+                RscriptList.SelectedRows[0].Cells[0].Value.ToString() != "") updateCurrentScript();
             else insertNewScript();
         }
         public void updateCurrentScript()
         {
-            string SQL = @"UPDATE metainfo.rscript SET filterdesc=@Filter, rankdesc=@Rank, script=@Script";
+            string SQL = @"UPDATE metainfo.rscript SET name=@Name, filterdesc=@Filter, rankdesc=@Rank, script=@Script
+                           WHERE name=@OLDName";
             Dictionary<string, object[]> param = new Dictionary<string, object[]>();
             param.Add("Filter", new object[] { NpgsqlDbType.Text, RscriptFilterText.Text });
             param.Add("Rank", new object[] { NpgsqlDbType.Text, RscriptRankText.Text });
             param.Add("Script", new object[] { NpgsqlDbType.Text, Rscript.Text });
+            param.Add("Name", new object[] { NpgsqlDbType.Text, RscriptNameText.Text });
+            param.Add("OLDName", new object[] { NpgsqlDbType.Text, RscriptList.SelectedRows[0].Cells[0].Value.ToString() });
             RManager.DB.writeToDB(SQL, param);
             RManager.syncScriptList();
             RscriptList.DataSource = null;
             RscriptList.DataSource = RManager.scriptList;
-            //RscriptList.Refresh();
+            RscriptList.Refresh();
         }
         public void insertNewScript()
         {
@@ -86,6 +89,9 @@ namespace StockTrade
             if (RscriptNameText.Text == null) return;
             RManager.DB.deleteScriptFromDB(RscriptNameText.Text);
             RManager.syncScriptList();
+            RscriptList.DataSource = null;
+            RscriptList.DataSource = RManager.scriptList;
+            RscriptList.Refresh();
         }
 
         private void AddNewButton_Click(object sender, EventArgs e)

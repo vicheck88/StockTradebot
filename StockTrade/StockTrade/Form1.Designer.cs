@@ -66,7 +66,6 @@
             this.autoSellOrderComboBox = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
             this.label19 = new System.Windows.Forms.Label();
-            this.limitBuyingPerStockLabel = new System.Windows.Forms.Label();
             this.autoBuyOrderComboBox = new System.Windows.Forms.ComboBox();
             this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
             this.label12 = new System.Windows.Forms.Label();
@@ -115,6 +114,7 @@
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.stockListDataGridView = new System.Windows.Forms.DataGridView();
             this.axKHOpenAPI1 = new AxKHOpenAPILib.AxKHOpenAPI();
+            this.limitBuyingPerStockTextBox = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.orderPriceNumericUpDown)).BeginInit();
@@ -464,8 +464,8 @@
             this.tableLayoutPanel2.Controls.Add(this.autoSellOrderComboBox, 1, 5);
             this.tableLayoutPanel2.Controls.Add(this.label4, 0, 4);
             this.tableLayoutPanel2.Controls.Add(this.label19, 0, 3);
-            this.tableLayoutPanel2.Controls.Add(this.limitBuyingPerStockLabel, 1, 3);
             this.tableLayoutPanel2.Controls.Add(this.autoBuyOrderComboBox, 1, 4);
+            this.tableLayoutPanel2.Controls.Add(this.limitBuyingPerStockTextBox, 1, 3);
             this.tableLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel2.Location = new System.Drawing.Point(3, 3);
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
@@ -616,17 +616,6 @@
             this.label19.TabIndex = 0;
             this.label19.Text = "종목당 매수금액";
             this.label19.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // limitBuyingPerStockLabel
-            // 
-            this.limitBuyingPerStockLabel.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.limitBuyingPerStockLabel.AutoSize = true;
-            this.limitBuyingPerStockLabel.Location = new System.Drawing.Point(221, 71);
-            this.limitBuyingPerStockLabel.Name = "limitBuyingPerStockLabel";
-            this.limitBuyingPerStockLabel.Size = new System.Drawing.Size(11, 12);
-            this.limitBuyingPerStockLabel.TabIndex = 0;
-            this.limitBuyingPerStockLabel.Text = "0";
-            this.limitBuyingPerStockLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // autoBuyOrderComboBox
             // 
@@ -1194,6 +1183,14 @@
             this.axKHOpenAPI1.Size = new System.Drawing.Size(337, 168);
             this.axKHOpenAPI1.TabIndex = 0;
             // 
+            // limitBuyingPerStockTextBox
+            // 
+            this.limitBuyingPerStockTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.limitBuyingPerStockTextBox.Location = new System.Drawing.Point(154, 69);
+            this.limitBuyingPerStockTextBox.Name = "limitBuyingPerStockTextBox";
+            this.limitBuyingPerStockTextBox.Size = new System.Drawing.Size(145, 21);
+            this.limitBuyingPerStockTextBox.TabIndex = 4;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
@@ -1300,7 +1297,6 @@
         private System.Windows.Forms.Label label18;
         private System.Windows.Forms.ComboBox autoSellOrderComboBox;
         private System.Windows.Forms.Label label19;
-        private System.Windows.Forms.Label limitBuyingPerStockLabel;
         private System.Windows.Forms.TextBox updateTimeTextBox;
         private System.Windows.Forms.Button selectRFileButton;
         private System.Windows.Forms.TabPage tabPage5;
@@ -1327,6 +1323,7 @@
         private System.Windows.Forms.ListBox deleteListBox;
         private System.Windows.Forms.TabPage tabPage7;
         private System.Windows.Forms.ListBox orderListBox2;
+        private System.Windows.Forms.TextBox limitBuyingPerStockTextBox;
     }
 }
 
