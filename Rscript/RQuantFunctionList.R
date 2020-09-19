@@ -323,7 +323,6 @@ cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew)
       if(length(yRank) == 0 & length(unique(qRank)) < 4 ){return(result)}
       
       curQRange<-diff(range(as.double(qDate)[qRank<5]))
-      prevQRange<-diff(range(as.double(qDate)[qRank>1 & qRank<=5]))
       
       if(length(unique(qDate))>=4 & curQRange<=1){
         data<-qData[qRank<=4]
