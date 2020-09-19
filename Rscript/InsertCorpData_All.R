@@ -34,46 +34,40 @@ setDT(corpTable)
 #dbWriteTable(conn,SQL("metainfo.기업정보"),corpTable)
 #corpTable<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.기업정보")))
 #모든 기업의 재무제표 구하기
-
+print(paste0(Sys.time()," : Starting to get FS"))
+#최신 재무제표 받기
 corpList<-unique(corpTable$종목코드)
-fsQ<-getAllFS('Q',corpList)
-fsY<-getAllFS('Y',corpList)
+htmlData<-getFSHtmlFromFnGuide(corpList)
 
-#데이터베이스에서 구하기
-FfsQ<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.분기재무제표")))
-FfsY<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.연간재무제표")))
+fsQ<-rbindlist(lapply(corpList,function(x){
+  cleanFSHtmlToDataFrame('Q',htmlData[x])
+}))
+fsY<-rbindlist(lapply(corpList,function(x){
+  cleanFSHtmlToDataFrame('Y',htmlData[x])
+}))
 
-Ydiff<-fsetdiff(fsY,FfsY)
-Qdiff<-fsetdiff(fsQ,FfsQ)
+dbDisconnect(conn)
+conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
 
-fsQ<-funion(FfsQ,Qdiff)
-fsY<-funion(FfsY,Ydiff)
+print(paste0(Sys.time()," : Starting to write FS"))
+FfsY<-data.table(dbGetQuery(conn,SQL("SELECT * from metainfo.연간재무제표")))
+FfsQ<-data.table(dbGetQuery(conn,SQL("SELECT * from metainfo.분기재무제표")))
 
-#기록한 재무제표 데이터베이스 저장
-res<-FALSE
-while(res==FALSE){
-  tryCatch(
-    res = dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQNew,append=TRUE,row.names=FALSE),
-    error=function(e){print(e);res=FALSE;Sys.sleep(5)}
-  )
-}
-res<-FALSE
-while(res==FALSE){
-  tryCatch(
-    res = dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsQNew,append=TRUE,row.names=FALSE),
-    error=function(e){print(e);res=FALSE;Sys.sleep(5)}
-  )
-}
+fsY<-unique(rbind(FfsY,fsY),by=c("종목코드","종류","계정","일자"),fromLast=T)
+fsQ<-unique(rbind(FfsQ,fsQ),by=c("종목코드","종류","계정","일자"),fromLast=T)
 
+dbWriteTable(conn,SQL("test.분기재무제표"),fsQ,overwrite=TRUE,row.names=FALSE)
+dbWriteTable(conn,SQL("test.연간재무제표"),fsY,overwrite=TRUE,row.names=FALSE)
+
+print(paste0(Sys.time()," : Starting to get factor data"))
 fs<-NULL
 for(i in 1:nrow(corpTable)){
-  fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,FALSE))
+  fs<-rbind(fs,cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsY,TRUE))
+  print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",corpTable[i,]$종목코드))
 }
 
-res<-FALSE
-while(res==FALSE){
-  tryCatch(
-    res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE),
-    error=function(e){print(e);res<-FALSE;Sys.sleep(5)}
-  )
-}
+dbDisconnect(conn)
+conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
+
+res<-dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,overwrite=TRUE)
+print(paste0(Sys.time()," : Finished"))

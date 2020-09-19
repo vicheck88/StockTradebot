@@ -16,8 +16,7 @@ if(month(Sys.Date())==month(availableDate[2])) {
 } else{
   availableDate<-availableDate[2]
 }
-latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.기업정보"))[,1]
-
+latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.월별기업정보"))[,1]
 
 if(latestDate!=availableDate){
   
@@ -58,18 +57,19 @@ if(latestDate!=availableDate){
   dbWriteTable(conn,SQL("metainfo.분기재무제표"),fsQ,overwrite=TRUE,row.names=FALSE)
   dbWriteTable(conn,SQL("metainfo.연간재무제표"),fsY,overwrite=TRUE,row.names=FALSE)
   
-  print(paste0(Sys.time()," : Starting to get factor data"))
+  print(paste0(Sys.time()," : Starting to summarize financial data"))
   fs<-NULL
   for(i in 1:nrow(corpTable)){
-    fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
-    print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",corpTable[i,]$종목코드))
+    fs<-rbind(fs,cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsY,TRUE))
+    #fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
+    print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: Summarizing Data of ",corpTable[i,]$종목코드))
   }
   
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
   
   res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)
-  print(paste0(Sys.time()," : Fisished"))
+  print(paste0(Sys.time()," : Finished"))
 }
 
 print(paste0(Sys.time()," : Already updated. Script finished"))
