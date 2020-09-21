@@ -1,4 +1,4 @@
 #! /bin/bash
 cd /home/pi/stockInfoCrawler/StockTradebot/Rscript
-Rscript InsertCorpData.R
+/usr/local/bin/Rscript InsertCorpData.R
 
