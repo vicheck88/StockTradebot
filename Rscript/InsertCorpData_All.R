@@ -65,7 +65,7 @@ for(i in 1:nrow(corpTable)){
   res<-cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,FALSE)
   fs<-rbind(fs,res)
   if(!is.null(res)) print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",corpTable[i,]$종목코드," Date: ",corpTable[i,]$일자))
-  else print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] fail: calculating Factors of ",corpTable[i,]$종목코드," Date: ",corpTable[i,]$일자," : return NULL"))
+  #else print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] fail: calculating Factors of ",corpTable[i,]$종목코드," Date: ",corpTable[i,]$일자," : return NULL"))
 }
 
 dbDisconnect(conn)
