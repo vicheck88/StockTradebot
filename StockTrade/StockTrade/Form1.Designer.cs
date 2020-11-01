@@ -67,6 +67,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label19 = new System.Windows.Forms.Label();
             this.autoBuyOrderComboBox = new System.Windows.Forms.ComboBox();
+            this.limitBuyingPerStockTextBox = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
             this.label12 = new System.Windows.Forms.Label();
             this.accountComboBox = new System.Windows.Forms.ComboBox();
@@ -114,7 +115,6 @@
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.stockListDataGridView = new System.Windows.Forms.DataGridView();
             this.axKHOpenAPI1 = new AxKHOpenAPILib.AxKHOpenAPI();
-            this.limitBuyingPerStockTextBox = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.orderPriceNumericUpDown)).BeginInit();
@@ -630,6 +630,14 @@
             this.autoBuyOrderComboBox.Name = "autoBuyOrderComboBox";
             this.autoBuyOrderComboBox.Size = new System.Drawing.Size(145, 20);
             this.autoBuyOrderComboBox.TabIndex = 1;
+            // 
+            // limitBuyingPerStockTextBox
+            // 
+            this.limitBuyingPerStockTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.limitBuyingPerStockTextBox.Location = new System.Drawing.Point(154, 69);
+            this.limitBuyingPerStockTextBox.Name = "limitBuyingPerStockTextBox";
+            this.limitBuyingPerStockTextBox.Size = new System.Drawing.Size(145, 21);
+            this.limitBuyingPerStockTextBox.TabIndex = 4;
             // 
             // tableLayoutPanel5
             // 
@@ -1182,14 +1190,6 @@
             this.axKHOpenAPI1.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axKHOpenAPI1.OcxState")));
             this.axKHOpenAPI1.Size = new System.Drawing.Size(337, 168);
             this.axKHOpenAPI1.TabIndex = 0;
-            // 
-            // limitBuyingPerStockTextBox
-            // 
-            this.limitBuyingPerStockTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.limitBuyingPerStockTextBox.Location = new System.Drawing.Point(154, 69);
-            this.limitBuyingPerStockTextBox.Name = "limitBuyingPerStockTextBox";
-            this.limitBuyingPerStockTextBox.Size = new System.Drawing.Size(145, 21);
-            this.limitBuyingPerStockTextBox.TabIndex = 4;
             // 
             // Form1
             // 
