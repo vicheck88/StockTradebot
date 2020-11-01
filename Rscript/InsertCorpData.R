@@ -62,7 +62,7 @@ if(latestDate!=availableDate){
   for(i in 1:nrow(corpTable)){
     fs<-rbind(fs,cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,TRUE))
     #fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
-    print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: Summarizing Data of ",corpTable[i,]$종목코드))
+    if(NROW(fs)==i) print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: Summarizing Data of ",corpTable[i,]$종목코드))
   }
   
   dbDisconnect(conn)
