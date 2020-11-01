@@ -304,7 +304,7 @@ cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew)
       
       month(yDate)<-month(yDate)+4
       month(qDate)<-month(qDate)+monthTerm[month(qDate)]
-      lastYearDate<-businessDate %m+% -12
+      lastYearDate<-businessDate %m+% months(-12)
       
       yData<-yData[yDate>=lastYearDate]
       qData<-qData[qDate>=lastYearDate]
