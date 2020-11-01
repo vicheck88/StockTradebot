@@ -454,7 +454,7 @@ namespace StockTrade
         {
             if (autoTradingRuleList == null) return;
             stocksToBuy = new Dictionary<string, stockInfo>();
-            
+            if(RcorpLists!=null) RcorpLists.Clear();
             foreach (var rule in autoTradingRuleList)
             {
                 DataTable RcorpList = Rprogram.getCorpTable(rule.분석R파일, rule.제한종목개수);
@@ -693,7 +693,7 @@ namespace StockTrade
             string status = "정지";
 
             if (RName.Length > 0 && limitBuyingStockPrice > 0 && limitBuyingStockNumber > 0 &&
-                limitBuyingPerStock > 0 && autoBuyingOrderType.Length > 0 && autoSellingOrderType.Length > 0)
+                autoBuyingOrderType.Length > 0 && autoSellingOrderType.Length > 0)
             {
                 autoRuleID = registeredRuleList.Count;
                 registeredRuleList.Add(new AutoTradingRule(
@@ -701,7 +701,7 @@ namespace StockTrade
                 updateAutoTradingRule();
             }
             else if (RName.Length == 0 || limitBuyingStockPrice == 0 || limitBuyingStockNumber == 0 ||
-                limitBuyingPerStock == 0 || autoBuyingOrderType.Length == 0 || autoSellingOrderType.Length == 0)
+                 autoBuyingOrderType.Length == 0 || autoSellingOrderType.Length == 0)
             {
                 MessageBox.Show("거래규칙 값을 모두 입력하세요");
             }
