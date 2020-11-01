@@ -30,7 +30,7 @@ if(latestDate!=availableDate){
   corpTable<-as.data.table(df)
   
   #지금까지 등록되어있는 기업정보 구하기
-  corpList<-dbGetQuery(conn,SQL("select distinct 종목코드 from metainfo.기업정보"))$종목코드
+  corpList<-dbGetQuery(conn,SQL("select distinct 종목코드 from metainfo.월별기업정보"))$종목코드
   corpList<-unique(c(corpList,corpTable$종목코드))
 
   print(paste0(Sys.time()," : Starting to get FS"))
@@ -60,7 +60,7 @@ if(latestDate!=availableDate){
   print(paste0(Sys.time()," : Starting to summarize financial data"))
   fs<-NULL
   for(i in 1:nrow(corpTable)){
-    fs<-rbind(fs,cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsY,TRUE))
+    fs<-rbind(fs,cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,TRUE))
     #fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
     print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: Summarizing Data of ",corpTable[i,]$종목코드))
   }
@@ -68,8 +68,6 @@ if(latestDate!=availableDate){
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
   
-  res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)
+  res<-dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,append=TRUE)
   print(paste0(Sys.time()," : Finished"))
-}
-
-print(paste0(Sys.time()," : Already updated. Script finished"))
+} else{ print(paste0(Sys.time()," : Already updated. Script finished"))}
