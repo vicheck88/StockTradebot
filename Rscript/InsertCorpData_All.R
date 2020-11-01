@@ -62,8 +62,10 @@ dbWriteTable(conn,SQL("test.연간재무제표"),fsY,overwrite=TRUE,row.names=FA
 print(paste0(Sys.time()," : Starting to get factor data"))
 fs<-NULL
 for(i in 1:nrow(corpTable)){
-  fs<-rbind(fs,cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,FALSE))
-  if(NROW(fs)==i) print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",corpTable[i,]$종목코드))
+  res<-cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,FALSE)
+  fs<-rbind(fs,res)
+  if(!is.null(res)) print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: calculating Factors of ",corpTable[i,]$종목코드," Date: ",corpTable[i,]$일자))
+  else print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] fail: calculating Factors of ",corpTable[i,]$종목코드," Date: ",corpTable[i,]$일자," : return NULL"))
 }
 
 dbDisconnect(conn)
