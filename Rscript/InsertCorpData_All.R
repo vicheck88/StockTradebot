@@ -1,7 +1,7 @@
 library(RPostgres)
 library(DBI)
 
-conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
+conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='119.194.25.19',port='54321',user='postgres',password='12dnjftod')
 #함수 불러돌이기
 source("./RQuantFunctionList.R",encoding="utf-8")
 
