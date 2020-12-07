@@ -1,4 +1,4 @@
-[1] "2020-11-02 00:05:03 : Starting Script"
+[1] "2020-12-04 00:05:01 : Starting Script"
 Loading required package: xts
 Loading required package: zoo
 
@@ -105,7 +105,7 @@ The following objects are masked from ‘package:xts’:
 
     first, last
 
-[1] "2020-11-02 00:05:26 : Starting to get date"
+[1] "2020-12-04 00:05:21 : Starting to get date"
 Warning message:
-Duplicated column names deduplicated: '54000' => '54000_1' [5] 
-[1] "2020-11-02 00:05:35 : Already updated. Script finished"
+Duplicated column names deduplicated: '56600' => '56600_1' [5] 
+[1] "2020-12-04 00:05:27 : Already updated. Script finished"
