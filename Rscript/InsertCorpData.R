@@ -2,8 +2,9 @@ print(paste0(Sys.time()," : Starting Script"))
 
 library(RPostgres)
 library(DBI)
-
-conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='119.194.25.19',port='54321',user='postgres',password='12dnjftod')
+library(jsonlite)
+dbConfig=read_json("./config.json")$database
+conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
 #함수 불러돌이기
 source("./RQuantFunctionList.R",encoding="utf-8")
 
@@ -45,7 +46,7 @@ if(latestDate!=availableDate){
   }))
   
   dbDisconnect(conn)
-  conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
+  conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
   
   print(paste0(Sys.time()," : Starting to write FS"))
   FfsY<-data.table(dbGetQuery(conn,SQL("SELECT * from metainfo.연간재무제표")))
@@ -66,7 +67,7 @@ if(latestDate!=availableDate){
   }
   
   dbDisconnect(conn)
-  conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
+  conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
   
   res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)
   print(paste0(Sys.time()," : Finished"))
