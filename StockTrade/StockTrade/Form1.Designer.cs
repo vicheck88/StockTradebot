@@ -1173,13 +1173,13 @@
             this.stockListDataGridView.Location = new System.Drawing.Point(2, 2);
             this.stockListDataGridView.Margin = new System.Windows.Forms.Padding(2);
             this.stockListDataGridView.Name = "stockListDataGridView";
-            this.stockListDataGridView.ReadOnly = true;
             this.stockListDataGridView.RowHeadersVisible = false;
             this.stockListDataGridView.RowHeadersWidth = 62;
             this.stockListDataGridView.RowTemplate.Height = 30;
             this.stockListDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.stockListDataGridView.Size = new System.Drawing.Size(602, 184);
             this.stockListDataGridView.TabIndex = 0;
+            this.stockListDataGridView.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.stockListDataGridView_CellContentClick);
             // 
             // axKHOpenAPI1
             // 

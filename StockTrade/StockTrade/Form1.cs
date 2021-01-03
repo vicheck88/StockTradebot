@@ -452,7 +452,8 @@ namespace StockTrade
         }
         void initStocksToBuy()
         {
-            if (autoTradingRuleList == null) return;
+            setRulesForTrading();
+            if (autoTradingRuleList.Count == 0) return;
             stocksToBuy = new Dictionary<string, stockInfo>();
             if(RcorpLists!=null) RcorpLists.Clear();
             foreach (var rule in autoTradingRuleList)
@@ -460,15 +461,16 @@ namespace StockTrade
                 DataTable RcorpList = Rprogram.getCorpTable(rule.분석R파일, rule.제한종목개수);
                 if (RcorpLists == null) RcorpLists = RcorpList;
                 else RcorpLists = RcorpLists.AsEnumerable().Union(RcorpList.AsEnumerable()).CopyToDataTable();
+
                 foreach (DataRow corp in RcorpList.Rows)
                 {
-                    string code = corp[1].ToString();
-                    string name = corp[2].ToString();
+                    string code = corp["종목코드"].ToString();
+                    string name = corp["종목명"].ToString();
                     int price = rule.종목당매수금액;
 
                     rule.autoTradingPurchaseStockList.Add(new AutoTradingPurchaseStock(code, price, 0));
                     if (stocksToBuy.Keys.Contains(code)) stocksToBuy[code].remainingPrice += price;
-                    else stocksToBuy.Add(code, new stockInfo(code, name, price));
+                    else stocksToBuy.Add(code, new stockInfo(code, name, price, true));
                 }
                 buyOrderType = rule.매수거래구분;
                 sellOrderType = rule.매도거래구분;
@@ -476,6 +478,8 @@ namespace StockTrade
             }
             stockListDataGridView.DataSource = null;
             stockListDataGridView.DataSource = RcorpLists;
+            foreach(DataGridViewColumn col in stockListDataGridView.Columns)
+                if (col.Index != 0) col.ReadOnly = true;
         }
         void startAutoTrading()
         {
@@ -487,19 +491,7 @@ namespace StockTrade
             if (t != null) t.Stop();
             if(RcorpLists!=null) RcorpLists=null;
             stocksToBuy = new Dictionary<string, stockInfo>();
-            autoTradingRuleList = new List<AutoTradingRule>();
             
-            foreach(DataGridViewRow row in autoRuleDataGridView.Rows)
-            {
-                if (row.Cells["거래규칙_상태"].Value.ToString() != "시작") continue;
-                var newRule = new AutoTradingRule(int.Parse(row.Cells[0].Value.ToString()),
-                    row.Cells[1].Value.ToString(), int.Parse(row.Cells[2].Value.ToString()), 
-                    int.Parse(row.Cells[3].Value.ToString()), int.Parse(row.Cells[4].Value.ToString()), 
-                    row.Cells[5].Value.ToString(), row.Cells[6].Value.ToString(), 
-                    row.Cells[7].Value.ToString(), row.Cells[8].Value.ToString());
-                autoTradingRuleList.Add(newRule);
-                if (newRule.종목당매수금액 == 0) newRule.종목당매수금액 = newRule.매입제한금액 / newRule.제한종목개수;
-            }
             initStocksToBuy();
             if (autoTradingRuleList.Count == 0)
             {
@@ -514,6 +506,21 @@ namespace StockTrade
                 buyOrderType, sellOrderType, updateTime));
             orderListBox2.Items.Add("자동거래 시작");
             orderListBox2.Items.Add("---------------------------------");
+        }
+        void setRulesForTrading()
+        {
+            autoTradingRuleList = new List<AutoTradingRule>();
+            foreach (DataGridViewRow row in autoRuleDataGridView.Rows)
+            {
+                if (row.Cells["거래규칙_상태"].Value.ToString() != "시작") continue;
+                var newRule = new AutoTradingRule(int.Parse(row.Cells[0].Value.ToString()),
+                    row.Cells[1].Value.ToString(), int.Parse(row.Cells[2].Value.ToString()),
+                    int.Parse(row.Cells[3].Value.ToString()), int.Parse(row.Cells[4].Value.ToString()),
+                    row.Cells[5].Value.ToString(), row.Cells[6].Value.ToString(),
+                    row.Cells[7].Value.ToString(), row.Cells[8].Value.ToString());
+                autoTradingRuleList.Add(newRule);
+                if (newRule.종목당매수금액 == 0) newRule.종목당매수금액 = newRule.매입제한금액 / newRule.제한종목개수;
+            }
         }
         void seeTodayStockDeal()
         {
@@ -530,7 +537,7 @@ namespace StockTrade
                         var st = stocksToBuy[s.종목코드];
                         st.remainingPrice -= int.Parse(s.총평가금액.Replace(",", ""));
                     }
-                    else stocksToBuy.Add(s.종목코드, new stockInfo(s.종목코드, s.종목명, -int.Parse(s.총평가금액.Replace(",", ""))));
+                    else stocksToBuy.Add(s.종목코드, new stockInfo(s.종목코드, s.종목명, -int.Parse(s.총평가금액.Replace(",", "")), true));
                 }
             }
             foreach(var s in stocksToBuy)
@@ -547,10 +554,14 @@ namespace StockTrade
                 seeTodayStockDeal();
                 isPriceUpdated = true;
             }
-            var stockCodeList = String.Join(";", 
-                stocksToBuy.OrderBy(i => i.Value.remainingPrice).Select(x => "A" + x.Key));
-            axKHOpenAPI1.CommKwRqData(stockCodeList, 0, stocksToBuy.Count, 0, "조건검색종목", "5100");
+            var includedStockList = stocksToBuy.Where(x => x.Value.isIncluded);
+            var stockCodeList = String.Join(";",
+                includedStockList.OrderBy(i => i.Value.remainingPrice).Select(x => "A" + x.Key));
+            axKHOpenAPI1.CommKwRqData(stockCodeList, 0, includedStockList.Count(), 0, "조건검색종목", "5100");
         }
+
+
+
         void updateBalance()
         {
             DB.deleteBalanceInfo(userID, DateTime.Now.ToString("yyyy-MM"),
@@ -858,6 +869,16 @@ namespace StockTrade
                     writeCurTradeRule();
                 }
             }
+        }
+
+        private void stockListDataGridView_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            var view = sender as DataGridView;
+            if (e.RowIndex < 0) return;
+            if (!(view.Columns[e.ColumnIndex] is DataGridViewCheckBoxColumn)) return;
+            var code = view.Rows[e.RowIndex].Cells[2].Value.ToString();
+            stocksToBuy[code].isIncluded ^= true;
+            view.Rows[e.RowIndex].Cells[0].Value = stocksToBuy[code].isIncluded;
         }
     }
 }
