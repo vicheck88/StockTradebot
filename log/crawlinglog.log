@@ -1,4 +1,4 @@
-[1] "2021-02-01 00:05:02 : Starting Script"
+[1] "2021-02-02 00:05:02 : Starting Script"
 Loading required package: xts
 Loading required package: zoo
 
@@ -51,8 +51,6 @@ The following object is masked from ‘package:magrittr’:
     extract
 
 corrplot 0.84 loaded
-Highcharts (www.highcharts.com) is a Highsoft software product which is
-not free for commercial and Governmental use
 
 Attaching package: ‘plotly’
 
@@ -105,35 +103,9 @@ The following objects are masked from ‘package:xts’:
 
     first, last
 
-[1] "2021-02-01 00:05:22 : Starting to get date"
-[1] "2021-02-01 00:05:23 : Starting to get current coporation list"
-Warning: 3 parsing failures.
-row col  expected    actual         file
- 20  -- 1 columns 2 columns literal data
- 25  -- 1 columns 2 columns literal data
-127  -- 1 columns 2 columns literal data
-
-Warning: 3 parsing failures.
-row col  expected    actual         file
- 20  -- 1 columns 2 columns literal data
- 25  -- 1 columns 2 columns literal data
-127  -- 1 columns 2 columns literal data
-
-Error: Can't subset columns that don't exist.
-✖ Column `종목명` doesn't exist.
-Backtrace:
-     █
-  1. └─global::KRXDataMerge(day)
-  2.   ├─generics::setdiff(down_sector[, "종목명"], down_ind[, "종목명"])
-  3.   ├─down_sector[, "종목명"]
-  4.   ├─readr:::`[.spec_tbl_df`(down_sector, , "종목명")
-  5.   ├─base::NextMethod(`[`)
-  6.   └─tibble:::`[.tbl_df`(down_sector, , "종목명")
-  7.     └─tibble:::vectbl_as_col_location(...)
-  8.       ├─tibble:::subclass_col_index_errors(...)
-  9.       │ └─base::withCallingHandlers(...)
- 10.       └─vctrs::vec_as_location(j, n, names)
- 11.         └─(function () ...
- 12.           └─vctrs:::stop_subscript_oob(...)
- 13.             └─vctrs:::stop_subscript(...)
+[1] "2021-02-02 00:05:21 : Starting to get date"
+Warning message:
+Duplicated column names deduplicated: '67100' => '67100_1' [4] 
+[1] "2021-02-02 00:05:22 : Starting to get current coporation list"
+Error: '종목코드,종목명,매매거래정지,정리매매 종목,관리종목,투자주의환기종목,불성실공시,단일가매매대상 초저유동성종목,상장주식수 부족 우선주,단기과열종목,투자주의종목,투자경고종목,투자위험종목' does not exist in current working directory ('/home/pi/stockInfoCrawler/StockTradebot/Rscript').
 Execution halted
