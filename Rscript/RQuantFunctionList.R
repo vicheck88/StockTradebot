@@ -23,58 +23,85 @@ recentBizDay <- function(){
 }
 
 
-KRXIndStat <- function(businessDay){
+KRXIndStat <- function(businessDay,type){
   # 산업별 현황 OTP 발급
   gen_otp_url =
-    'http://marketdata.krx.co.kr/contents/COM/GenerateOTP.jspx'
+    'http://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd'
   gen_otp_data = list(
+    mktId = type,
+    trdDd = '20210201',
+    money = '1',
+    csvxls_isNo = 'false',
     name = 'fileDown',
-    filetype = 'csv',
-    url = 'MKD/03/0303/03030103/mkd03030103',
-    tp_cd = 'ALL',
-    date = businessDay, # 최근영업일로 변경
-    lang = 'ko',
-    pagePath = '/contents/MKD/03/0303/03030103/MKD03030103.jsp')
+    url='dbms/MDC/STAT/standard/MDCSTAT03901'
+    )
   otp = POST(gen_otp_url, query = gen_otp_data) %>%
     read_html() %>%
     html_text()
   # 산업별 현황 데이터 다운로드
-  down_url = 'http://file.krx.co.kr/download.jspx'
-  down_sector = POST(down_url, query = list(code = otp),
-                     add_headers(referer = gen_otp_url)) %>%
-    read_html() %>%
+  down_url = 'http://data.krx.co.kr/comm/fileDn/download_csv/download.cmd'
+  down_sector = POST(down_url, query = list(code = otp)) %>%
+    read_html(.,encoding='cp949') %>%
     html_text() %>%
     read_csv()
 }
-
 KRXIndividualStat<-function(businessDay){
   # 개별종목 지표 OTP 발급
   gen_otp_url =
-    'http://marketdata.krx.co.kr/contents/COM/GenerateOTP.jspx'
+    'http://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd'
   gen_otp_data = list(
+    searchType = '1',
+    mktId = 'ALL',
+    csvxls_isNo = "false",
     name = 'fileDown',
-    filetype = 'csv',
-    url = "MKD/13/1302/13020401/mkd13020401",
-    market_gubun = 'ALL',
-    gubun = '1',
-    schdate = businessDay, # 최근영업일로 변경
-    pagePath = "/contents/MKD/13/1302/13020401/MKD13020401.jsp")
+    url = 'dbms/MDC/STAT/standard/MDCSTAT03501',
+    trdDd = businessDay # 최근영업일로 변경
+    )
   
   otp = POST(gen_otp_url, query = gen_otp_data) %>%
     read_html() %>%
     html_text()
   
   # 개별종목 지표 데이터 다운로드
-  down_url = 'http://file.krx.co.kr/download.jspx'
-  down_ind = POST(down_url, query = list(code = otp),
-                  add_headers(referer = gen_otp_url)) %>%
+  down_url = 'http://data.krx.co.kr/comm/fileDn/download_csv/download.cmd'
+  down_ind = POST(down_url, query = list(code = otp)) %>%
+    read_html(.,encoding='cp949') %>%
+    html_text() %>%
+    read_csv()
+}
+KRXMonitoringStat<-function(){
+  # 개별종목 지표 OTP 발급
+  gen_otp_url =
+    'http://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd'
+  gen_otp_data = list(
+    mktId = 'ALL',
+    csvxls_isNo = "false",
+    name = 'fileDown',
+    url = 'dbms/MDC/STAT/standard/MDCSTAT02001'
+  )
+  
+  otp = POST(gen_otp_url, query = gen_otp_data) %>%
     read_html() %>%
+    html_text()
+  
+  # 개별종목 지표 데이터 다운로드
+  down_url = 'http://data.krx.co.kr/comm/fileDn/download_csv/download.cmd'
+  down_ind = POST(down_url, query = list(code = otp)) %>%
+    read_html(.,encoding='cp949') %>%
     html_text() %>%
     read_csv()
 }
 
 KRXDataMerge<-function(businessDay){
-  down_sector<-KRXIndStat(businessDay)
+  down_sector_KOSPI<-KRXIndStat(businessDay,'STK')
+  down_sector_KOSDAQ<-KRXIndStat(businessDay,'KSQ')
+  down_sector<-rbind(down_sector_KOSPI,down_sector_KOSDAQ)
+  
+  down_monitoring<-KRXMonitoringStat()
+  down_monitoring$관리종목<-str_replace_all(down_monitoring$관리종목,'O','관리종목')
+  down_monitoring$관리종목<-str_replace_all(down_monitoring$관리종목,'X','-')
+  down_monitoring<-down_monitoring[,c(1,2,5)]
+  
   down_ind<-KRXIndividualStat(businessDay)
   #데이터 정리(개별종목, 산업현황 데이터 병합)
   intersect(names(down_sector),names(down_ind)) #겹치는 항목
@@ -85,11 +112,18 @@ KRXDataMerge<-function(businessDay){
                                     names(down_ind)),
                      all = FALSE
   )
+  KOR_ticker<-merge(KOR_ticker,down_monitoring,by=c("종목코드","종목명"),all=FALSE)
   setDT(KOR_ticker)
-  setorder(KOR_ticker,'시가총액(원)') #시가총액으로 정렬
+  setorder(KOR_ticker,'시가총액') #시가총액으로 정렬
   
   KOR_ticker <- KOR_ticker[!grepl('스팩', KOR_ticker$'종목명'),] 
   KOR_ticker <- KOR_ticker[str_sub(KOR_ticker$'종목코드', -1, -1) == 0,] #우선주
+  KOR_ticker$일자<-as.Date(businessDay,format='%Y%m%d')
+  KOR_ticker<-subset(KOR_ticker,select = c('일자','종목코드','종목명','시장구분','업종명','종가','시가총액',
+                                           '주당배당금','배당수익률','관리종목'))
+  names(KOR_ticker)<-c('일자','종목코드','종목명','시장구분','산업분류','현재가(종가)','시가총액',
+                       '주당배당금','배당수익률','관리여부')
+  return(KOR_ticker)
 }
 
 WICSSectorInfo<-function(businessDay){

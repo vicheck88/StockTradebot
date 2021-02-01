@@ -62,9 +62,10 @@ namespace StockTrade
                 newRow["Included"] = true;
                 foreach (var name in output.ColumnNames)
                 {
-                    if (output[name].Type == SymbolicExpressionType.NumericVector ||
-                        output[name].Type == SymbolicExpressionType.IntegerVector) 
-                        newRow[name] = (double.Parse(row[name].ToString())) / 10e8;
+                    if ((output[name].Type == SymbolicExpressionType.NumericVector ||
+                        output[name].Type == SymbolicExpressionType.IntegerVector) &&
+                        !(name.Contains("현재가") || name.Contains("배당") || name.Contains("RANK")))
+                        newRow[name] = (double.Parse(row[name].ToString())) / 1e8;
                     else newRow[name] = row[name];
                 }
             }
