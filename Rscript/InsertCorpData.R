@@ -45,7 +45,7 @@ if(latestDate!=availableDate){
   }))
   
   dbDisconnect(conn)
-  conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
+  conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='119.194.25.19',port='54321',user='postgres',password='12dnjftod')
   
   print(paste0(Sys.time()," : Starting to write FS"))
   FfsY<-data.table(dbGetQuery(conn,SQL("SELECT * from metainfo.연간재무제표")))
@@ -66,8 +66,8 @@ if(latestDate!=availableDate){
   }
   
   dbDisconnect(conn)
-  conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='203.243.21.33',port='5432',user='postgres',password='12dnjftod')
-  
+  conn<-dbConnect(RPostgres::Postgres(),dbname='stocks',host='119.194.25.19',port='54321',user='postgres',password='12dnjftod')
+
   res<-dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,append=TRUE)
   print(paste0(Sys.time()," : Finished"))
 } else{ print(paste0(Sys.time()," : Already updated. Script finished"))}
