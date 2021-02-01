@@ -34,6 +34,7 @@ namespace StockTrade
             engine.Evaluate(String.Format("source(\"{0}\")", Rname + ".R"));
             DataFrame output = engine.GetSymbol("output").AsDataFrame();
             DataTable table = new DataTable();
+            table.Columns.Add("Included", typeof(bool));
             foreach (var name in output.ColumnNames)
             {
                 Type t;
@@ -54,11 +55,19 @@ namespace StockTrade
                 table.Columns.Add(name);
                 if (t != null) table.Columns[name].DataType = t;
             }
-                
-            foreach (var row in output.GetRows())
+
+            foreach (DataFrameRow row in output.GetRows())
             {
                 DataRow newRow = table.Rows.Add();
-                foreach (var name in output.ColumnNames) newRow[name] = row[name];
+                newRow["Included"] = true;
+                foreach (var name in output.ColumnNames)
+                {
+                    if ((output[name].Type == SymbolicExpressionType.NumericVector ||
+                        output[name].Type == SymbolicExpressionType.IntegerVector) &&
+                        !(name.Contains("현재가") || name.Contains("배당") || name.Contains("RANK")))
+                        newRow[name] = (double.Parse(row[name].ToString())) / 1e8;
+                    else newRow[name] = row[name];
+                }
             }
             return table;
         }

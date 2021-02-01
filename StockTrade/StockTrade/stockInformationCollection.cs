@@ -13,11 +13,13 @@ namespace StockTrade
         public int remainingPrice;
         public int curStatus;
         public int curPrice;
-        public stockInfo(string stockCode, string stockName, int remainingPrice)
+        public bool isIncluded;
+        public stockInfo(string stockCode, string stockName, int remainingPrice, bool isIncluded)
         {
             this.stockCode = stockCode;
             this.stockName = stockName;
             this.remainingPrice = remainingPrice;
+            this.isIncluded = isIncluded;
             this.curStatus = -1;
             this.curPrice = 0;
         }
