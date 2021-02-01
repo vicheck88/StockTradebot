@@ -26,8 +26,6 @@ if(latestDate!=availableDate){
   day<-str_remove_all(availableDate,"-")
   #전달 말 등록된 기업정보
   df<-KRXDataMerge(day)
-  df<-subset(df,select=c("일자","종목코드", "종목명", "시장구분", "산업분류","현재가(종가)","시가총액(원)","주당배당금", "배당수익률","관리여부"))
-  colnames(df)[7]<-"시가총액"
   corpTable<-as.data.table(df)
   
   #지금까지 등록되어있는 기업정보 구하기
