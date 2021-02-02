@@ -32,8 +32,8 @@ for(day in availableDate){
 colnames(corpTable)[7]<-"시가총액"
 setDT(corpTable)
 
-#dbWriteTable(conn,SQL("metainfo.기업정보"),corpTable)
-#corpTable<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.기업정보")))
+#dbWriteTable(conn,SQL("metainfo.월별기업정보"),corpTable)
+#corpTable<-as.data.table(dbGetQuery(conn,SQL("select * from metainfo.월별기업정보")))
 #모든 기업의 재무제표 구하기
 print(paste0(Sys.time()," : Starting to get FS"))
 #최신 재무제표 받기
