@@ -69,8 +69,4 @@ if(latestDate!=availableDate){
   
   res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)
   print(paste0(Sys.time()," : Finished"))
-}
-
-  res<-dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,append=TRUE)
-  print(paste0(Sys.time()," : Finished"))
 } else{ print(paste0(Sys.time()," : Already updated. Script finished"))}
