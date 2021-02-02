@@ -29,7 +29,7 @@ KRXIndStat <- function(businessDay,type){
     'http://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd'
   gen_otp_data = list(
     mktId = type,
-    trdDd = '20210201',
+    trdDd = businessDay,
     money = '1',
     csvxls_isNo = 'false',
     name = 'fileDown',
@@ -104,12 +104,10 @@ KRXDataMerge<-function(businessDay){
   
   down_ind<-KRXIndividualStat(businessDay)
   #데이터 정리(개별종목, 산업현황 데이터 병합)
-  intersect(names(down_sector),names(down_ind)) #겹치는 항목
   setdiff(down_sector[,'종목명'],down_ind[,'종목명']) #겹치지 않은 종목 ->제외(일반적이지 않은 종목들)
   
   KOR_ticker = merge(down_sector, down_ind,
-                     by = intersect(names(down_sector),
-                                    names(down_ind)),
+                     by = intersect(names(down_sector),names(down_ind)),
                      all = FALSE
   )
   KOR_ticker<-merge(KOR_ticker,down_monitoring,by=c("종목코드","종목명"),all=FALSE)

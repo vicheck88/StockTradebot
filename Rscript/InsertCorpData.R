@@ -59,9 +59,10 @@ if(latestDate!=availableDate){
   print(paste0(Sys.time()," : Starting to summarize financial data"))
   fs<-NULL
   for(i in 1:nrow(corpTable)){
+    oldN<-NROW(fs)
     fs<-rbind(fs,cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,TRUE))
     #fs<-rbind(fs,cleanDataAndGetFactor(corpTable[i,],fsY,fsQ,TRUE))
-    if(NROW(fs)==i) print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: Summarizing Data of ",corpTable[i,]$종목코드))
+    if(oldN<NROW(fs)) print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: Summarizing Data of ",corpTable[i,]$종목코드))
   }
   
   dbDisconnect(conn)
