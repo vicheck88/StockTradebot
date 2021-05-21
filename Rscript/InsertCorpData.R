@@ -68,6 +68,6 @@ if(latestDate!=availableDate){
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
   
-  res<-dbWriteTable(conn,SQL("metainfo.기업정보"),fs,append=TRUE)
+  res<-dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,append=TRUE)
   print(paste0(Sys.time()," : Finished"))
 } else{ print(paste0(Sys.time()," : Already updated. Script finished"))}
