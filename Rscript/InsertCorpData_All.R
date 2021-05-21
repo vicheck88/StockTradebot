@@ -8,7 +8,7 @@ source("./RQuantFunctionList.R",encoding="utf-8")
 
 #처음 전체 update
 
-year<-as.character(2010:2020)
+year<-as.character(2010:2021)
 availableDate<-getLastBizdayofMonth(100)
 availableDate<-availableDate[-99]
 availableDate<-availableDate[availableDate>'2010-01-01']
@@ -21,7 +21,7 @@ for(day in availableDate){
   tryCatch(
     {
       df<-KRXDataMerge(day)
-      df<-subset(df,select=c("일자","종목코드", "종목명", "시장구분", "산업분류","현재가(종가)","시가총액(원)","주당배당금", "배당수익률","관리여부"))
+      df<-subset(df,select=c("일자","종목코드", "종목명", "시장구분", "산업분류","현재가(종가)","시가총액","주당배당금", "배당수익률","관리여부"))
       corpTable<-rbind(corpTable,df)
     },
     error=function(e){
@@ -29,7 +29,6 @@ for(day in availableDate){
     } 
   )
 }
-colnames(corpTable)[7]<-"시가총액"
 setDT(corpTable)
 
 #dbWriteTable(conn,SQL("metainfo.월별기업정보"),corpTable)
@@ -62,6 +61,17 @@ dbWriteTable(conn,SQL("test.연간재무제표"),fsY,overwrite=TRUE,row.names=FA
 
 print(paste0(Sys.time()," : Starting to get factor data"))
 fs<-NULL
+
+#등록날짜 설정하기
+fsY[,등록일자:=as.Date(paste0(일자,'.01'),format='%Y.%m.%d')]
+fsQ[,등록일자:=as.Date(paste0(일자,'.01'),format='%Y.%m.%d')]
+fsY$등록일자<-fsY$등록일자 %m+% months(4)
+fsQ$등록일자<-fsQ$등록일자 %m+% months(3)
+joinedQ<-fsQ[fsY,.(종목코드,종류,계정,일자,값,등록일자=i.등록일자),on=c("종목코드","종류","계정","일자"),nomatch=0]
+names(joinedQ)<-names(fsQ)
+fsQ<-unique(rbind(fsQ,joinedQ),by=c("종목코드","종류","계정","일자","값"),fromLast=TRUE)
+
+
 for(i in 1:nrow(corpTable)){
   res<-cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,FALSE)
   fs<-rbind(fs,res)
