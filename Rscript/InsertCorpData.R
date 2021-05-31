@@ -53,9 +53,11 @@ newfsQ$등록일자<-Sys.Date()
 newfsY$등록일자<-Sys.Date()
 
 names(newfsQ)<-names(FfsQ)
-names(newfsY)<-n
+names(newfsY)<-names(FfsY)
 fsY<-rbind(FfsY,newfsY)
 fsQ<-rbind(FfsQ,newfsQ)
+fsY$일자<-as.character(fsY$일자)
+fsQ$일자<-as.character(fsQ$일자)
 
 dbWriteTable(conn,SQL("metainfo.분기재무제표"),newfsQ,append=TRUE,row.names=FALSE)
 dbWriteTable(conn,SQL("metainfo.연간재무제표"),newfsY,append=TRUE,row.names=FALSE)
@@ -68,26 +70,15 @@ if(latestDate!=availableDate){
   fs<-NULL
   for(i in 1:nrow(corpTable)){
     oldN<-NROW(fs)
-    fs<-rbind(fs,cleanDataAndExtractEntitiesFromFS2(corpTable[i,],fsY,fsQ))
+    res<-cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,TRUE)
+    if(!is.null(fs) & !is.null(res)) names(res)<-names(fs)
+    fs<-rbind(fs,res)
     if(oldN<NROW(fs)) print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: Summarizing Data of ",corpTable[i,]$종목코드))
   }
   
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
   
-<<<<<<< HEAD
   res<-dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,append=TRUE)
   print(paste0(Sys.time()," : Finished"))
 } else{ print(paste0(Sys.time()," : Already updated. Script finished"))}
-=======
-  dbWriteTable(conn,SQL("metainfo.월별기업재무요약"),fs,append=TRUE)
-  dbWriteTable(conn,SQL("metainfo.기업정보"),corpTable,append=TRUE)
-  print(paste0(Sys.time()," : Finished"))
-}
-
-
-
-
-
-
->>>>>>> 2f9028dea9ca8e7a59708c72362670b782dd80c0

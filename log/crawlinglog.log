@@ -1,4 +1,4 @@
-[1] "2021-05-21 02:00:02 : Starting Script"
+[1] "2021-06-01 02:00:05 : Starting Script"
 Loading required package: xts
 Loading required package: zoo
 
@@ -103,5 +103,7 @@ The following objects are masked from ‘package:xts’:
 
     first, last
 
-[1] "2021-05-21 02:00:24 : Starting to get date"
-[1] "2021-05-21 02:00:25 : Already updated. Script finished"
+[1] "2021-06-01 02:00:31 : Starting to get date"
+[1] "2021-06-01 02:00:33 : Starting to get current coporation list"
+Error: '종목코드,종목명,매매거래정지,정리매매 종목,관리종목,투자주의환기종목,불성실공시,단일가매매대상 초저유동성종목,상장주식수 부족 우선주,단기과열종목,투자주의종목,투자경고종목,투자위험종목' does not exist in current working directory ('/home/pi/stockInfoCrawler/StockTradebot/Rscript').
+Execution halted
