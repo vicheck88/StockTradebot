@@ -315,7 +315,7 @@ getStockNumberList<-function(businessDay, codeList){
   return(result)
 }
 
-cleanDataAndExtractEntitiesFromFS2<-function(corpData,yearData,quarterData,isNew){
+cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew){
   result<-NULL
   tryCatch(
     {
@@ -332,60 +332,6 @@ cleanDataAndExtractEntitiesFromFS2<-function(corpData,yearData,quarterData,isNew
       if(!isNew){
         yData<-yData[등록일자<=businessDate]
         qData<-qData[등록일자<=businessDate]
-      }
-      
-      yDate<-as.character(yData$일자)
-      qDate<-as.character(qData$일자)
-      
-      qRank<-frank(-as.double(qDate),ties.method="dense")
-      yRank<-frank(-as.double(yDate),ties.method="dense")
-      
-      if(length(yRank) == 0 & length(unique(qRank)) < 4 ){return(result)}
-      
-      curQRange<-diff(range(as.double(qDate)[qRank<5]))
-      
-      if(length(unique(qDate))>=4 & curQRange<=1){
-        data<-qData[qRank<=4]
-      } else{ data<-yData[yRank==1] }
-      result <- extractFSEntities2(corpData, data, businessDate)
-    },
-    error=function(e) print(paste0("Fail to Read: ",code," Date:",businessDate))
-  )
-  return(result)
-}
-
-extractFSEntities2<-function(corpData,data,businessDate){
-  marketPrice<-corpData$시가총액
-  code<-corpData$종목코드
-  data<-data[data$종목코드==code]
-  data<-unique(data,by=c("종목코드","종류","계정","일자"),fromLast=T)
-  
-  if(length(unique(data$일자))==4){
-    data<-sumQuarterData(data)
-  }
-  
-  data$등록일자<-businessDate
-  data<-subset(data,select=c("등록일자","종목코드","종류","계정","값"))
-  return(data)
-}
-
-cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew){
-  result<-NULL
-  tryCatch(
-    {
-      businessDate<-as.Date(corpData[[1]],format='%Y-%m-%d')
-      code<-corpData[[2]]
-      yData<-yearData[종목코드==code]
-      qData<-quarterData[종목코드==code]
-      
-      lastYearDate<-businessDate %m+% months(-12)
-      
-      yData<-yData[등록일자>=lastYearDate]
-      qData<-qData[등록일자>=lastYearDate]
-      
-      if(!isNew){
-        yData<-yData[등록일자<=Sys.Date()]
-        qData<-qData[등록일자<=Sys.Date()]
       }
       
       yDate<-as.character(yData$일자)
