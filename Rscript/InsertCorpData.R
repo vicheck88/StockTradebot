@@ -20,22 +20,25 @@ if(month(Sys.Date())==month(availableDate[2])) {
 latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.월별기업정보"))[,1]
 
 cnt<-0
-while(TRUE){
+while(cnt<10){
+  tryCatch({
+    print(paste0(Sys.time()," : Starting to get current coporation list"))
+    day<-str_remove_all(availableDate,"-")
+    #전달 말 등록된 기업정보
+    df<-KRXDataMerge(day)
+    corpTable<-as.data.table(df)
+    break
+  }, error = function(e) {
+    cnt=cnt+1
+    print(paste0(Sys.time()," : Fail to get corp Data. Try again after 10mins"))
+    Sys.sleep(60*10)
+  })
   if(cnt==10){
     print("Fail to get corp Data.")
     break
   }
-  print(paste0(Sys.time()," : Starting to get current coporation list"))
-  day<-str_remove_all(availableDate,"-")
-  #전달 말 등록된 기업정보
-  df<-KRXDataMerge(day)
-  if(is.null(df)) {
-    cnt++
-    print("Fail to get corp Data. Try again after 10mins")
-    Sys.sleep(60*10)
-  } else { break }
 }
-corpTable<-as.data.table(df)
+
 
 #지금까지 등록되어있는 기업정보 구하기
 corpList<-dbGetQuery(conn,SQL("select distinct 종목코드 from metainfo.월별기업정보"))$종목코드
