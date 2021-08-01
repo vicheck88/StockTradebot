@@ -1,5 +1,6 @@
 library(RPostgres)
 library(DBI)
+
 library(jsonlite)
 dbConfig=read_json("./config.json")$database
 conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)

@@ -1,0 +1,109 @@
+[1] "2021-06-01 02:00:05 : Starting Script"
+Loading required package: xts
+Loading required package: zoo
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+Loading required package: TTR
+Registered S3 method overwritten by 'quantmod':
+  method            from
+  as.zoo.data.frame zoo 
+Version 0.4-0 included new data defaults. See ?getSymbols.
+Loading required package: xml2
+
+Attaching package: ‘readr’
+
+The following object is masked from ‘package:rvest’:
+
+    guess_encoding
+
+
+Attaching package: ‘lubridate’
+
+The following objects are masked from ‘package:base’:
+
+    date, intersect, setdiff, union
+
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:xts’:
+
+    first, last
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: ‘tidyr’
+
+The following object is masked from ‘package:magrittr’:
+
+    extract
+
+corrplot 0.84 loaded
+
+Attaching package: ‘plotly’
+
+The following object is masked from ‘package:ggplot2’:
+
+    last_plot
+
+The following object is masked from ‘package:httr’:
+
+    config
+
+The following object is masked from ‘package:stats’:
+
+    filter
+
+The following object is masked from ‘package:graphics’:
+
+    layout
+
+
+Attaching package: ‘PerformanceAnalytics’
+
+The following object is masked from ‘package:graphics’:
+
+    legend
+
+
+Please cite as: 
+
+ Hlavac, Marek (2018). stargazer: Well-Formatted Regression and Summary Statistics Tables.
+ R package version 5.2.2. https://CRAN.R-project.org/package=stargazer 
+
+
+Attaching package: ‘data.table’
+
+The following object is masked from ‘package:timetk’:
+
+    :=
+
+The following objects are masked from ‘package:dplyr’:
+
+    between, first, last
+
+The following objects are masked from ‘package:lubridate’:
+
+    hour, isoweek, mday, minute, month, quarter, second, wday, week,
+    yday, year
+
+The following objects are masked from ‘package:xts’:
+
+    first, last
+
+[1] "2021-06-01 02:00:31 : Starting to get date"
+[1] "2021-06-01 02:00:33 : Starting to get current coporation list"
+Error: '종목코드,종목명,매매거래정지,정리매매 종목,관리종목,투자주의환기종목,불성실공시,단일가매매대상 초저유동성종목,상장주식수 부족 우선주,단기과열종목,투자주의종목,투자경고종목,투자위험종목' does not exist in current working directory ('/home/pi/stockInfoCrawler/StockTradebot/Rscript').
+Execution halted

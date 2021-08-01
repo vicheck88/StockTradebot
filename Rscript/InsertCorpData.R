@@ -19,7 +19,6 @@ if(month(Sys.Date())==month(availableDate[2])) {
 }
 latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.월별기업정보"))[,1]
 
-cnt<-0
 while(TRUE){
   tryCatch({
     print(paste0(Sys.time()," : Starting to get current coporation list"))
@@ -29,14 +28,9 @@ while(TRUE){
     corpTable<-as.data.table(df)
     break
   }, error = function(e) {
-    cnt++
-    print("Fail to get corp Data. Try again after 10mins")
-    Sys.sleep(60*10)
+    print(paste0(Sys.time()," : Fail to get corp Data. Try again after 20mins"))
+    Sys.sleep(60*20)
   })
-  if(cnt==10){
-    print("Fail to get corp Data.")
-    break
-  }
 }
 
 
@@ -96,6 +90,6 @@ if(latestDate!=availableDate){
   dbDisconnect(conn)
   conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
   
-  dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,append=TRUE)
+  res<-dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,append=TRUE)
   print(paste0(Sys.time()," : Finished"))
-}
+} else{ print(paste0(Sys.time()," : Already updated. Script finished"))}
