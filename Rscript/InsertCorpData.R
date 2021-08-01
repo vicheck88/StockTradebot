@@ -27,6 +27,7 @@ while(TRUE){
     #전달 말 등록된 기업정보
     df<-KRXDataMerge(day)
     corpTable<-as.data.table(df)
+    break
   }, error = function(e) {
     cnt++
     print("Fail to get corp Data. Try again after 10mins")
@@ -61,6 +62,8 @@ print(paste0(Sys.time()," : Starting to write FS"))
 FfsY<-data.table(dbGetQuery(conn,SQL("SELECT * from metainfo.연간재무제표")))
 FfsQ<-data.table(dbGetQuery(conn,SQL("SELECT * from metainfo.분기재무제표")))
 
+names(fsQ)<-names(FfsQ[,-'등록일자'])
+names(fsY)<-names(FfsY[,-'등록일자'])
 newfsQ<-fsetdiff(fsQ,FfsQ[,-'등록일자'])
 newfsY<-fsetdiff(fsY,FfsY[,-'등록일자'])
 newfsQ$등록일자<-Sys.Date()
