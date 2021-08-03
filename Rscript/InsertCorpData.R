@@ -43,10 +43,14 @@ print(paste0(Sys.time()," : Starting to get FS"))
 htmlData<-getFSHtmlFromFnGuide(corpList)
 
 fsQ<-rbindlist(lapply(corpList,function(x){
-  cleanFSHtmlToDataFrame('Q',htmlData[x])
+  if(!is.null(htmlData[x][[1]])){
+    cleanFSHtmlToDataFrame('Q',htmlData[x])
+  } 
 }))
 fsY<-rbindlist(lapply(corpList,function(x){
-  cleanFSHtmlToDataFrame('Y',htmlData[x])
+  if(!is.null(htmlData[x][[1]])){
+    cleanFSHtmlToDataFrame('Y',htmlData[x])  
+  }
 }))
 
 dbDisconnect(conn)
