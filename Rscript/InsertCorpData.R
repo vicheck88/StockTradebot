@@ -19,8 +19,7 @@ if(month(Sys.Date())==month(availableDate[2])) {
 }
 latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.월별기업정보"))[,1]
 
-cnt<-0
-while(cnt<10){
+while(TRUE){
   tryCatch({
     print(paste0(Sys.time()," : Starting to get current coporation list"))
     day<-str_remove_all(availableDate,"-")
@@ -29,14 +28,9 @@ while(cnt<10){
     corpTable<-as.data.table(df)
     break
   }, error = function(e) {
-    cnt=cnt+1
-    print(paste0(Sys.time()," : Fail to get corp Data. Try again after 10mins"))
-    Sys.sleep(60*10)
+    print(paste0(Sys.time()," : Fail to get corp Data. Try again after 20mins"))
+    Sys.sleep(60*20)
   })
-  if(cnt==10){
-    print("Fail to get corp Data.")
-    break
-  }
 }
 
 
@@ -49,10 +43,14 @@ print(paste0(Sys.time()," : Starting to get FS"))
 htmlData<-getFSHtmlFromFnGuide(corpList)
 
 fsQ<-rbindlist(lapply(corpList,function(x){
-  cleanFSHtmlToDataFrame('Q',htmlData[x])
+  if(!is.null(htmlData[x][[1]])){
+    cleanFSHtmlToDataFrame('Q',htmlData[x])
+  } 
 }))
 fsY<-rbindlist(lapply(corpList,function(x){
-  cleanFSHtmlToDataFrame('Y',htmlData[x])
+  if(!is.null(htmlData[x][[1]])){
+    cleanFSHtmlToDataFrame('Y',htmlData[x])  
+  }
 }))
 
 dbDisconnect(conn)

@@ -216,8 +216,8 @@ getFSHtmlFromFnGuide<-function(codeList){
 }
 #Fnguide에서 받은 데이터 정리하기
 cleanFSHtmlToDataFrame<-function(type,htmlData){
-  if(length(htmlData)==0) return(NULL)
   data<-htmlData[[1]]
+  if(length(data)==0) return(NULL)
   if(type=="Y") r=1 else r=2
   idxList<-0:2*2+r
   # 3개 재무제표를 하나로 합치기    
