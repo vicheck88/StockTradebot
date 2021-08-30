@@ -41,7 +41,7 @@ getTopNUpbitCoinList<-function(num){
 }
 createJwtToken<-function(query){
   upbitConfig<-fromJSON("./config.json")$upbit_key
-  uuid<-as.character(as.numeric(Sys.time()))
+  uuid<-as.character(as.numeric(Sys.time())*runif(1,1,1000))
   query_hash_alg<-"SHA512"
   if(is.null(query)){
     jwtClaim<-jwt_claim(access_key=upbitConfig$access_key,nonce=uuid)
@@ -110,17 +110,17 @@ getEqualWeightBalanceDiff<-function(num){
   topNCoinList<-getTopNUpbitCoinList(num)
   balanceList<-getCurrentUpbitAccountInfo()
   balanceList[avg_buy_price==0]$avg_buy_price<-1
-  totalBalance<-balanceList[,sum(balance*avg_buy_price)]
+  totalBalance<-balanceList[,sum(balance*avg_buy_price)]*0.9
   topNCoinList$targetbalance<-rep(totalBalance/num,num)
   topNCoinList<-topNCoinList[,.(name,symbol,price,targetbalance)]
-  curBalanceList<-balanceList[,.(currency,balance=balance*avg_buy_price)]
+  curBalanceList<-balanceList[,.(currency,balance=balance*avg_buy_price,curvolume=balance)]
   joinList<-merge(topNCoinList,curBalanceList,by.x="symbol",by.y="currency",all=TRUE)
   joinList<-joinList[symbol!="KRW"]
   joinList[is.na(balance)]$balance<-0
   joinList[is.na(targetbalance)]$targetbalance<-0
   joinList[,diff:=targetbalance-balance]
-  joinList<-joinList[,.(symbol,diff)]
-  names(joinList)<-c("market","buyamount")
+  joinList<-joinList[,.(symbol,diff,curvolume)]
+  names(joinList)<-c("market","buyamount","currentvolume")
   return(joinList)
 }
 rebalanceWeight<-function(table){
@@ -132,8 +132,13 @@ rebalanceWeight<-function(table){
   table[,buyamount:=abs(buyamount)]
   table[,price:=getCurrentUpbitPrice(table$market)$trade_price]
   table[,volume:=buyamount/price]
+  table[side=="ask"][currentvolume<volume]$volume<-table[side=="ask"][currentvolume<volume]$currentvolume
   table<-subset(table,select=c("market","side","volume","price","ord_type"))
-  orderCoin(table)
+  if(NROW(table[side=="ask"])>0){
+    orderCoin(table[side=="ask"])
+    Sys.sleep(10)
+  }
+  orderCoin(table[side=="bid"])
 }
 getOrderList<-function(status){
   query<-paste0("state=",status)
@@ -149,7 +154,7 @@ orderCoin<-function(order){
     res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
     print(res$status_code)
     print(rawToChar(res$content))
-    Sys.sleep(0.1)
+    Sys.sleep(0.3)
   }
 }
 

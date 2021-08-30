@@ -1,3 +1,4 @@
 setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
-
-orderCoin(rebalanceWeight(getEqualWeightBalanceDiff(10)))
+#setwd("C:/Users/vicen/Documents/Github/StockTradebot/Rscript")
+source("./coinFunctionList.R",encoding="utf-8")
+rebalanceWeight(getEqualWeightBalanceDiff(10))
