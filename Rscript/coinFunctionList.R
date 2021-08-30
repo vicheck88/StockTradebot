@@ -149,7 +149,7 @@ orderCoin<-function(order){
     res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
     print(res$status_code)
     print(rawToChar(res$content))
-    Sys.sleep(0.1)
+    Sys.sleep(0.5)
   }
 }
 
