@@ -1,4 +1,5 @@
 print(paste0(Sys.time()," : Starting Script"))
+setwd("/mnt/c/Users/vicen/Documents/StockTradebot/Rscript")
 
 library(RPostgres)
 library(DBI)
@@ -43,14 +44,10 @@ print(paste0(Sys.time()," : Starting to get FS"))
 htmlData<-getFSHtmlFromFnGuide(corpList)
 
 fsQ<-rbindlist(lapply(corpList,function(x){
-  if(!is.null(htmlData[x][[1]])){
     cleanFSHtmlToDataFrame('Q',htmlData[x])
-  } 
 }))
 fsY<-rbindlist(lapply(corpList,function(x){
-  if(!is.null(htmlData[x][[1]])){
     cleanFSHtmlToDataFrame('Y',htmlData[x])  
-  }
 }))
 
 dbDisconnect(conn)
@@ -60,6 +57,8 @@ print(paste0(Sys.time()," : Starting to write FS"))
 FfsY<-data.table(dbGetQuery(conn,SQL("SELECT * from metainfo.연간재무제표")))
 FfsQ<-data.table(dbGetQuery(conn,SQL("SELECT * from metainfo.분기재무제표")))
 
+names(fsQ)<-names(FfsQ[,-'등록일자'])
+names(fsY)<-names(FfsY[,-'등록일자'])
 newfsQ<-fsetdiff(fsQ,FfsQ[,-'등록일자'])
 newfsY<-fsetdiff(fsY,FfsY[,-'등록일자'])
 newfsQ$등록일자<-Sys.Date()

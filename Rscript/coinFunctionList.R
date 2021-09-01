@@ -39,9 +39,9 @@ getTopNUpbitCoinList<-function(num){
   coinTable<-subset(coinTable,select=-english_name)
   return(coinTable[1:num,])
 }
-createJwtToken<-function(query){
+createJwtToken<-function(query,random){
   upbitConfig<-fromJSON("./config.json")$upbit_key
-  uuid<-as.character(as.numeric(Sys.time())*runif(1,1,1000))
+  uuid<-as.character(as.numeric(Sys.time())*random)
   query_hash_alg<-"SHA512"
   if(is.null(query)){
     jwtClaim<-jwt_claim(access_key=upbitConfig$access_key,nonce=uuid)
@@ -58,7 +58,7 @@ createJwtToken<-function(query){
   return(jwtToken)
 }
 getResponseParam<-function(url, query){
-  jwtToken<-createJwtToken(query)
+  jwtToken<-createJwtToken(query,runif(1,1000,23455))
   h<-new_handle()
   handle_setheaders(h, .list=list(Accept="application/json", 
                                   Authorization=paste0("Bearer ",jwtToken)))
@@ -79,6 +79,7 @@ getCurrentUpbitPrice<-function(coinList){
   handle_setheaders(h, .list=list(Accepts="application/json"))
   priceList<-as.data.table(fromJSON(rawToChar(curl_fetch_memory(url, h)$content)))
   priceList<-priceList[,.(market,trade_price)]
+  priceList[,trade_price:=as.double(trade_price)]
   return(priceList)
 }
 getCoinPriceHistory<-function(coinList,type,unit,count){
@@ -108,19 +109,36 @@ getMomentumHistory<-function(coinList,candleType,unit,count,priceType,momentumPe
 }
 getEqualWeightBalanceDiff<-function(num){
   topNCoinList<-getTopNUpbitCoinList(num)
+  topNCoinList[,market:=paste0("KRW-",symbol)]
   balanceList<-getCurrentUpbitAccountInfo()
-  balanceList[avg_buy_price==0]$avg_buy_price<-1
-  totalBalance<-balanceList[,sum(balance*avg_buy_price)]*0.9
-  topNCoinList$targetbalance<-rep(totalBalance/num,num)
-  topNCoinList<-topNCoinList[,.(name,symbol,price,targetbalance)]
-  curBalanceList<-balanceList[,.(currency,balance=balance*avg_buy_price,curvolume=balance)]
+  balanceList[,market:=paste0("KRW-",currency)]
+  topNCoinList<-topNCoinList[,.(name,symbol,price)]
+  price=getCurrentUpbitPrice(balanceList$market[-1])
+  price<-rbind(price,as.list(c("KRW-KRW",1)))
+  balanceList<-merge(balanceList,price,by.x="market",by.y="market")
+  balanceList[,trade_price:=as.double(trade_price)]
+  curBalanceList<-balanceList[,.(market,currency,balance=balance*trade_price,curvolume=balance)]
+  totalBalance<-curBalanceList[,sum(balance)]
+  topNCoinList$targetbalance<-totalBalance/num
+  
   joinList<-merge(topNCoinList,curBalanceList,by.x="symbol",by.y="currency",all=TRUE)
   joinList<-joinList[symbol!="KRW"]
+  joinList[,market:=paste0("KRW-",symbol)]
+  minimumOrder<-getMinimumOrderUnit(joinList$market)
+  joinList<-merge(joinList,minimumOrder,by.x="market",by.y="market",all=TRUE)
   joinList[is.na(balance)]$balance<-0
   joinList[is.na(targetbalance)]$targetbalance<-0
   joinList[,diff:=targetbalance-balance]
-  joinList<-joinList[,.(symbol,diff,curvolume)]
-  names(joinList)<-c("market","buyamount","currentvolume")
+  
+  joinList[diff<0][diff>ask_min]$targetbalance<-joinList[diff<0][diff>ask_min]$balance
+  joinList[diff>0][diff<bid_min]$targetbalance<-joinList[diff>0][diff<bid_min]$balance
+  joinList[,diff:=targetbalance-balance]
+  remainedBalance<-totalBalance-joinList[diff==0][,sum(balance)]
+  joinList[diff!=0][targetbalance>0]$targetbalance<-remainedBalance/NROW(joinList[diff!=0][targetbalance>0])
+  joinList[,diff:=targetbalance-balance]
+  
+  joinList<-joinList[,.(symbol,diff,curvolume,price)]
+  names(joinList)<-c("market","buyamount","currentvolume","price")
   return(joinList)
 }
 rebalanceWeight<-function(table){
@@ -136,7 +154,7 @@ rebalanceWeight<-function(table){
   table<-subset(table,select=c("market","side","volume","price","ord_type"))
   if(NROW(table[side=="ask"])>0){
     orderCoin(table[side=="ask"])
-    Sys.sleep(10)
+    Sys.sleep(5)
   }
   orderCoin(table[side=="bid"])
 }
@@ -148,7 +166,7 @@ getOrderList<-function(status){
 }
 orderCoin<-function(order){
   query<-paste0("market=",order$market,"&side=",order$side,"&volume=",order$volume,"&price=",order$price,"&ord_type=",order$ord_type)
-  tokenList<-sapply(query,function(x) createJwtToken(x)) 
+  tokenList<-sapply(query,function(x) createJwtToken(x,runif(1,1000,33553))) 
   url<-"https://api.upbit.com/v1/orders"
   for(i in 1:NROW(order)){
     res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
@@ -157,4 +175,22 @@ orderCoin<-function(order){
     Sys.sleep(0.3)
   }
 }
-
+getMinimumOrderUnit<-function(coinList){
+  table<-NULL
+  query<-paste0("market=",coinList)
+  tokenList<-sapply(query,function(x) createJwtToken(x,runif(1,1000,33553)))
+  url<-paste0("https://api.upbit.com/v1/orders/chance?",query)
+  for(i in 1:length(coinList)){
+    res<-GET(url[i],add_headers(Authorization=paste0("Bearer ",tokenList[i])))
+    if(res$status_code==200){
+      list<-fromJSON(rawToChar(res$content))
+      table<-rbind(table,c(coinList[i],list$market$ask$min_total,list$market$bid$min_total))  
+    }
+  }
+  table<-as.data.table(table)
+  names(table)<-c("market","ask_min","bid_min")
+  table[,ask_min:=as.double(ask_min)]
+  table[,bid_min:=as.double(bid_min)]
+  table[,ask_min:=-ask_min]
+  return(table)
+}
