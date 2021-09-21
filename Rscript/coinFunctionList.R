@@ -1,9 +1,12 @@
 #setwd("C:/Users/vicen/Documents/Github/StockTradebot/Rscript")
 
-pkg = c('quantmod','jsonlite', 'stringr', 
+pkg = c('quantmod','jsonlite', 'stringr', 'logr',
         'jose','openssl','PerformanceAnalytics','xts','curl','data.table',
         'httr')
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
+
+logDir<-"/home/pi/stockInfoCrawler/StockTradebot/log"
+
 if (length(new.pkg)) {
   install.packages(new.pkg, dependencies = TRUE)}
 sapply(pkg,library,character.only=T)
@@ -108,13 +111,29 @@ getMomentumHistory<-function(coinList,candleType,unit,count,priceType,momentumPe
   return(subset(priceList,select=c("market","candle_date_time_kst","momentum")))
 }
 getEqualWeightBalanceDiff<-function(num){
+  logPath<-paste0(logDir,"coinLog.",Sys.Date(),".log")
+  log_open(logPath)
+  
+  log_print(paste0("TOP ",num,"COIN LIST:"))
   topNCoinList<-getTopNUpbitCoinList(num)
+  log_print(topNCoinList)
   topNCoinList[,market:=paste0("KRW-",symbol)]
+  
+  log_print("CURRENT BALANCE")
+  krwCoinList<-getUpbitCoinList()
   balanceList<-getCurrentUpbitAccountInfo()
+  
+  KRWRow<-balanceList[1,]
+  balanceList<-merge(balanceList,krwCoinList[,1],by.x="currency",by.y="market")
+  balanceList<-rbind(KRWRow,balanceList)
+  log_print(balanceList)
+  
   balanceList[,market:=paste0("KRW-",currency)]
   topNCoinList<-topNCoinList[,.(name,symbol,price)]
+  log_print("CURRENT COIN PRICE")
   price=getCurrentUpbitPrice(balanceList$market[-1])
   price<-rbind(price,as.list(c("KRW-KRW",1)))
+  
   balanceList<-merge(balanceList,price,by.x="market",by.y="market")
   balanceList[,trade_price:=as.double(trade_price)]
   curBalanceList<-balanceList[,.(market,currency,balance=balance*trade_price,curvolume=balance)]
@@ -139,9 +158,15 @@ getEqualWeightBalanceDiff<-function(num){
   
   joinList<-joinList[,.(symbol,diff,curvolume,price)]
   names(joinList)<-c("market","buyamount","currentvolume","price")
+  log_print("COIN LIST FOR ORDER")
+  log_print(joinList)
+  log_close()
   return(joinList)
 }
 rebalanceWeight<-function(table){
+  logPath<-paste0(logDir,"coinLog.",Sys.Date(),".log")
+  log_open(logPath)
+  
   table<-table[buyamount!=0]
   table[,market:=paste("KRW",market,sep="-")]
   table$ord_type<-'limit'
@@ -152,26 +177,31 @@ rebalanceWeight<-function(table){
   table[,volume:=buyamount/price]
   table[side=="ask"][currentvolume<volume]$volume<-table[side=="ask"][currentvolume<volume]$currentvolume
   table<-subset(table,select=c("market","side","volume","price","ord_type"))
+  
+  log_print("FINAL ORDER LIST")
+  log_print(table)
+  
   if(NROW(table[side=="ask"])>0){
     orderCoin(table[side=="ask"])
     Sys.sleep(5)
   }
   orderCoin(table[side=="bid"])
+  log_close()
 }
 getOrderList<-function(status){
   query<-paste0("state=",status)
   url<-"https://api.upbit.com/v1/orders"
-  
-  
 }
 orderCoin<-function(order){
+  
   query<-paste0("market=",order$market,"&side=",order$side,"&volume=",order$volume,"&price=",order$price,"&ord_type=",order$ord_type)
   tokenList<-sapply(query,function(x) createJwtToken(x,runif(1,1000,33553))) 
   url<-"https://api.upbit.com/v1/orders"
   for(i in 1:NROW(order)){
     res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
-    print(res$status_code)
-    print(rawToChar(res$content))
+    log_print(query)
+    log_print(res$status_code)
+    log_print(rawToChar(res$content))
     Sys.sleep(0.3)
   }
 }
