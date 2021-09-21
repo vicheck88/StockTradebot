@@ -58,6 +58,8 @@ fsY<-unique(rbind(FfsY,fsY),by=c("종목코드","종류","계정","일자"),from
 fsQ<-unique(rbind(FfsQ,fsQ),by=c("종목코드","종류","계정","일자"),fromLast=T)
 
 dbWriteTable(conn,SQL("test.분기재무제표"),fsQ,overwrite=TRUE,row.names=FALSE)
+
+
 dbWriteTable(conn,SQL("test.연간재무제표"),fsY,overwrite=TRUE,row.names=FALSE)
 
 print(paste0(Sys.time()," : Starting to get factor data"))
