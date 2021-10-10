@@ -1,0 +1,134 @@
+========================================================================= 
+Log Path: /home/pi/stockInfoCrawler/StockTradebot/log/logcoinLog.2021-10-11.log 
+Working Directory: /home/pi/stockInfoCrawler/StockTradebot/Rscript 
+User Name: pi 
+R Version: 3.6.2 (2019-12-12) 
+Machine: raspberrypi armv7l 
+Operating System: Linux 5.10.60-v7+ #1449 SMP Wed Aug 25 15:00:01 BST 2021 
+Log Start Time: 2021-10-11 01:53:42 
+========================================================================= 
+
+[1] "market=KRW-AHT&side=bid&volume=64247.0646669262&price=21.4&ord_type=limit"      
+[2] "market=KRW-AXS&side=bid&volume=9.13242898619874&price=150550&ord_type=limit"    
+[3] "market=KRW-BTC&side=bid&volume=0.0525109944095381&price=67830000&ord_type=limit"
+[4] "market=KRW-QKC&side=bid&volume=33947.8317005487&price=40.5&ord_type=limit"      
+[5] "market=KRW-STPT&side=bid&volume=8087.57166983659&price=170&ord_type=limit"      
+[6] "market=KRW-STX&side=bid&volume=558.89722921635&price=2460&ord_type=limit"       
+
+NOTE: Log Print Time:  2021-10-11 01:53:42 
+NOTE: Elapsed Time in seconds: 0.17976975440979 
+
+[1] 400
+
+NOTE: Log Print Time:  2021-10-11 01:53:42 
+NOTE: Elapsed Time in seconds: 0.00257253646850586 
+
+[1] "{\"error\":{\"message\":\"고객확인 미이행시 1회 주문은 1,000,000 KRW 미만으로 제한됩니다. 고객확인을 완료해주세요.\",\"name\":\"invalid_bid_max_price_kyc_grace\"}}"
+
+NOTE: Log Print Time:  2021-10-11 01:53:42 
+NOTE: Elapsed Time in seconds: 0.00323915481567383 
+
+[1] "market=KRW-AHT&side=bid&volume=64247.0646669262&price=21.4&ord_type=limit"      
+[2] "market=KRW-AXS&side=bid&volume=9.13242898619874&price=150550&ord_type=limit"    
+[3] "market=KRW-BTC&side=bid&volume=0.0525109944095381&price=67830000&ord_type=limit"
+[4] "market=KRW-QKC&side=bid&volume=33947.8317005487&price=40.5&ord_type=limit"      
+[5] "market=KRW-STPT&side=bid&volume=8087.57166983659&price=170&ord_type=limit"      
+[6] "market=KRW-STX&side=bid&volume=558.89722921635&price=2460&ord_type=limit"       
+
+NOTE: Log Print Time:  2021-10-11 01:53:43 
+NOTE: Elapsed Time in seconds: 0.397825717926025 
+
+[1] 400
+
+NOTE: Log Print Time:  2021-10-11 01:53:43 
+NOTE: Elapsed Time in seconds: 0.00319886207580566 
+
+[1] "{\"error\":{\"message\":\"고객확인 미이행시 1회 주문은 1,000,000 KRW 미만으로 제한됩니다. 고객확인을 완료해주세요.\",\"name\":\"invalid_bid_max_price_kyc_grace\"}}"
+
+NOTE: Log Print Time:  2021-10-11 01:53:43 
+NOTE: Elapsed Time in seconds: 0.00438666343688965 
+
+[1] "market=KRW-AHT&side=bid&volume=64247.0646669262&price=21.4&ord_type=limit"      
+[2] "market=KRW-AXS&side=bid&volume=9.13242898619874&price=150550&ord_type=limit"    
+[3] "market=KRW-BTC&side=bid&volume=0.0525109944095381&price=67830000&ord_type=limit"
+[4] "market=KRW-QKC&side=bid&volume=33947.8317005487&price=40.5&ord_type=limit"      
+[5] "market=KRW-STPT&side=bid&volume=8087.57166983659&price=170&ord_type=limit"      
+[6] "market=KRW-STX&side=bid&volume=558.89722921635&price=2460&ord_type=limit"       
+
+NOTE: Log Print Time:  2021-10-11 01:53:43 
+NOTE: Elapsed Time in seconds: 0.435192584991455 
+
+[1] 400
+
+NOTE: Log Print Time:  2021-10-11 01:53:43 
+NOTE: Elapsed Time in seconds: 0.0062105655670166 
+
+[1] "{\"error\":{\"message\":\"고객확인 미이행시 1회 주문은 1,000,000 KRW 미만으로 제한됩니다. 고객확인을 완료해주세요.\",\"name\":\"invalid_bid_max_price_kyc_grace\"}}"
+
+NOTE: Log Print Time:  2021-10-11 01:53:43 
+NOTE: Elapsed Time in seconds: 0.00757431983947754 
+
+[1] "market=KRW-AHT&side=bid&volume=64247.0646669262&price=21.4&ord_type=limit"      
+[2] "market=KRW-AXS&side=bid&volume=9.13242898619874&price=150550&ord_type=limit"    
+[3] "market=KRW-BTC&side=bid&volume=0.0525109944095381&price=67830000&ord_type=limit"
+[4] "market=KRW-QKC&side=bid&volume=33947.8317005487&price=40.5&ord_type=limit"      
+[5] "market=KRW-STPT&side=bid&volume=8087.57166983659&price=170&ord_type=limit"      
+[6] "market=KRW-STX&side=bid&volume=558.89722921635&price=2460&ord_type=limit"       
+
+NOTE: Log Print Time:  2021-10-11 01:53:44 
+NOTE: Elapsed Time in seconds: 0.481832027435303 
+
+[1] 400
+
+NOTE: Log Print Time:  2021-10-11 01:53:44 
+NOTE: Elapsed Time in seconds: 0.00632143020629883 
+
+[1] "{\"error\":{\"message\":\"고객확인 미이행시 1회 주문은 1,000,000 KRW 미만으로 제한됩니다. 고객확인을 완료해주세요.\",\"name\":\"invalid_bid_max_price_kyc_grace\"}}"
+
+NOTE: Log Print Time:  2021-10-11 01:53:44 
+NOTE: Elapsed Time in seconds: 0.00783872604370117 
+
+[1] "market=KRW-AHT&side=bid&volume=64247.0646669262&price=21.4&ord_type=limit"      
+[2] "market=KRW-AXS&side=bid&volume=9.13242898619874&price=150550&ord_type=limit"    
+[3] "market=KRW-BTC&side=bid&volume=0.0525109944095381&price=67830000&ord_type=limit"
+[4] "market=KRW-QKC&side=bid&volume=33947.8317005487&price=40.5&ord_type=limit"      
+[5] "market=KRW-STPT&side=bid&volume=8087.57166983659&price=170&ord_type=limit"      
+[6] "market=KRW-STX&side=bid&volume=558.89722921635&price=2460&ord_type=limit"       
+
+NOTE: Log Print Time:  2021-10-11 01:53:44 
+NOTE: Elapsed Time in seconds: 0.448484182357788 
+
+[1] 400
+
+NOTE: Log Print Time:  2021-10-11 01:53:44 
+NOTE: Elapsed Time in seconds: 0.00554561614990234 
+
+[1] "{\"error\":{\"message\":\"고객확인 미이행시 1회 주문은 1,000,000 KRW 미만으로 제한됩니다. 고객확인을 완료해주세요.\",\"name\":\"invalid_bid_max_price_kyc_grace\"}}"
+
+NOTE: Log Print Time:  2021-10-11 01:53:44 
+NOTE: Elapsed Time in seconds: 0.00681138038635254 
+
+[1] "market=KRW-AHT&side=bid&volume=64247.0646669262&price=21.4&ord_type=limit"      
+[2] "market=KRW-AXS&side=bid&volume=9.13242898619874&price=150550&ord_type=limit"    
+[3] "market=KRW-BTC&side=bid&volume=0.0525109944095381&price=67830000&ord_type=limit"
+[4] "market=KRW-QKC&side=bid&volume=33947.8317005487&price=40.5&ord_type=limit"      
+[5] "market=KRW-STPT&side=bid&volume=8087.57166983659&price=170&ord_type=limit"      
+[6] "market=KRW-STX&side=bid&volume=558.89722921635&price=2460&ord_type=limit"       
+
+NOTE: Log Print Time:  2021-10-11 01:53:44 
+NOTE: Elapsed Time in seconds: 0.457324981689453 
+
+[1] 400
+
+NOTE: Log Print Time:  2021-10-11 01:53:45 
+NOTE: Elapsed Time in seconds: 0.00587153434753418 
+
+[1] "{\"error\":{\"message\":\"고객확인 미이행시 1회 주문은 1,000,000 KRW 미만으로 제한됩니다. 고객확인을 완료해주세요.\",\"name\":\"invalid_bid_max_price_kyc_grace\"}}"
+
+NOTE: Log Print Time:  2021-10-11 01:53:45 
+NOTE: Elapsed Time in seconds: 0.00740265846252441 
+
+========================================================================= 
+Log End Time: 2021-10-11 01:53:45 
+Log Elapsed Time: 0 00:00:02 
+========================================================================= 

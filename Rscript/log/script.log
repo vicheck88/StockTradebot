@@ -1,0 +1,39 @@
+========================================================================= 
+Log Path: ./log/script.log 
+Working Directory: /home/pi/stockInfoCrawler/StockTradebot/Rscript 
+User Name: pi 
+R Version: 3.6.2 (2019-12-12) 
+Machine: raspberrypi armv7l 
+Operating System: Linux 5.10.60-v7+ #1449 SMP Wed Aug 25 15:00:01 BST 2021 
+Log Start Time: 2021-10-11 01:53:35 
+========================================================================= 
+
+Final Table List 
+
+NOTE: Log Print Time:  2021-10-11 01:53:35 
+NOTE: Elapsed Time in seconds: 0.0083310604095459 
+
+      market side       volume      price ord_type
+ 1:  KRW-ADA  ask 7.103569e+00     2740.0    limit
+ 2:  KRW-AHT  bid 6.424706e+04       21.4    limit
+ 3:  KRW-AXS  bid 9.132429e+00   150550.0    limit
+ 4:  KRW-BCH  ask 1.407860e+00   741100.0    limit
+ 5:  KRW-BTC  bid 5.251099e-02 67830000.0    limit
+ 6: KRW-DOGE  ask 3.630810e+03      298.0    limit
+ 7:  KRW-DOT  ask 2.201633e-01    43610.0    limit
+ 8:  KRW-ETH  ask 9.533964e-03  4346000.0    limit
+ 9:  KRW-LTC  ask 4.715255e+00   220100.0    limit
+10:  KRW-QKC  bid 3.394783e+04       40.5    limit
+11: KRW-STPT  bid 8.087572e+03      170.0    limit
+12:  KRW-STX  bid 5.588972e+02     2460.0    limit
+13:  KRW-XRP  ask 5.927157e+00     1450.0    limit
+
+NOTE: Data frame has 13 rows and 5 columns. 
+
+NOTE: Log Print Time:  2021-10-11 01:53:35 
+NOTE: Elapsed Time in seconds: 0.0315918922424316 
+
+========================================================================= 
+Log End Time: 2021-10-11 01:53:35 
+Log Elapsed Time: 0 00:00:00 
+========================================================================= 
