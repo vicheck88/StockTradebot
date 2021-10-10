@@ -180,20 +180,19 @@ rebalanceWeight<-function(table){
   
   log_print("FINAL ORDER LIST")
   log_print(table)
-  
+  log_close()  
   if(NROW(table[side=="ask"])>0){
     orderCoin(table[side=="ask"])
-    Sys.sleep(5)
+    Sys.sleep(3)
   }
   orderCoin(table[side=="bid"])
-  log_close()
 }
 getOrderList<-function(status){
   query<-paste0("state=",status)
   url<-"https://api.upbit.com/v1/orders"
 }
 orderCoin<-function(order){
-  
+  log_open(logPath)
   query<-paste0("market=",order$market,"&side=",order$side,"&volume=",order$volume,"&price=",order$price,"&ord_type=",order$ord_type)
   tokenList<-sapply(query,function(x) createJwtToken(x,runif(1,1000,33553))) 
   url<-"https://api.upbit.com/v1/orders"
@@ -204,6 +203,7 @@ orderCoin<-function(order){
     log_print(rawToChar(res$content))
     Sys.sleep(0.3)
   }
+  log_close()
 }
 getMinimumOrderUnit<-function(coinList){
   table<-NULL
