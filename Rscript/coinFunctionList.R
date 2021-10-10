@@ -5,8 +5,8 @@ pkg = c('quantmod','jsonlite', 'stringr', 'logr',
         'httr')
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
 
-#logDir<-"/home/pi/stockInfoCrawler/StockTradebot/log"
-logDir<-"C:/coinTestLog"
+logDir<-"/home/pi/stockInfoCrawler/StockTradebot/log"
+#logDir<-"C:/coinTestLog"
 
 if (length(new.pkg)) {
   install.packages(new.pkg, dependencies = TRUE)}
@@ -198,6 +198,7 @@ createOrderTable<-function(table,currentBalance){
   balanceCombinedTable[diff<0][diff>ask_min]$targetBalance<-balanceCombinedTable[diff<0][diff>ask_min]$balance
   balanceCombinedTable[diff>0][diff<bid_min]$targetBalance<-balanceCombinedTable[diff>0][diff<bid_min]$balance
   balanceCombinedTable[,diff:=targetBalance-balance]
+  balanceCombinedTable[,sellall:=targetBalance==0]
   
   
   remainedBalance<-totalBalance-balanceCombinedTable[diff==0][,sum(balance)]
@@ -207,8 +208,8 @@ createOrderTable<-function(table,currentBalance){
     balanceCombinedTable[,diff:=targetBalance-balance]
   }
   
-  balanceCombinedTable<-balanceCombinedTable[,.(market,diff,curvolume)]
-  names(balanceCombinedTable)<-c("market","buyamount","currentvolume")
+  balanceCombinedTable<-balanceCombinedTable[,.(market,diff,curvolume,sellall)]
+  names(balanceCombinedTable)<-c("market","buyamount","currentvolume","sellall")
   return(balanceCombinedTable)
 }
 
@@ -223,9 +224,10 @@ rebalanceTable<-function(table){
   table[,buyamount:=abs(buyamount)]
   table[,price:=getCurrentUpbitPrice(table$market)$trade_price]
   table[,volume:=buyamount/price]
+  table[sellall==T]$volume<-table[sellall==T]$currentvolume
   table[side=="ask"][currentvolume<volume]$volume<-table[side=="ask"][currentvolume<volume]$currentvolume
  
-   log_open()
+  log_open()
   
   table<-subset(table,select=c("market","side","volume","price","ord_type"))
   log_print("Final Table List")
