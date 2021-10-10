@@ -249,7 +249,7 @@ orderCoin<-function(order){
   url<-"https://api.upbit.com/v1/orders"
   for(i in 1:NROW(order)){
     res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
-    log_print(query)
+    log_print(query[i])
     log_print(res$status_code)
     log_print(rawToChar(res$content))
     Sys.sleep(0.3)
