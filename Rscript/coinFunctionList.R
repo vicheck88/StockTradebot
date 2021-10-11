@@ -13,7 +13,7 @@ if (length(new.pkg)) {
 sapply(pkg,library,character.only=T)
 
 getCoinMarketCapList<-function(num){
-  coinMarket_api_key<-"7a53f6d1-41fd-4658-836a-b59e6432f5cf"
+  coinMarket_api_key<-fromJSON("./config.json")$coinmarketcap_key$api_key
   url<-paste0("https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?limit=",num)
   h<-new_handle()
   handle_setheaders(h, .list=list("X-CMC_PRO_API_KEY"=coinMarket_api_key, Accepts="application/json"))
@@ -179,16 +179,11 @@ getIndexBalance<-function(coinList, limitRatio, type){
   }
   return(coinList)
 }
-createOrderTable<-function(table,currentBalance){
-  totalBalance<-sum(currentBalance$balance)
-  balanceCombinedTable<-merge(table,currentBalance,by="market",all=TRUE)
-  balanceCombinedTable[,totalBalance:=totalBalance]
-  balanceCombinedTable<-balanceCombinedTable[market!="KRW-KRW"]
-  balanceCombinedTable[,targetBalance:=totalBalance*ratio]
+createOrderTable<-function(balanceCombinedTable){
   
   minimumOrder<-getMinimumOrderUnit(balanceCombinedTable$market)
   balanceCombinedTable<-merge(balanceCombinedTable,minimumOrder,by.x="market",by.y="market",all=TRUE)
-  
+
   balanceCombinedTable[is.na(balance)]$balance<-0
   balanceCombinedTable[is.na(targetBalance)]$targetBalance<-0
   balanceCombinedTable[is.na(ratio)]$ratio<-0
@@ -200,11 +195,10 @@ createOrderTable<-function(table,currentBalance){
   balanceCombinedTable[,diff:=targetBalance-balance]
   balanceCombinedTable[,sellall:=targetBalance==0]
   
-  
   remainedBalance<-totalBalance-balanceCombinedTable[diff==0][,sum(balance)]
   
   if(remainedBalance!=totalBalance){
-    balanceCombinedTable[diff!=0]$targetBalance<-balanceCombinedTable[diff!=0][,ratio]*remainedBalance  
+    balanceCombinedTable[diff!=0]$targetBalance<-balanceCombinedTable[diff!=0][,ratio/sum(ratio)]*remainedBalance  
     balanceCombinedTable[,diff:=targetBalance-balance]
   }
   
