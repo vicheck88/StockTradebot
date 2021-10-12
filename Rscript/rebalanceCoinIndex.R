@@ -39,9 +39,9 @@ balanceCombinedTable<-merge(coinMomentumUnionTable,currentBalance,by="market",al
 balanceCombinedTable[,totalBalance:=totalBalance]
 balanceCombinedTable<-balanceCombinedTable[market!="KRW-KRW"]
 balanceCombinedTable[,targetBalance:=totalBalance*ratio]
-balanceCombinedTable[,curRatio:=balance/sum(balance)]
+balanceCombinedTable[,curRatio:=balance/totalBalance]
 balanceCombinedTable[,diffRatio:=abs(curRatio-ratio)]
-balanceCombinedTable[,outsideofBand:=diffRatio>curRatio*bandLimit]
+balanceCombinedTable[,outsideofBand:=diffRatio>ratio*bandLimit]
 
 if(sum(balanceCombinedTable$outsideofBand)){
   orderTable<-createOrderTable(balanceCombinedTable)

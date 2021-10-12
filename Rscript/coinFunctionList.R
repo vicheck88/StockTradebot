@@ -195,6 +195,8 @@ createOrderTable<-function(balanceCombinedTable){
   balanceCombinedTable[,diff:=targetBalance-balance]
   balanceCombinedTable[,sellall:=targetBalance==0]
   
+  totalBalance<-balanceCombinedTable$totalBalance[1]
+  
   remainedBalance<-totalBalance-balanceCombinedTable[diff==0][,sum(balance)]
   
   if(remainedBalance!=totalBalance){
