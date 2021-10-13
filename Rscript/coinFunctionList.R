@@ -124,7 +124,7 @@ getMomentumHistory<-function(coinList,candleType,unit,count,priceType,momentumPe
   return(subset(priceList,select=c("market","candle_date_time_kst","momentum")))
 }
 getUpbitCoinMomentum<-function(candleType,unit,momentumPeriod, coinList){
-  coinList<-paste("KRW",coinList$symbol,sep="-")
+  coinList<-paste("KRW",coinList,sep="-")
   momentum<-getMomentumHistory(coinList,candleType,unit,momentumPeriod+1,"trade_price",momentumPeriod)
   return(momentum)
 }
@@ -155,11 +155,12 @@ getCurrentBalance<-function(){
 
 getMomentumBalance<-function(coinList,num,limitRatio,type,momentumList){
   momentumList[,symbol:=sapply(strsplit(market,"-"),function(x)x[2])]
-  momentumList <- coinList[momentumList,on=c("symbol"),nomatch=0]
-  momentumList<-na.omit(momentumList)
+  momentumList <- coinList[momentumList,on=c("symbol")]
+  momentumList <- coinList[momentumList,on=c("symbol")]
   momentumList<-momentumList[order(-momentum)]
   momentumList<-momentumList[,.(symbol,market,market_cap)]
   if(type=="MARKET"){
+    momentumList<-na.omit(momentumList)
     momentumList[,ratio:=market_cap/sum(market_cap)*limitRatio]  
   } else if(type=="EQUAL"){
     momentumList[,ratio:=1/num*limitRatio]  
