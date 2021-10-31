@@ -5,102 +5,28 @@ User Name: vicen
 R Version: 4.0.3 (2020-10-10)
 Machine: DESKTOP-DJHD24Q x86-64
 Operating System: Windows 10 x64 build 19042
-Log Start Time: 2021-10-11 01:48:06
+Log Start Time: 2021-10-22 07:10:08
 =========================================================================
 
-market=KRW-BCH&side=ask&volume=1.40766993104844&price=741100&ord_type=limit
-market=KRW-DOGE&side=ask&volume=3643.03523563&price=297&ord_type=limit
-market=KRW-ETH&side=ask&volume=0.0168059769632925&price=4341000&ord_type=limit
-market=KRW-LTC&side=ask&volume=4.71525473&price=220300&ord_type=limit
-market=KRW-XRP&side=ask&volume=584.477295269922&price=1450&ord_type=limit
+Final Table List
 
-NOTE: Log Print Time:  2021-10-11 01:48:06
-NOTE: Elapsed Time in seconds: 0.0799851417541504
+NOTE: Log Print Time:  2021-10-22 07:10:08
+NOTE: Elapsed Time in seconds: 0.00100302696228027
 
-[1] 400
+     market side       volume    price ord_type
+1:  KRW-BTC  bid 2.659168e-04 77502000    limit
+2:  KRW-ETH  bid 1.951658e-03  5048000    limit
+3:  KRW-HUM  bid 2.439905e+01      343    limit
+4:  KRW-OMG  bid 1.034365e+02    18280    limit
+5: KRW-STPT  bid 4.005225e+01      190    limit
+6:  KRW-STX  bid 1.816321e+00     2805    limit
 
-NOTE: Log Print Time:  2021-10-11 01:48:06
-NOTE: Elapsed Time in seconds: 0.00800299644470215
+NOTE: Data frame has 6 rows and 5 columns.
 
-NOTE: Log Print Time:  2021-10-11 01:48:06
-NOTE: Elapsed Time in seconds: 0.000996828079223633
+NOTE: Log Print Time:  2021-10-22 07:10:08
+NOTE: Elapsed Time in seconds: 0.00586199760437012
 
-market=KRW-BCH&side=ask&volume=1.40766993104844&price=741100&ord_type=limit
-market=KRW-DOGE&side=ask&volume=3643.03523563&price=297&ord_type=limit
-market=KRW-ETH&side=ask&volume=0.0168059769632925&price=4341000&ord_type=limit
-market=KRW-LTC&side=ask&volume=4.71525473&price=220300&ord_type=limit
-market=KRW-XRP&side=ask&volume=584.477295269922&price=1450&ord_type=limit
-
-NOTE: Log Print Time:  2021-10-11 01:48:06
-NOTE: Elapsed Time in seconds: 0.39460301399231
-
-[1] 400
-
-NOTE: Log Print Time:  2021-10-11 01:48:06
-NOTE: Elapsed Time in seconds: 0.00695109367370605
-
-NOTE: Log Print Time:  2021-10-11 01:48:06
-NOTE: Elapsed Time in seconds: 0.00698685646057129
-
-market=KRW-BCH&side=ask&volume=1.40766993104844&price=741100&ord_type=limit
-market=KRW-DOGE&side=ask&volume=3643.03523563&price=297&ord_type=limit
-market=KRW-ETH&side=ask&volume=0.0168059769632925&price=4341000&ord_type=limit
-market=KRW-LTC&side=ask&volume=4.71525473&price=220300&ord_type=limit
-market=KRW-XRP&side=ask&volume=584.477295269922&price=1450&ord_type=limit
-
-NOTE: Log Print Time:  2021-10-11 01:48:06
-NOTE: Elapsed Time in seconds: 0.400437116622925
-
-[1] 201
-
-NOTE: Log Print Time:  2021-10-11 01:48:06
-NOTE: Elapsed Time in seconds: 0.00299906730651855
-
-{"uuid":"8a7f8a9f-7465-4677-8cd2-4bb41e8eecdc","side":"ask","ord_type":"limit","price":"4341000.0","state":"wait","market":"KRW-ETH","created_at":"2021-10-11T01:48:06+09:00","volume":"0.01680597","remaining_volume":"0.01680597","reserved_fee":"0.0","remaining_fee":"0.0","paid_fee":"0.0","locked":"0.01680597","executed_volume":"0.0","trades_count":0}
-
-NOTE: Log Print Time:  2021-10-11 01:48:06
-NOTE: Elapsed Time in seconds: 0.00199794769287109
-
-market=KRW-BCH&side=ask&volume=1.40766993104844&price=741100&ord_type=limit
-market=KRW-DOGE&side=ask&volume=3643.03523563&price=297&ord_type=limit
-market=KRW-ETH&side=ask&volume=0.0168059769632925&price=4341000&ord_type=limit
-market=KRW-LTC&side=ask&volume=4.71525473&price=220300&ord_type=limit
-market=KRW-XRP&side=ask&volume=584.477295269922&price=1450&ord_type=limit
-
-NOTE: Log Print Time:  2021-10-11 01:48:07
-NOTE: Elapsed Time in seconds: 0.391797065734863
-
-[1] 400
-
-NOTE: Log Print Time:  2021-10-11 01:48:07
-NOTE: Elapsed Time in seconds: 0.00299882888793945
-
-NOTE: Log Print Time:  2021-10-11 01:48:07
-NOTE: Elapsed Time in seconds: 0.00400400161743164
-
-market=KRW-BCH&side=ask&volume=1.40766993104844&price=741100&ord_type=limit
-market=KRW-DOGE&side=ask&volume=3643.03523563&price=297&ord_type=limit
-market=KRW-ETH&side=ask&volume=0.0168059769632925&price=4341000&ord_type=limit
-market=KRW-LTC&side=ask&volume=4.71525473&price=220300&ord_type=limit
-market=KRW-XRP&side=ask&volume=584.477295269922&price=1450&ord_type=limit
-
-NOTE: Log Print Time:  2021-10-11 01:48:07
-NOTE: Elapsed Time in seconds: 0.425638198852539
-
-[1] 201
-
-NOTE: Log Print Time:  2021-10-11 01:48:07
-NOTE: Elapsed Time in seconds: 0.00400590896606445
-
-{"uuid":"27a485d2-8cb1-4ca2-b32e-658f0cc820be","side":"ask","ord_type":"limit","price":"1450.0","state":"wait","market":"KRW-XRP","created_at":"2021-10-11T01:48:07+09:00","volume":"584.47729526","remaining_volume":"584.47729526","reserved_fee":"0.0","remaining_fee":"0.0","paid_fee":"0.0","locked":"584.47729526","executed_volume":"0.0","trades_count":0}
-
-NOTE: Log Print Time:  2021-10-11 01:48:07
-NOTE: Elapsed Time in seconds: 0.00299787521362305
-
-Error in setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript") : 
-  작업디렉토리를 변경할 수 없습니다
-
-
-NOTE: Log Print Time:  2021-10-11 01:48:50
-NOTE: Elapsed Time in seconds: 42.8792672157288
-
+=========================================================================
+Log End Time: 2021-10-22 07:10:08
+Log Elapsed Time: 0 00:00:00
+=========================================================================

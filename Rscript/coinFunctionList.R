@@ -1,12 +1,12 @@
-#setwd("C:/Users/vicen/Documents/Github/StockTradebot/Rscript")
+setwd("C:/Users/vicen/Documents/Github/StockTradebot/Rscript")
 
 pkg = c('quantmod','jsonlite', 'stringr', 'logr',
         'jose','openssl','PerformanceAnalytics','xts','curl','data.table',
         'httr')
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
 
-logDir<-"/home/pi/stockInfoCrawler/StockTradebot/log"
-#logDir<-"C:/coinTestLog"
+#logDir<-"/home/pi/stockInfoCrawler/StockTradebot/log"
+logDir<-"C:/coinTestLog"
 
 if (length(new.pkg)) {
   install.packages(new.pkg, dependencies = TRUE)}
@@ -114,18 +114,28 @@ getCoinPriceHistory<-function(coinList,type,unit,count){
   }
   return(rbindlist(res))
 }
-getMomentumHistory<-function(coinList,candleType,unit,count,priceType,momentumPeriod){
+getMomentumHistory<-function(coinList,candleType,unit,count,priceType,momentumPeriod,weight){
   #priceType: opening_price, high_price, low_price, trade_price
   priceList<-getCoinPriceHistory(coinList,candleType,unit,count)
   priceList<-subset(priceList,select=c("market","candle_date_time_kst",priceType))
-  priceList[,prevPrice:=shift(get(priceType),momentumPeriod,NA,"lead"),by=market]
+  
+  priceList[,"prevPrice":=shift(get(priceType),momentumPeriod[1],NA,"lead"),by=market]
+  priceList[,"momentum":= get(priceType)/prevPrice*weight[1]]
+  
+  if(length(momentumPeriod)>1){
+    for(i in 2:length(momentumPeriod)){
+      priceList[,"prevPrice":=shift(get(priceType),momentumPeriod[i],NA,"lead"),by=market]
+      priceList[,"momentum":= momentum+get(priceType)/prevPrice*weight[i]]
+    }
+  }
+
   priceList<-na.omit(priceList)
   priceList[,momentum:=get(priceType)/prevPrice*100]
   return(subset(priceList,select=c("market","candle_date_time_kst","momentum")))
 }
-getUpbitCoinMomentum<-function(candleType,unit,momentumPeriod, coinList){
+getUpbitCoinMomentum<-function(candleType,unit,momentumPeriod, weight, coinList){
   coinList<-paste("KRW",coinList,sep="-")
-  momentum<-getMomentumHistory(coinList,candleType,unit,momentumPeriod+1,"trade_price",momentumPeriod)
+  momentum<-getMomentumHistory(coinList,candleType,unit,max(momentumPeriod)+1,"trade_price",momentumPeriod,weight)  
   return(momentum)
 }
 
@@ -196,7 +206,7 @@ createOrderTable<-function(balanceCombinedTable){
   balanceCombinedTable[,diff:=targetBalance-balance]
   balanceCombinedTable[,sellall:=targetBalance==0]
   
-  totalBalance<-balanceCombinedTable$totalBalance[1]
+  totalBalance<-balanceCombinedTable[,sum(targetBalance)]
   
   remainedBalance<-totalBalance-balanceCombinedTable[diff==0][,sum(balance)]
   
@@ -225,7 +235,6 @@ rebalanceTable<-function(table){
   table[side=="ask"][currentvolume<volume]$volume<-table[side=="ask"][currentvolume<volume]$currentvolume
  
   log_open()
-  
   table<-subset(table,select=c("market","side","volume","price","ord_type"))
   log_print("Final Table List")
   log_print(table)
@@ -233,7 +242,7 @@ rebalanceTable<-function(table){
   
   if(NROW(table[side=="ask"])>0){
     orderCoin(table[side=="ask"])
-    Sys.sleep(5)
+    Sys.sleep(2)
   }
   orderCoin(table[side=="bid"])
 }
@@ -244,12 +253,24 @@ orderCoin<-function(order){
   query<-paste0("market=",order$market,"&side=",order$side,"&volume=",order$volume,"&price=",order$price,"&ord_type=",order$ord_type)
   tokenList<-sapply(query,function(x) createJwtToken(x,runif(1,1000,33553))) 
   url<-"https://api.upbit.com/v1/orders"
+  failOrder<-c()
   for(i in 1:NROW(order)){
     res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
     log_print(query[i])
     log_print(res$status_code)
     log_print(rawToChar(res$content))
+    if(res$status_code!="201") failOrder<-failOrder(failOrder,i)
     Sys.sleep(0.3)
+  }
+  if(length(failOrder)>0){
+    Sys.sleep(10)
+    for(i in failOrder){
+      res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
+      log_print(query[i])
+      log_print(res$status_code)
+      log_print(rawToChar(res$content))
+      Sys.sleep(0.3)
+    }
   }
 }
 
