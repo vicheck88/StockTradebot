@@ -195,8 +195,8 @@ createOrderTable<-function(balanceCombinedTable){
   balanceCombinedTable[diff>0][diff<bid_min]$targetBalance<-balanceCombinedTable[diff>0][diff<bid_min]$balance
   balanceCombinedTable[,diff:=targetBalance-balance]
   balanceCombinedTable[,sellall:=targetBalance==0]
-  
-  totalBalance<-balanceCombinedTable$totalBalance[1]
+ 
+  totalBalance<-balanceCombinedTable[,sum(targetBalance)]
   
   remainedBalance<-totalBalance-balanceCombinedTable[diff==0][,sum(balance)]
   
@@ -233,25 +233,36 @@ rebalanceTable<-function(table){
   
   if(NROW(table[side=="ask"])>0){
     orderCoin(table[side=="ask"])
-    Sys.sleep(3)
+    Sys.sleep(2)
   }
+
   orderCoin(table[side=="bid"])
 }
-
 orderCoin<-function(order){
   logPath<-paste0(logDir,"coinLog.",Sys.Date(),".log")
   log_open(logPath)
   query<-paste0("market=",order$market,"&side=",order$side,"&volume=",order$volume,"&price=",order$price,"&ord_type=",order$ord_type)
   tokenList<-sapply(query,function(x) createJwtToken(x,runif(1,1000,33553))) 
   url<-"https://api.upbit.com/v1/orders"
+  failOrder<-c()
   for(i in 1:NROW(order)){
     res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
     log_print(query[i])
     log_print(res$status_code)
     log_print(rawToChar(res$content))
+    if(res$status_code!="201") failOrder<-c(failOrder,i)
     Sys.sleep(0.3)
   }
-  log_close()
+  if(length(failOrder)>0){
+    Sys.sleep(10)
+    for(i in failOrder){
+      res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
+      log_print(query[i])
+      log_print(res$status_code)
+      log_print(rawToChar(res$content))
+      Sys.sleep(0.3)
+    }
+  }
 }
 
 getMinimumOrderUnit<-function(coinList){
