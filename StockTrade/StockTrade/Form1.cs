@@ -195,7 +195,7 @@ namespace StockTrade
                 }
         }
 
-        private void onReceiveChejanData(object sender, _DKHOpenAPIEvents_OnReceiveChejanDataEvent e)
+        private void onReceiveChejanData(object sender,  _DKHOpenAPIEvents_OnReceiveChejanDataEvent e)
         {
             if (e.sGubun == "0")//주문 접수 , 체결시
             {
