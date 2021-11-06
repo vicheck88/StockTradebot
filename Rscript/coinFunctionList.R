@@ -238,12 +238,13 @@ rebalanceTable<-function(table){
   log_print(table)
   log_close()
   
+  failOrder<-c()
   if(NROW(table[side=="ask"])>0){
-    orderCoin(table[side=="ask"])
+    failOrder<-c(failOrder,orderCoin(table[side=="ask"]))
     Sys.sleep(2)
   }
-
-  orderCoin(table[side=="bid"])
+  failOrder<-c(failOrder,orderCoin(table[side=="bid"]))
+  return(failOrder)
 }
 orderCoin<-function(order){
   logPath<-paste0(logDir,"coinLog.",Sys.Date(),".log")
@@ -257,19 +258,10 @@ orderCoin<-function(order){
     log_print(query[i])
     log_print(res$status_code)
     log_print(rawToChar(res$content))
-    if(res$status_code!="201") failOrder<-c(failOrder,i)
+    if(res$status_code!="201") failOrder<-failOrder(failOrder,order[i,]$market)
     Sys.sleep(0.3)
   }
-  if(length(failOrder)>0){
-    Sys.sleep(10)
-    for(i in failOrder){
-      res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
-      log_print(query[i])
-      log_print(res$status_code)
-      log_print(rawToChar(res$content))
-      Sys.sleep(0.3)
-    }
-  }
+  return(failOrder)
 }
 
 getMinimumOrderUnit<-function(coinList){
