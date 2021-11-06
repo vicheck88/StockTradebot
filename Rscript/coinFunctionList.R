@@ -114,18 +114,27 @@ getCoinPriceHistory<-function(coinList,type,unit,count){
   }
   return(rbindlist(res))
 }
-getMomentumHistory<-function(coinList,candleType,unit,count,priceType,momentumPeriod){
+getMomentumHistory<-function(coinList,candleType,unit,count,priceType,momentumPeriod,weight){
   #priceType: opening_price, high_price, low_price, trade_price
   priceList<-getCoinPriceHistory(coinList,candleType,unit,count)
   priceList<-subset(priceList,select=c("market","candle_date_time_kst",priceType))
-  priceList[,prevPrice:=shift(get(priceType),momentumPeriod,NA,"lead"),by=market]
+  
+  priceList[,"prevPrice":=shift(get(priceType),momentumPeriod[1],NA,"lead"),by=market]
+  priceList[,"momentum":= get(priceType)/prevPrice*weight[1]*100]
+  
+  if(length(momentumPeriod)>1){
+    for(i in 2:length(momentumPeriod)){
+      priceList[,"prevPrice":=shift(get(priceType),momentumPeriod[i],NA,"lead"),by=market]
+      priceList[,"momentum":= momentum+get(priceType)/prevPrice*weight[i]*100]
+    }
+  }
+
   priceList<-na.omit(priceList)
-  priceList[,momentum:=get(priceType)/prevPrice*100]
   return(subset(priceList,select=c("market","candle_date_time_kst","momentum")))
 }
-getUpbitCoinMomentum<-function(candleType,unit,momentumPeriod, coinList){
+getUpbitCoinMomentum<-function(candleType,unit,momentumPeriod, weight, coinList){
   coinList<-paste("KRW",coinList,sep="-")
-  momentum<-getMomentumHistory(coinList,candleType,unit,momentumPeriod+1,"trade_price",momentumPeriod)
+  momentum<-getMomentumHistory(coinList,candleType,unit,max(momentumPeriod)+1,"trade_price",momentumPeriod,weight)  
   return(momentum)
 }
 
@@ -195,7 +204,6 @@ createOrderTable<-function(balanceCombinedTable){
   balanceCombinedTable[diff>0][diff<bid_min]$targetBalance<-balanceCombinedTable[diff>0][diff<bid_min]$balance
   balanceCombinedTable[,diff:=targetBalance-balance]
   balanceCombinedTable[,sellall:=targetBalance==0]
- 
   totalBalance<-balanceCombinedTable[,sum(targetBalance)]
   
   remainedBalance<-totalBalance-balanceCombinedTable[diff==0][,sum(balance)]
@@ -225,7 +233,6 @@ rebalanceTable<-function(table){
   table[side=="ask"][currentvolume<volume]$volume<-table[side=="ask"][currentvolume<volume]$currentvolume
  
   log_open()
-  
   table<-subset(table,select=c("market","side","volume","price","ord_type"))
   log_print("Final Table List")
   log_print(table)
@@ -242,7 +249,7 @@ orderCoin<-function(order){
   logPath<-paste0(logDir,"coinLog.",Sys.Date(),".log")
   log_open(logPath)
   query<-paste0("market=",order$market,"&side=",order$side,"&volume=",order$volume,"&price=",order$price,"&ord_type=",order$ord_type)
-  tokenList<-sapply(query,function(x) createJwtToken(x,runif(1,1000,33553))) 
+  tokenList<-sapply(query,function(x) createJwtToken(x,runif(1,1,100000000))) 
   url<-"https://api.upbit.com/v1/orders"
   failOrder<-c()
   for(i in 1:NROW(order)){
