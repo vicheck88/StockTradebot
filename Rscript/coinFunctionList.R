@@ -1,12 +1,12 @@
-setwd("C:/Users/vicen/Documents/Github/StockTradebot/Rscript")
+#setwd("C:/Users/vicen/Documents/Github/StockTradebot/Rscript")
 
 pkg = c('quantmod','jsonlite', 'stringr', 'logr',
         'jose','openssl','PerformanceAnalytics','xts','curl','data.table',
         'httr')
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
 
-#logDir<-"/home/pi/stockInfoCrawler/StockTradebot/log"
-logDir<-"C:/coinTestLog"
+logDir<-"/home/pi/stockInfoCrawler/StockTradebot/log"
+#logDir<-"C:/coinTestLog"
 
 if (length(new.pkg)) {
   install.packages(new.pkg, dependencies = TRUE)}
@@ -238,11 +238,13 @@ rebalanceTable<-function(table){
   log_print(table)
   log_close()
   
+  failOrder<-c()
   if(NROW(table[side=="ask"])>0){
-    orderCoin(table[side=="ask"])
+    failOrder<-c(failOrder,orderCoin(table[side=="ask"]))
     Sys.sleep(2)
   }
-  orderCoin(table[side=="bid"])
+  failOrder<-c(failOrder,orderCoin(table[side=="bid"]))
+  return(failOrder)
 }
 
 orderCoin<-function(order){
@@ -257,19 +259,14 @@ orderCoin<-function(order){
     log_print(query[i])
     log_print(res$status_code)
     log_print(rawToChar(res$content))
+<<<<<<< HEAD
     if(res$status_code!="201") failOrder<-c(failOrder,i)
+=======
+    if(res$status_code!="201") failOrder<-failOrder(failOrder,order[i,]$market)
+>>>>>>> 057387593892a71061197e926a0b8d1be64001fc
     Sys.sleep(0.3)
   }
-  if(length(failOrder)>0){
-    Sys.sleep(10)
-    for(i in failOrder){
-      res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
-      log_print(query[i])
-      log_print(res$status_code)
-      log_print(rawToChar(res$content))
-      Sys.sleep(0.3)
-    }
-  }
+  return(failOrder)
 }
 
 getMinimumOrderUnit<-function(coinList){

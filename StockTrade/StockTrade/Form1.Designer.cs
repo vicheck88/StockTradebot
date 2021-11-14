@@ -85,6 +85,7 @@
             this.depositLabel = new System.Windows.Forms.Label();
             this.stockCodeLabel = new System.Windows.Forms.Label();
             this.tableLayoutPanel7 = new System.Windows.Forms.TableLayoutPanel();
+            this.axKHOpenAPI1 = new AxKHOpenAPILib.AxKHOpenAPI();
             this.autoRuleDataGridView = new System.Windows.Forms.DataGridView();
             this.거래규칙_번호 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.분석_R파일 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -114,7 +115,7 @@
             this.outstandingDataGridView = new System.Windows.Forms.DataGridView();
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.stockListDataGridView = new System.Windows.Forms.DataGridView();
-            this.axKHOpenAPI1 = new AxKHOpenAPILib.AxKHOpenAPI();
+            this.axKHOpenAPI2 = new AxKHOpenAPILib.AxKHOpenAPI();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.orderPriceNumericUpDown)).BeginInit();
@@ -126,6 +127,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.limitNumberNumericUpDown)).BeginInit();
             this.tableLayoutPanel5.SuspendLayout();
             this.tableLayoutPanel7.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.axKHOpenAPI1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.autoRuleDataGridView)).BeginInit();
             this.tableLayoutPanel6.SuspendLayout();
             this.tabControl2.SuspendLayout();
@@ -140,7 +142,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.outstandingDataGridView)).BeginInit();
             this.tabPage5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.stockListDataGridView)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.axKHOpenAPI1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.axKHOpenAPI2)).BeginInit();
             this.SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -841,19 +843,31 @@
             // 
             this.tableLayoutPanel7.ColumnCount = 1;
             this.tableLayoutPanel7.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel7.Controls.Add(this.autoRuleDataGridView, 0, 1);
             this.tableLayoutPanel7.Controls.Add(this.tableLayoutPanel6, 0, 2);
+            this.tableLayoutPanel7.Controls.Add(this.axKHOpenAPI1, 0, 3);
+            this.tableLayoutPanel7.Controls.Add(this.autoRuleDataGridView, 0, 1);
             this.tableLayoutPanel7.Controls.Add(this.tableLayoutPanel1, 0, 0);
+            this.tableLayoutPanel7.Controls.Add(this.axKHOpenAPI2, 0, 4);
             this.tableLayoutPanel7.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel7.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel7.Name = "tableLayoutPanel7";
-            this.tableLayoutPanel7.RowCount = 4;
+            this.tableLayoutPanel7.RowCount = 5;
             this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 37.5F));
             this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 62.5F));
             this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 0F));
+            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel7.Size = new System.Drawing.Size(1246, 536);
             this.tableLayoutPanel7.TabIndex = 3;
+            // 
+            // axKHOpenAPI1
+            // 
+            this.axKHOpenAPI1.Enabled = true;
+            this.axKHOpenAPI1.Location = new System.Drawing.Point(3, 518);
+            this.axKHOpenAPI1.Name = "axKHOpenAPI1";
+            this.axKHOpenAPI1.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axKHOpenAPI1.OcxState")));
+            this.axKHOpenAPI1.Size = new System.Drawing.Size(100, 1);
+            this.axKHOpenAPI1.TabIndex = 4;
             // 
             // autoRuleDataGridView
             // 
@@ -880,7 +894,7 @@
             this.autoRuleDataGridView.RowHeadersWidth = 62;
             this.autoRuleDataGridView.RowTemplate.Height = 23;
             this.autoRuleDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.autoRuleDataGridView.Size = new System.Drawing.Size(1240, 129);
+            this.autoRuleDataGridView.Size = new System.Drawing.Size(1240, 122);
             this.autoRuleDataGridView.TabIndex = 3;
             this.autoRuleDataGridView.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.autoRuleDataGridView_CellContentClick);
             // 
@@ -978,13 +992,13 @@
             this.tableLayoutPanel6.Controls.Add(this.tabControl2, 1, 0);
             this.tableLayoutPanel6.Controls.Add(this.tabControl1, 0, 0);
             this.tableLayoutPanel6.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel6.Location = new System.Drawing.Point(3, 312);
+            this.tableLayoutPanel6.Location = new System.Drawing.Point(3, 305);
             this.tableLayoutPanel6.Name = "tableLayoutPanel6";
             this.tableLayoutPanel6.RowCount = 1;
             this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 220F));
-            this.tableLayoutPanel6.Size = new System.Drawing.Size(1240, 220);
-            this.tableLayoutPanel6.TabIndex = 2;
+            this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 258F));
+            this.tableLayoutPanel6.Size = new System.Drawing.Size(1240, 207);
+            this.tableLayoutPanel6.TabIndex = 5;
             // 
             // tabControl2
             // 
@@ -996,7 +1010,7 @@
             this.tabControl2.Location = new System.Drawing.Point(623, 3);
             this.tabControl2.Name = "tabControl2";
             this.tabControl2.SelectedIndex = 0;
-            this.tabControl2.Size = new System.Drawing.Size(614, 214);
+            this.tabControl2.Size = new System.Drawing.Size(614, 201);
             this.tabControl2.TabIndex = 1;
             // 
             // tabPage6
@@ -1005,7 +1019,7 @@
             this.tabPage6.Location = new System.Drawing.Point(4, 22);
             this.tabPage6.Name = "tabPage6";
             this.tabPage6.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage6.Size = new System.Drawing.Size(606, 188);
+            this.tabPage6.Size = new System.Drawing.Size(606, 175);
             this.tabPage6.TabIndex = 2;
             this.tabPage6.Text = "주문기록(체결)";
             this.tabPage6.UseVisualStyleBackColor = true;
@@ -1017,7 +1031,7 @@
             this.orderRecordListBox.ItemHeight = 12;
             this.orderRecordListBox.Location = new System.Drawing.Point(3, 3);
             this.orderRecordListBox.Name = "orderRecordListBox";
-            this.orderRecordListBox.Size = new System.Drawing.Size(600, 182);
+            this.orderRecordListBox.Size = new System.Drawing.Size(600, 169);
             this.orderRecordListBox.TabIndex = 0;
             // 
             // tabPage3
@@ -1093,7 +1107,7 @@
             this.tabControl1.Location = new System.Drawing.Point(3, 3);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(614, 214);
+            this.tabControl1.Size = new System.Drawing.Size(614, 201);
             this.tabControl1.TabIndex = 0;
             // 
             // tabPage1
@@ -1102,7 +1116,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(606, 188);
+            this.tabPage1.Size = new System.Drawing.Size(606, 175);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "잔고";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -1120,7 +1134,7 @@
             this.balanceDataGridView.RowHeadersWidth = 62;
             this.balanceDataGridView.RowTemplate.Height = 23;
             this.balanceDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.balanceDataGridView.Size = new System.Drawing.Size(600, 182);
+            this.balanceDataGridView.Size = new System.Drawing.Size(600, 169);
             this.balanceDataGridView.TabIndex = 0;
             // 
             // tabPage2
@@ -1179,17 +1193,15 @@
             this.stockListDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.stockListDataGridView.Size = new System.Drawing.Size(602, 184);
             this.stockListDataGridView.TabIndex = 0;
-            this.stockListDataGridView.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.stockListDataGridView_CellContentClick);
             // 
-            // axKHOpenAPI1
+            // axKHOpenAPI2
             // 
-            this.axKHOpenAPI1.Enabled = true;
-            this.axKHOpenAPI1.Location = new System.Drawing.Point(12, 301);
-            this.axKHOpenAPI1.Margin = new System.Windows.Forms.Padding(2);
-            this.axKHOpenAPI1.Name = "axKHOpenAPI1";
-            this.axKHOpenAPI1.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axKHOpenAPI1.OcxState")));
-            this.axKHOpenAPI1.Size = new System.Drawing.Size(337, 168);
-            this.axKHOpenAPI1.TabIndex = 0;
+            this.axKHOpenAPI2.Enabled = true;
+            this.axKHOpenAPI2.Location = new System.Drawing.Point(3, 518);
+            this.axKHOpenAPI2.Name = "axKHOpenAPI2";
+            this.axKHOpenAPI2.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axKHOpenAPI2.OcxState")));
+            this.axKHOpenAPI2.Size = new System.Drawing.Size(100, 15);
+            this.axKHOpenAPI2.TabIndex = 6;
             // 
             // Form1
             // 
@@ -1197,7 +1209,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1246, 536);
             this.Controls.Add(this.tableLayoutPanel7);
-            this.Controls.Add(this.axKHOpenAPI1);
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "Form1";
             this.Text = "Form1";
@@ -1217,6 +1228,7 @@
             this.tableLayoutPanel5.ResumeLayout(false);
             this.tableLayoutPanel5.PerformLayout();
             this.tableLayoutPanel7.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.axKHOpenAPI1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.autoRuleDataGridView)).EndInit();
             this.tableLayoutPanel6.ResumeLayout(false);
             this.tabControl2.ResumeLayout(false);
@@ -1231,14 +1243,12 @@
             ((System.ComponentModel.ISupportInitialize)(this.outstandingDataGridView)).EndInit();
             this.tabPage5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.stockListDataGridView)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.axKHOpenAPI1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.axKHOpenAPI2)).EndInit();
             this.ResumeLayout(false);
 
         }
 
         #endregion
-
-        private AxKHOpenAPILib.AxKHOpenAPI axKHOpenAPI1;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel5;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel4;
@@ -1288,19 +1298,11 @@
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel7;
         private System.Windows.Forms.DataGridView autoRuleDataGridView;
-        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel6;
-        private System.Windows.Forms.TabControl tabControl1;
-        private System.Windows.Forms.TabPage tabPage1;
-        private System.Windows.Forms.DataGridView balanceDataGridView;
-        private System.Windows.Forms.TabPage tabPage2;
-        private System.Windows.Forms.DataGridView outstandingDataGridView;
         private System.Windows.Forms.Label label18;
         private System.Windows.Forms.ComboBox autoSellOrderComboBox;
         private System.Windows.Forms.Label label19;
         private System.Windows.Forms.TextBox updateTimeTextBox;
         private System.Windows.Forms.Button selectRFileButton;
-        private System.Windows.Forms.TabPage tabPage5;
-        private System.Windows.Forms.DataGridView stockListDataGridView;
         private System.Windows.Forms.Label stockNameLabel;
         private System.Windows.Forms.Label RFileName;
         private System.Windows.Forms.DataGridViewTextBoxColumn 거래규칙_번호;
@@ -1314,6 +1316,9 @@
         private System.Windows.Forms.DataGridViewComboBoxColumn 거래규칙_상태;
         private System.Windows.Forms.DataGridViewButtonColumn 삭제;
         private System.Windows.Forms.DataGridViewButtonColumn 수정;
+        private System.Windows.Forms.TextBox limitBuyingPerStockTextBox;
+        private AxKHOpenAPILib.AxKHOpenAPI axKHOpenAPI1;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel6;
         private System.Windows.Forms.TabControl tabControl2;
         private System.Windows.Forms.TabPage tabPage6;
         private System.Windows.Forms.ListBox orderRecordListBox;
@@ -1323,7 +1328,14 @@
         private System.Windows.Forms.ListBox deleteListBox;
         private System.Windows.Forms.TabPage tabPage7;
         private System.Windows.Forms.ListBox orderListBox2;
-        private System.Windows.Forms.TextBox limitBuyingPerStockTextBox;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.DataGridView balanceDataGridView;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.DataGridView outstandingDataGridView;
+        private System.Windows.Forms.TabPage tabPage5;
+        private System.Windows.Forms.DataGridView stockListDataGridView;
+        private AxKHOpenAPILib.AxKHOpenAPI axKHOpenAPI2;
     }
 }
 

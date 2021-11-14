@@ -1,15 +1,21 @@
 =========================================================================
 Log Path: ./log/script.log
-Working Directory: C:/Users/vicen/Documents/Github/StockTradebot/Rscript
+Program Path: C:\Users\vicen\Documents\StockTradebot\Rscript\coinFunctionList.R
+Working Directory: C:/Users/vicen/Documents/StockTradebot/Rscript
 User Name: vicen
 R Version: 4.0.3 (2020-10-10)
-Machine: DESKTOP-DJHD24Q x86-64
+Machine: DESKTOP-L3ARD11 x86-64
 Operating System: Windows 10 x64 build 19042
+<<<<<<< HEAD
 Log Start Time: 2021-10-31 11:51:18
+=======
+Log Start Time: 2021-11-07 07:24:10
+>>>>>>> 057387593892a71061197e926a0b8d1be64001fc
 =========================================================================
 
 Final Table List
 
+<<<<<<< HEAD
 NOTE: Log Print Time:  2021-10-31 11:51:18
 NOTE: Elapsed Time in seconds: 0.000999927520751953
 
@@ -32,5 +38,30 @@ NOTE: Elapsed Time in seconds: 0.00598311424255371
 
 =========================================================================
 Log End Time: 2021-10-31 11:51:18
+=======
+NOTE: Log Print Time:  2021-11-07 07:24:10
+NOTE: Elapsed Time in seconds: 0.00900721549987793
+
+      market side       volume    price ord_type
+ 1:  KRW-ADA  bid 9.298241e+01     2415    limit
+ 2: KRW-BORA  ask 6.592859e+03      436    limit
+ 3:  KRW-BTC  bid 5.380054e-02 74495000    limit
+ 4:  KRW-CRO  bid 2.960293e+03      405    limit
+ 5:  KRW-ENJ  ask 1.958771e+02     4095    limit
+ 6:  KRW-ETH  bid 3.375478e-01  5464000    limit
+ 7: KRW-MANA  ask 3.046139e+02     3440    limit
+ 8:  KRW-PLA  ask 1.224521e+03     1910    limit
+ 9: KRW-SAND  ask 3.511015e+02     3290    limit
+10:  KRW-SOL  bid 8.585661e-01   310800    limit
+11:  KRW-XRP  bid 1.345678e+02     1395    limit
+
+NOTE: Data frame has 11 rows and 5 columns.
+
+NOTE: Log Print Time:  2021-11-07 07:24:11
+NOTE: Elapsed Time in seconds: 0.0479989051818848
+
+=========================================================================
+Log End Time: 2021-11-07 07:24:11
+>>>>>>> 057387593892a71061197e926a0b8d1be64001fc
 Log Elapsed Time: 0 00:00:00
 =========================================================================
