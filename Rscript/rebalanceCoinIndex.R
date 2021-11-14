@@ -5,7 +5,7 @@ source("./coinFunctionList.R",encoding="utf-8")
 
 num<-5
 coinNumLimit<-100
-bandLimit<-0.5
+bandLimit<-0.3
 currentBalance<-getCurrentBalance()
 totalBalance<-currentBalance[,sum(balance)]
 coinList<-getUpbitCoinListDetail(coinNumLimit)
@@ -34,6 +34,8 @@ indexCoin<-getIndexBalance(coinList[1:num,],indexLimitRatio,"MARKET")
 coinMomentumUnionTable<-rbind(indexCoin,momentumCoin)
 coinMomentumUnionTable<-coinMomentumUnionTable[,.(ratio=sum(ratio)),by=c("symbol","market","market_cap")]
 
+failOrder<-c()
+
 for(i in 1:5){
   #totalBalance<-sum(currentBalance$balance)
   balanceCombinedTable<-merge(coinMomentumUnionTable,currentBalance,by="market",all=TRUE)
@@ -49,7 +51,6 @@ for(i in 1:5){
   balanceCombinedTable[,outsideofBand:=diffRatio>ratio*bandLimit]
   
   if(length(failOrder)==0){
-    failOrder<-c()
     if(sum(balanceCombinedTable$outsideofBand)){
       orderTable<-createOrderTable(balanceCombinedTable)
       failOrder<-rebalanceTable(orderTable)
