@@ -120,17 +120,15 @@ getMomentumHistory<-function(coinList,candleType,unit,count,priceType,momentumPe
   priceList<-subset(priceList,select=c("market","candle_date_time_kst",priceType))
   
   priceList[,"prevPrice":=shift(get(priceType),momentumPeriod[1],NA,"lead"),by=market]
-  priceList[,"momentum":= get(priceType)/prevPrice*weight[1]]
+  priceList[,"momentum":= get(priceType)/prevPrice*weight[1]*100]
   
   if(length(momentumPeriod)>1){
     for(i in 2:length(momentumPeriod)){
       priceList[,"prevPrice":=shift(get(priceType),momentumPeriod[i],NA,"lead"),by=market]
-      priceList[,"momentum":= momentum+get(priceType)/prevPrice*weight[i]]
+      priceList[,"momentum":= momentum+(get(priceType)/prevPrice*weight[i]*100)]
     }
   }
-
   priceList<-na.omit(priceList)
-  priceList[,momentum:=get(priceType)/prevPrice*100]
   return(subset(priceList,select=c("market","candle_date_time_kst","momentum")))
 }
 getUpbitCoinMomentum<-function(candleType,unit,momentumPeriod, weight, coinList){
@@ -259,7 +257,7 @@ orderCoin<-function(order){
     log_print(query[i])
     log_print(res$status_code)
     log_print(rawToChar(res$content))
-    if(res$status_code!="201") failOrder<-failOrder(failOrder,i)
+    if(res$status_code!="201") failOrder<-c(failOrder,i)
     Sys.sleep(0.3)
   }
   if(length(failOrder)>0){

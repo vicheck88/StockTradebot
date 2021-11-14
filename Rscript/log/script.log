@@ -5,28 +5,32 @@ User Name: vicen
 R Version: 4.0.3 (2020-10-10)
 Machine: DESKTOP-DJHD24Q x86-64
 Operating System: Windows 10 x64 build 19042
-Log Start Time: 2021-10-22 07:10:08
+Log Start Time: 2021-10-31 11:51:18
 =========================================================================
 
 Final Table List
 
-NOTE: Log Print Time:  2021-10-22 07:10:08
-NOTE: Elapsed Time in seconds: 0.00100302696228027
+NOTE: Log Print Time:  2021-10-31 11:51:18
+NOTE: Elapsed Time in seconds: 0.000999927520751953
 
-     market side       volume    price ord_type
-1:  KRW-BTC  bid 2.659168e-04 77502000    limit
-2:  KRW-ETH  bid 1.951658e-03  5048000    limit
-3:  KRW-HUM  bid 2.439905e+01      343    limit
-4:  KRW-OMG  bid 1.034365e+02    18280    limit
-5: KRW-STPT  bid 4.005225e+01      190    limit
-6:  KRW-STX  bid 1.816321e+00     2805    limit
+      market side       volume    price ord_type
+ 1:  KRW-ADA  bid  30.72943421     2350    limit
+ 2:  KRW-BAT  bid  82.67513396     1485    limit
+ 3:  KRW-BTC  bid   0.01661917 73000000    limit
+ 4:  KRW-ENJ  bid  32.13696861     3580    limit
+ 5:  KRW-ETH  bid   0.10336465  5150000    limit
+ 6: KRW-MANA  bid  28.45659693     4025    limit
+ 7:  KRW-PLA  bid  51.01543397     1865    limit
+ 8: KRW-SAND  ask 462.68524091     2405    limit
+ 9:  KRW-SOL  bid   0.26954715   227700    limit
+10:  KRW-XRP  bid  42.85925711     1315    limit
 
-NOTE: Data frame has 6 rows and 5 columns.
+NOTE: Data frame has 10 rows and 5 columns.
 
-NOTE: Log Print Time:  2021-10-22 07:10:08
-NOTE: Elapsed Time in seconds: 0.00586199760437012
+NOTE: Log Print Time:  2021-10-31 11:51:18
+NOTE: Elapsed Time in seconds: 0.00598311424255371
 
 =========================================================================
-Log End Time: 2021-10-22 07:10:08
+Log End Time: 2021-10-31 11:51:18
 Log Elapsed Time: 0 00:00:00
 =========================================================================
