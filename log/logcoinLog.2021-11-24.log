@@ -1,0 +1,40 @@
+========================================================================= 
+Log Path: /home/pi/stockInfoCrawler/StockTradebot/log/logcoinLog.2021-11-24.log 
+Working Directory: /home/pi/stockInfoCrawler/StockTradebot/Rscript 
+User Name: pi 
+R Version: 3.6.2 (2019-12-12) 
+Machine: raspberrypi armv7l 
+Operating System: Linux 5.10.60-v7+ #1449 SMP Wed Aug 25 15:00:01 BST 2021 
+Log Start Time: 2021-11-24 18:41:25 
+========================================================================= 
+
+market=&side=&volume=&price=&ord_type= 
+
+NOTE: Log Print Time:  2021-11-24 18:41:25 
+NOTE: Elapsed Time in seconds: 0.0846235752105713 
+
+[1] 401
+
+NOTE: Log Print Time:  2021-11-24 18:41:25 
+NOTE: Elapsed Time in seconds: 0.00240492820739746 
+
+{"error":{"message":"Jwt의 query를 검증하는데 실패하였습니다.","name":"invalid_query_payload"}} 
+
+NOTE: Log Print Time:  2021-11-24 18:41:25 
+NOTE: Elapsed Time in seconds: 0.00226759910583496 
+
+character(0)
+
+NOTE: Log Print Time:  2021-11-24 18:41:25 
+NOTE: Elapsed Time in seconds: 0.34507155418396 
+
+[1] 401
+
+NOTE: Log Print Time:  2021-11-24 18:41:25 
+NOTE: Elapsed Time in seconds: 0.00261044502258301 
+
+{"error":{"message":"로그인이 필요합니다.","name":"no_authorization_token"}} 
+
+NOTE: Log Print Time:  2021-11-24 18:41:25 
+NOTE: Elapsed Time in seconds: 0.00278449058532715 
+

@@ -1,0 +1,40 @@
+========================================================================= 
+Log Path: /home/pi/stockInfoCrawler/StockTradebot/log/logcoinLog.2021-11-20.log 
+Working Directory: /home/pi/stockInfoCrawler/StockTradebot/Rscript 
+User Name: pi 
+R Version: 3.6.2 (2019-12-12) 
+Machine: raspberrypi armv7l 
+Operating System: Linux 5.10.60-v7+ #1449 SMP Wed Aug 25 15:00:01 BST 2021 
+Log Start Time: 2021-11-20 06:00:45 
+========================================================================= 
+
+market=KRW-CRO&side=bid&volume=1028.45005721243&price=681&ord_type=limit 
+
+NOTE: Log Print Time:  2021-11-20 06:00:46 
+NOTE: Elapsed Time in seconds: 0.156888246536255 
+
+[1] 201
+
+NOTE: Log Print Time:  2021-11-20 06:00:46 
+NOTE: Elapsed Time in seconds: 0.00314903259277344 
+
+[1] "{\"uuid\":\"44e53f0e-c91d-47e9-a6e2-07be50c90590\",\"side\":\"bid\",\"ord_type\":\"limit\",\"price\":\"681.0\",\"state\":\"wait\",\"market\":\"KRW-CRO\",\"created_at\":\"2021-11-20T06:00:45+09:00\",\"volume\":\"1028.45005721\",\"remaining_volume\":\"1028.45005721\",\"reserved_fee\":\"350.187244480005\",\"remaining_fee\":\"350.187244480005\",\"paid_fee\":\"0.0\",\"locked\":\"700724.676204490005\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2021-11-20 06:00:46 
+NOTE: Elapsed Time in seconds: 0.00484466552734375 
+
+market=KRW-SAND&side=bid&volume=8.58549732551948&price=5230&ord_type=limit 
+
+NOTE: Log Print Time:  2021-11-20 06:00:46 
+NOTE: Elapsed Time in seconds: 0.428563594818115 
+
+[1] 201
+
+NOTE: Log Print Time:  2021-11-20 06:00:46 
+NOTE: Elapsed Time in seconds: 0.00335216522216797 
+
+[1] "{\"uuid\":\"e8c844f6-bd3d-4c89-97e8-298c54c905ed\",\"side\":\"bid\",\"ord_type\":\"limit\",\"price\":\"5230.0\",\"state\":\"wait\",\"market\":\"KRW-SAND\",\"created_at\":\"2021-11-20T06:00:46+09:00\",\"volume\":\"8.58549732\",\"remaining_volume\":\"8.58549732\",\"reserved_fee\":\"22.4510754918\",\"remaining_fee\":\"22.4510754918\",\"paid_fee\":\"0.0\",\"locked\":\"44924.6020590918\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2021-11-20 06:00:46 
+NOTE: Elapsed Time in seconds: 0.00422239303588867 
+

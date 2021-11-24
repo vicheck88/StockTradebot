@@ -258,7 +258,7 @@ orderCoin<-function(order){
     log_print(query[i])
     log_print(res$status_code)
     log_print(rawToChar(res$content))
-    if(res$status_code!="201") failOrder<-failOrder(failOrder,order[i,]$market)
+    if(res$status_code!="201") failOrder<-c(failOrder,order[i,]$market)
     Sys.sleep(0.3)
   }
   return(failOrder)

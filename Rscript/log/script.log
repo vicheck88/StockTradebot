@@ -5,34 +5,32 @@ User Name: pi
 R Version: 3.6.2 (2019-12-12) 
 Machine: raspberrypi armv7l 
 Operating System: Linux 5.10.60-v7+ #1449 SMP Wed Aug 25 15:00:01 BST 2021 
-Log Start Time: 2021-11-14 13:46:51 
+Log Start Time: 2021-11-24 18:41:18 
 ========================================================================= 
 
 Final Table List 
 
-NOTE: Log Print Time:  2021-11-14 13:46:51 
-NOTE: Elapsed Time in seconds: 0.0044715404510498 
+NOTE: Log Print Time:  2021-11-24 18:41:18 
+NOTE: Elapsed Time in seconds: 0.00738430023193359 
 
       market side       volume    price ord_type
- 1:  KRW-ADA  bid 7.562092e+01     2480    limit
- 2: KRW-BORA  ask 4.634565e+03      463    limit
- 3:  KRW-BTC  bid 4.286947e-02 78680000    limit
- 4:  KRW-CRO  bid 2.014838e+03      501    limit
- 5:  KRW-ENJ  ask 4.910715e+02     3680    limit
- 6:  KRW-ETH  bid 2.680658e-01  5631000    limit
- 7: KRW-MANA  ask 3.356183e+02     3955    limit
- 8:  KRW-PLA  ask 5.412999e+02     1985    limit
- 9: KRW-SAND  ask 3.270135e+02     3470    limit
-10:  KRW-SOL  bid 7.019541e-01   288600    limit
-11: KRW-WAXP  bid 1.427771e+03      707    limit
-12:  KRW-XRP  bid 1.080293e+02     1440    limit
+ 1:  KRW-ADA  ask 1.484214e+02     2110    limit
+ 2: KRW-BORA  ask 7.970823e+02     1620    limit
+ 3:  KRW-BTC  ask 8.424112e-02 70935000    limit
+ 4:  KRW-CRO  ask 1.124428e+03     1165    limit
+ 5:  KRW-ETH  ask 5.283666e-01  5364000    limit
+ 6:  KRW-HUM  ask 1.485317e+03      684    limit
+ 7: KRW-MANA  ask 2.025563e+02     5600    limit
+ 8: KRW-SAND  ask 1.570965e+02     8925    limit
+ 9:  KRW-SOL  ask 1.353524e+00   271650    limit
+10:  KRW-XRP  ask 2.099957e+02     1305    limit
 
-NOTE: Data frame has 12 rows and 5 columns. 
+NOTE: Data frame has 10 rows and 5 columns. 
 
-NOTE: Log Print Time:  2021-11-14 13:46:51 
-NOTE: Elapsed Time in seconds: 0.0221498012542725 
+NOTE: Log Print Time:  2021-11-24 18:41:18 
+NOTE: Elapsed Time in seconds: 0.02730393409729 
 
 ========================================================================= 
-Log End Time: 2021-11-14 13:46:51 
+Log End Time: 2021-11-24 18:41:18 
 Log Elapsed Time: 0 00:00:00 
 ========================================================================= 
