@@ -51,7 +51,8 @@ for(i in 1:5){
     failOrder<-c()
     if(sum(balanceCombinedTable$outsideofBand)){
       orderTable<-createOrderTable(balanceCombinedTable)
-      failOrder<-orderCoin(orderTable)
+      failOrder<-orderCoin(orderTable[side=="ask"])
+      failOrder<-c(failOrder,orderCoin(orderTable[side=="bid"]))
     } else{
       logPath<-paste0(logDir,"coinLog.",Sys.Date(),".log")
       log_open(logPath)
