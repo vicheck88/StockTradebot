@@ -228,7 +228,7 @@ createOrderTable<-function(balanceCombinedTable){
   balanceCombinedTable[sellall==T]$volume<-balanceCombinedTable[sellall==T]$currentvolume
   balanceCombinedTable[side=="ask"][currentvolume<volume]$volume<-balanceCombinedTable[side=="ask"][currentvolume<volume]$currentvolume
   
-  return(balanceCombinedTable)
+  return(balanceCombinedTable[,.(market,side,volume,price,ord_type)])
 }
 
 
