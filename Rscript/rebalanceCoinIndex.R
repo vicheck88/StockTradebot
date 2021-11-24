@@ -22,7 +22,7 @@ marketStrength<-NROW(momentumList[momentum>100])/NROW(momentumList)
 #상위 5개의 코인 매입
 momentumList<-getUpbitCoinMomentum("days","",c(10,20,30),c(0.5,0.3,0.2),getUpbitCoinList()$market)
 momentumStrength<-NROW(momentumList[momentum>100])/NROW(momentumList)
-momentumRatioLimit<-min(marketStrength*momentumStrength,0.5)
+momentumRatioLimit<-marketStrength*momentumStrength
 momentumCoin<-getMomentumBalance(coinList,num,momentumRatioLimit,"EQUAL",momentumList)
 
 #인덱스
