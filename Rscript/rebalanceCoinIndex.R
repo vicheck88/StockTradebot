@@ -35,25 +35,23 @@ coinMomentumUnionTable<-rbind(indexCoin,momentumCoin)
 coinMomentumUnionTable<-coinMomentumUnionTable[,.(ratio=sum(ratio)),by=c("symbol","market","market_cap")]
 
 failOrder<-c()
+balanceCombinedTable<-merge(coinMomentumUnionTable,currentBalance,by="market",all=TRUE)
+balanceCombinedTable[,totalBalance:=totalBalance]
+balanceCombinedTable<-balanceCombinedTable[market!="KRW-KRW"]
+balanceCombinedTable[is.na(ratio)]$ratio<-0
+balanceCombinedTable[is.na(balance)]$balance<-0
+balanceCombinedTable[is.na(curvolume)]$curvolume<-0
+balanceCombinedTable[,symbol:=sapply(strsplit(market,"-"),function(x)x[2])]
+balanceCombinedTable[,targetBalance:=totalBalance*ratio]
+balanceCombinedTable[,curRatio:=balance/totalBalance]
+balanceCombinedTable[,diffRatio:=abs(curRatio-ratio)]
+balanceCombinedTable[,outsideofBand:=diffRatio>ratio*bandLimit]
 
 for(i in 1:5){
-  #totalBalance<-sum(currentBalance$balance)
-  balanceCombinedTable<-merge(coinMomentumUnionTable,currentBalance,by="market",all=TRUE)
-  balanceCombinedTable[,totalBalance:=totalBalance]
-  balanceCombinedTable<-balanceCombinedTable[market!="KRW-KRW"]
-  balanceCombinedTable[is.na(ratio)]$ratio<-0
-  balanceCombinedTable[is.na(balance)]$balance<-0
-  balanceCombinedTable[is.na(curvolume)]$curvolume<-0
-  balanceCombinedTable[,symbol:=sapply(strsplit(market,"-"),function(x)x[2])]
-  balanceCombinedTable[,targetBalance:=totalBalance*ratio]
-  balanceCombinedTable[,curRatio:=balance/totalBalance]
-  balanceCombinedTable[,diffRatio:=abs(curRatio-ratio)]
-  balanceCombinedTable[,outsideofBand:=diffRatio>ratio*bandLimit]
-  
   if(length(failOrder)==0){
     if(sum(balanceCombinedTable$outsideofBand)){
       orderTable<-createOrderTable(balanceCombinedTable)
-      failOrder<-rebalanceTable(orderTable)
+      failOrder<-orderCoin(orderTable)
     } else{
       logPath<-paste0(logDir,"coinLog.",Sys.Date(),".log")
       log_open(logPath)
@@ -61,11 +59,10 @@ for(i in 1:5){
       log_close()
     }
   } else{
-    orderTable<-createOrderTable(balanceCombinedTable)
-    failOrder<-rebalanceTable(orderTable)
+    orderTable<-orderTable[market %in% failOrder]
+    failOrder<-orderCoin(orderTable)
   }
   if(length(failOrder)==0) break;
-  coinMomentumUnionTable<-coinMomentumUnionTable[market %in% failOrder]
   Sys.sleep(60*10)
 }
 
