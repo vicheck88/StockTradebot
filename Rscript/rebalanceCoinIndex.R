@@ -1,4 +1,4 @@
-setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
+#setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
 #setwd("C:/Users/vicen/Documents/Github/StockTradebot/Rscript")
 #setwd("C:/Users/vicen/Documents/StockTradebot/Rscript")
 source("./coinFunctionList.R",encoding="utf-8")
@@ -22,7 +22,7 @@ marketStrength<-min(0.95,NROW(momentumList[momentum>100])/NROW(momentumList))
 #상위 5개의 코인 매입
 momentumList<-getUpbitCoinMomentum("days","",c(10,20,30),c(0.5,0.3,0.2),getUpbitCoinList()$market)
 momentumStrength<-NROW(momentumList[momentum>100])/NROW(momentumList)
-momentumRatioLimit<-min(marketStrength*momentumStrength,0.6)
+momentumRatioLimit<-round(min(marketStrength*momentumStrength,marketStrength*0.5))
 momentumCoin<-getMomentumBalance(coinList,num,momentumRatioLimit,"EQUAL",momentumList)
 
 #인덱스
