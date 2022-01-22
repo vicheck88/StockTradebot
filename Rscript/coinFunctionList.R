@@ -86,13 +86,16 @@ getCurrentUpbitAccountInfo<-function(){
   return(result)
 }
 getCurrentUpbitPrice<-function(coinList){
-  krwCoinString=paste(coinList,collapse=',')
-  url <- paste0('https://api.upbit.com/v1/ticker?markets=',krwCoinString,'&count=',1)
-  h<-new_handle()
-  handle_setheaders(h, .list=list(Accepts="application/json"))
-  priceList<-as.data.table(fromJSON(rawToChar(curl_fetch_memory(url, h)$content)))
-  priceList<-priceList[,.(market,trade_price)]
-  priceList[,trade_price:=as.double(trade_price)]
+  if(length(coinList)>0){
+    krwCoinString=paste(coinList,collapse=',')
+    url <- paste0('https://api.upbit.com/v1/ticker?markets=',krwCoinString,'&count=',1)
+    h<-new_handle()
+    handle_setheaders(h, .list=list(Accepts="application/json"))
+    priceList<-as.data.table(fromJSON(rawToChar(curl_fetch_memory(url, h)$content)))
+    priceList<-priceList[,.(market,trade_price)]
+    priceList[,trade_price:=as.double(trade_price)]
+  }
+  else priceList<-data.table(market=character(),trade_price=double())
   return(priceList)
 }
 getCoinPriceHistory<-function(coinList,type,unit,count){
@@ -120,17 +123,15 @@ getMomentumHistory<-function(coinList,candleType,unit,count,priceType,momentumPe
   priceList<-subset(priceList,select=c("market","candle_date_time_kst",priceType))
   
   priceList[,"prevPrice":=shift(get(priceType),momentumPeriod[1],NA,"lead"),by=market]
-  priceList[,"momentum":= get(priceType)/prevPrice*weight[1]]
+  priceList[,"momentum":= get(priceType)/prevPrice*weight[1]*100]
   
   if(length(momentumPeriod)>1){
     for(i in 2:length(momentumPeriod)){
       priceList[,"prevPrice":=shift(get(priceType),momentumPeriod[i],NA,"lead"),by=market]
-      priceList[,"momentum":= momentum+get(priceType)/prevPrice*weight[i]]
+      priceList[,"momentum":= momentum+(get(priceType)/prevPrice*weight[i]*100)]
     }
   }
-
   priceList<-na.omit(priceList)
-  priceList[,momentum:=get(priceType)/prevPrice*100]
   return(subset(priceList,select=c("market","candle_date_time_kst","momentum")))
 }
 getUpbitCoinMomentum<-function(candleType,unit,momentumPeriod, weight, coinList){
