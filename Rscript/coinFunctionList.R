@@ -6,7 +6,7 @@ pkg = c('quantmod','jsonlite', 'stringr', 'logr',
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
 
 logDir<-"/home/pi/stockInfoCrawler/StockTradebot/log"
-#logDir<-"C:/coinTestLog"
+logDir<-"C:/coinTestLog"
 
 if (length(new.pkg)) {
   install.packages(new.pkg, dependencies = TRUE)}
