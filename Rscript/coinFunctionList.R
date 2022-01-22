@@ -215,37 +215,20 @@ createOrderTable<-function(balanceCombinedTable){
   
   balanceCombinedTable<-balanceCombinedTable[,.(market,diff,curvolume,sellall)]
   names(balanceCombinedTable)<-c("market","buyamount","currentvolume","sellall")
-  return(balanceCombinedTable)
-}
-
-
-rebalanceTable<-function(table){
-  logPath<-paste0(logDir,"coinLog.",Sys.Date(),".log")
-  log_open(logPath)
-  table<-table[buyamount!=0]
-  table$ord_type<-'limit'
-  table$side<-'bid'
-  table[buyamount<0]$side<-'ask'
-  table[,buyamount:=abs(buyamount)]
-  table[,price:=getCurrentUpbitPrice(table$market)$trade_price]
-  table[,volume:=buyamount/price]
-  table[sellall==T]$volume<-table[sellall==T]$currentvolume
-  table[side=="ask"][currentvolume<volume]$volume<-table[side=="ask"][currentvolume<volume]$currentvolume
- 
-  log_open()
-  table<-subset(table,select=c("market","side","volume","price","ord_type"))
-  log_print("Final Table List")
-  log_print(table)
-  log_close()
   
-  failOrder<-c()
-  if(NROW(table[side=="ask"])>0){
-    failOrder<-c(failOrder,orderCoin(table[side=="ask"]))
-    Sys.sleep(2)
-  }
-  failOrder<-c(failOrder,orderCoin(table[side=="bid"]))
-  return(failOrder)
+  balanceCombinedTable<-balanceCombinedTable[buyamount!=0]
+  balanceCombinedTable$ord_type<-'limit'
+  balanceCombinedTable$side<-'bid'
+  balanceCombinedTable[buyamount<0]$side<-'ask'
+  balanceCombinedTable[,buyamount:=abs(buyamount)]
+  balanceCombinedTable[,price:=getCurrentUpbitPrice(balanceCombinedTable$market)$trade_price]
+  balanceCombinedTable[,volume:=buyamount/price]
+  balanceCombinedTable[sellall==T]$volume<-balanceCombinedTable[sellall==T]$currentvolume
+  balanceCombinedTable[side=="ask"][currentvolume<volume]$volume<-balanceCombinedTable[side=="ask"][currentvolume<volume]$currentvolume
+  
+  return(balanceCombinedTable[,.(market,side,volume,price,ord_type)])
 }
+
 
 orderCoin<-function(order){
   logPath<-paste0(logDir,"coinLog.",Sys.Date(),".log")
