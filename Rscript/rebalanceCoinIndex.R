@@ -1,4 +1,4 @@
-setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
+#setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
 #setwd("C:/Users/vicen/Documents/Github/StockTradebot/Rscript")
 #setwd("C:/Users/vicen/Documents/StockTradebot/Rscript")
 source("./coinFunctionList.R",encoding="utf-8")
@@ -12,7 +12,7 @@ coinList<-getUpbitCoinListDetail(coinNumLimit)
 
 #1. 전체 시장의 모멘텀 계산(3개월로 계산)
 #전체 시장에서 상승하는 모멘텀의 개수비율로 코인과 현금의 비중 조절
-#시총 상위 100개의 코인으로 모멘텀 계산산
+#시총 상위 100개의 코인으로 모멘텀 계산
 #현금비중=100-margetStrength
 momentumList<-getUpbitCoinMomentum("days","",c(60),c(1), coinList$symbol)
 marketStrength<-min(0.95,NROW(momentumList[momentum>100])/NROW(momentumList))
@@ -51,7 +51,8 @@ for(i in 1:5){
   if(length(failOrder)==0){
     if(sum(balanceCombinedTable$outsideofBand)){
       orderTable<-createOrderTable(balanceCombinedTable)
-      failOrder<-orderCoin(orderTable)
+      failOrder<-orderCoin(orderTable[side=="ask"])
+      failOrder<-c(failOrder,orderCoin(orderTable[side=="bid"]))
     } else{
       logPath<-paste0(logDir,"coinLog.",Sys.Date(),".log")
       log_open(logPath)
@@ -65,6 +66,3 @@ for(i in 1:5){
   if(length(failOrder)==0) break;
   Sys.sleep(60*10)
 }
-
-
-
