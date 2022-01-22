@@ -1,0 +1,25 @@
+========================================================================= 
+Log Path: /home/pi/stockInfoCrawler/StockTradebot/log/logcoinLog.2021-12-09.log 
+Working Directory: /home/pi/stockInfoCrawler/StockTradebot/Rscript 
+User Name: pi 
+R Version: 3.6.2 (2019-12-12) 
+Machine: raspberrypi armv7l 
+Operating System: Linux 5.10.60-v7+ #1449 SMP Wed Aug 25 15:00:01 BST 2021 
+Log Start Time: 2021-12-09 21:40:43 
+========================================================================= 
+
+market=KRW-SAND&side=ask&volume=9.9512611563104&price=6875&ord_type=limit 
+
+NOTE: Log Print Time:  2021-12-09 21:40:43 
+NOTE: Elapsed Time in seconds: 0.282356739044189 
+
+[1] 401
+
+NOTE: Log Print Time:  2021-12-09 21:40:43 
+NOTE: Elapsed Time in seconds: 0.00238561630249023 
+
+{"error":{"message":"Jwt의 query를 검증하는데 실패하였습니다.","name":"invalid_query_payload"}} 
+
+NOTE: Log Print Time:  2021-12-09 21:40:43 
+NOTE: Elapsed Time in seconds: 0.00220322608947754 
+

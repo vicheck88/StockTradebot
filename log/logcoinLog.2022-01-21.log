@@ -1,0 +1,55 @@
+========================================================================= 
+Log Path: /home/pi/stockInfoCrawler/StockTradebot/log/logcoinLog.2022-01-21.log 
+Working Directory: /home/pi/stockInfoCrawler/StockTradebot/Rscript 
+User Name: pi 
+R Version: 3.6.2 (2019-12-12) 
+Machine: raspberrypi armv7l 
+Operating System: Linux 5.10.60-v7+ #1449 SMP Wed Aug 25 15:00:01 BST 2021 
+Log Start Time: 2022-01-21 21:00:31 
+========================================================================= 
+
+market=KRW-ADA&side=bid&volume=5.67578546904577&price=1500&ord_type=limit 
+
+NOTE: Log Print Time:  2022-01-21 21:00:31 
+NOTE: Elapsed Time in seconds: 0.140815258026123 
+
+[1] 201
+
+NOTE: Log Print Time:  2022-01-21 21:00:31 
+NOTE: Elapsed Time in seconds: 0.00236773490905762 
+
+[1] "{\"uuid\":\"dd76ec8c-55cb-4252-adf2-5b76cd42ef42\",\"side\":\"bid\",\"ord_type\":\"limit\",\"price\":\"1500.0\",\"state\":\"wait\",\"market\":\"KRW-ADA\",\"created_at\":\"2022-01-21T21:00:31+09:00\",\"volume\":\"5.67578546\",\"remaining_volume\":\"5.67578546\",\"reserved_fee\":\"4.256839095\",\"remaining_fee\":\"4.256839095\",\"paid_fee\":\"0.0\",\"locked\":\"8517.935029095\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2022-01-21 21:00:31 
+NOTE: Elapsed Time in seconds: 0.00341391563415527 
+
+market=KRW-BTC&side=bid&volume=0.000153704465295531&price=47808000&ord_type=limit 
+
+NOTE: Log Print Time:  2022-01-21 21:00:31 
+NOTE: Elapsed Time in seconds: 0.450517892837524 
+
+[1] 201
+
+NOTE: Log Print Time:  2022-01-21 21:00:31 
+NOTE: Elapsed Time in seconds: 0.00430870056152344 
+
+[1] "{\"uuid\":\"1d331f69-3e77-4491-bc6e-2e5f3268b66c\",\"side\":\"bid\",\"ord_type\":\"limit\",\"price\":\"47808000.0\",\"state\":\"wait\",\"market\":\"KRW-BTC\",\"created_at\":\"2022-01-21T21:00:31+09:00\",\"volume\":\"0.0001537\",\"remaining_volume\":\"0.0001537\",\"reserved_fee\":\"3.6740448\",\"remaining_fee\":\"3.6740448\",\"paid_fee\":\"0.0\",\"locked\":\"7351.7636448\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2022-01-21 21:00:31 
+NOTE: Elapsed Time in seconds: 0.00676178932189941 
+
+market=KRW-TFUEL&side=ask&volume=43.15136039&price=213&ord_type=limit 
+
+NOTE: Log Print Time:  2022-01-21 21:00:32 
+NOTE: Elapsed Time in seconds: 0.440862655639648 
+
+[1] 201
+
+NOTE: Log Print Time:  2022-01-21 21:00:32 
+NOTE: Elapsed Time in seconds: 0.00340771675109863 
+
+[1] "{\"uuid\":\"4d98ae0f-fe35-44f9-b64e-089f8e0e3e34\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"213.0\",\"state\":\"wait\",\"market\":\"KRW-TFUEL\",\"created_at\":\"2022-01-21T21:00:32+09:00\",\"volume\":\"43.15136039\",\"remaining_volume\":\"43.15136039\",\"reserved_fee\":\"0.0\",\"remaining_fee\":\"0.0\",\"paid_fee\":\"0.0\",\"locked\":\"43.15136039\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2022-01-21 21:00:32 
+NOTE: Elapsed Time in seconds: 0.00500297546386719 
+

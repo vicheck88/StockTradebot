@@ -1,0 +1,115 @@
+========================================================================= 
+Log Path: /home/pi/stockInfoCrawler/StockTradebot/log/logcoinLog.2021-12-13.log 
+Working Directory: /home/pi/stockInfoCrawler/StockTradebot/Rscript 
+User Name: pi 
+R Version: 3.6.2 (2019-12-12) 
+Machine: raspberrypi armv7l 
+Operating System: Linux 5.10.60-v7+ #1449 SMP Wed Aug 25 15:00:01 BST 2021 
+Log Start Time: 2021-12-13 21:00:37 
+========================================================================= 
+
+market=KRW-BORA&side=ask&volume=11.4257379160552&price=966&ord_type=limit 
+
+NOTE: Log Print Time:  2021-12-13 21:00:38 
+NOTE: Elapsed Time in seconds: 0.255463123321533 
+
+[1] 201
+
+NOTE: Log Print Time:  2021-12-13 21:00:38 
+NOTE: Elapsed Time in seconds: 0.00542020797729492 
+
+[1] "{\"uuid\":\"887b2121-64c6-49f0-80b9-fe046e2982c8\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"966.0\",\"state\":\"wait\",\"market\":\"KRW-BORA\",\"created_at\":\"2021-12-13T21:00:38+09:00\",\"volume\":\"11.42573791\",\"remaining_volume\":\"11.42573791\",\"reserved_fee\":\"0.0\",\"remaining_fee\":\"0.0\",\"paid_fee\":\"0.0\",\"locked\":\"11.42573791\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2021-12-13 21:00:38 
+NOTE: Elapsed Time in seconds: 0.00802254676818848 
+
+market=KRW-BTC&side=bid&volume=0.000907427033055628&price=60533000&ord_type=limit 
+
+NOTE: Log Print Time:  2021-12-13 21:00:38 
+NOTE: Elapsed Time in seconds: 0.479071617126465 
+
+[1] 201
+
+NOTE: Log Print Time:  2021-12-13 21:00:38 
+NOTE: Elapsed Time in seconds: 0.00557351112365723 
+
+[1] "{\"uuid\":\"7b8b69ce-5d69-4181-944d-31df988612f4\",\"side\":\"bid\",\"ord_type\":\"limit\",\"price\":\"60533000.0\",\"state\":\"wait\",\"market\":\"KRW-BTC\",\"created_at\":\"2021-12-13T21:00:38+09:00\",\"volume\":\"0.00090742\",\"remaining_volume\":\"0.00090742\",\"reserved_fee\":\"27.46442743\",\"remaining_fee\":\"27.46442743\",\"paid_fee\":\"0.0\",\"locked\":\"54956.31928743\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2021-12-13 21:00:38 
+NOTE: Elapsed Time in seconds: 0.00884795188903809 
+
+market=KRW-BTT&side=ask&volume=2923.3049635006&price=3.78&ord_type=limit 
+
+NOTE: Log Print Time:  2021-12-13 21:00:39 
+NOTE: Elapsed Time in seconds: 0.431549549102783 
+
+[1] 201
+
+NOTE: Log Print Time:  2021-12-13 21:00:39 
+NOTE: Elapsed Time in seconds: 0.00464153289794922 
+
+[1] "{\"uuid\":\"b0f09157-eaea-499e-8bfd-2dbd4c185299\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"3.78\",\"state\":\"wait\",\"market\":\"KRW-BTT\",\"created_at\":\"2021-12-13T21:00:39+09:00\",\"volume\":\"2923.3049635\",\"remaining_volume\":\"2923.3049635\",\"reserved_fee\":\"0.0\",\"remaining_fee\":\"0.0\",\"paid_fee\":\"0.0\",\"locked\":\"2923.3049635\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2021-12-13 21:00:39 
+NOTE: Elapsed Time in seconds: 0.00779175758361816 
+
+market=KRW-ETH&side=ask&volume=0.00573605365328949&price=4967000&ord_type=limit 
+
+NOTE: Log Print Time:  2021-12-13 21:00:39 
+NOTE: Elapsed Time in seconds: 0.442904233932495 
+
+[1] 201
+
+NOTE: Log Print Time:  2021-12-13 21:00:39 
+NOTE: Elapsed Time in seconds: 0.00504541397094727 
+
+[1] "{\"uuid\":\"67d902cf-8aa3-4559-9787-2eb72898e061\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"4967000.0\",\"state\":\"wait\",\"market\":\"KRW-ETH\",\"created_at\":\"2021-12-13T21:00:39+09:00\",\"volume\":\"0.00573605\",\"remaining_volume\":\"0.00573605\",\"reserved_fee\":\"0.0\",\"remaining_fee\":\"0.0\",\"paid_fee\":\"0.0\",\"locked\":\"0.00573605\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2021-12-13 21:00:39 
+NOTE: Elapsed Time in seconds: 0.00723433494567871 
+
+market=KRW-HIVE&side=ask&volume=6.31492036847331&price=1900&ord_type=limit 
+
+NOTE: Log Print Time:  2021-12-13 21:00:40 
+NOTE: Elapsed Time in seconds: 0.429948568344116 
+
+[1] 201
+
+NOTE: Log Print Time:  2021-12-13 21:00:40 
+NOTE: Elapsed Time in seconds: 0.00472450256347656 
+
+[1] "{\"uuid\":\"b9cebe41-66a1-494f-81ba-96ca2efed7c4\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"1900.0\",\"state\":\"wait\",\"market\":\"KRW-HIVE\",\"created_at\":\"2021-12-13T21:00:39+09:00\",\"volume\":\"6.31492036\",\"remaining_volume\":\"6.31492036\",\"reserved_fee\":\"0.0\",\"remaining_fee\":\"0.0\",\"paid_fee\":\"0.0\",\"locked\":\"6.31492036\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2021-12-13 21:00:40 
+NOTE: Elapsed Time in seconds: 0.00735950469970703 
+
+market=KRW-MATIC&side=ask&volume=4.3890462204966&price=2415&ord_type=limit 
+
+NOTE: Log Print Time:  2021-12-13 21:00:40 
+NOTE: Elapsed Time in seconds: 0.426668882369995 
+
+[1] 201
+
+NOTE: Log Print Time:  2021-12-13 21:00:40 
+NOTE: Elapsed Time in seconds: 0.00461769104003906 
+
+[1] "{\"uuid\":\"86b40639-1f85-49da-b150-1ad5833f88dd\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"2415.0\",\"state\":\"wait\",\"market\":\"KRW-MATIC\",\"created_at\":\"2021-12-13T21:00:40+09:00\",\"volume\":\"4.38904622\",\"remaining_volume\":\"4.38904622\",\"reserved_fee\":\"0.0\",\"remaining_fee\":\"0.0\",\"paid_fee\":\"0.0\",\"locked\":\"4.38904622\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2021-12-13 21:00:40 
+NOTE: Elapsed Time in seconds: 0.00728797912597656 
+
+market=KRW-SAND&side=ask&volume=1.75075525819022&price=6410&ord_type=limit 
+
+NOTE: Log Print Time:  2021-12-13 21:00:40 
+NOTE: Elapsed Time in seconds: 0.424494028091431 
+
+[1] 201
+
+NOTE: Log Print Time:  2021-12-13 21:00:40 
+NOTE: Elapsed Time in seconds: 0.00376439094543457 
+
+[1] "{\"uuid\":\"e3f1601a-af22-429b-bd95-613809b7b108\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"6410.0\",\"state\":\"wait\",\"market\":\"KRW-SAND\",\"created_at\":\"2021-12-13T21:00:40+09:00\",\"volume\":\"1.75075525\",\"remaining_volume\":\"1.75075525\",\"reserved_fee\":\"0.0\",\"remaining_fee\":\"0.0\",\"paid_fee\":\"0.0\",\"locked\":\"1.75075525\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2021-12-13 21:00:40 
+NOTE: Elapsed Time in seconds: 0.00544643402099609 
+

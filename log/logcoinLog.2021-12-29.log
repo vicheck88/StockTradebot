@@ -1,19 +1,19 @@
 ========================================================================= 
-Log Path: /home/pi/stockInfoCrawler/StockTradebot/log/logcoinLog.2021-11-24.log 
+Log Path: /home/pi/stockInfoCrawler/StockTradebot/log/logcoinLog.2021-12-29.log 
 Working Directory: /home/pi/stockInfoCrawler/StockTradebot/Rscript 
 User Name: pi 
 R Version: 3.6.2 (2019-12-12) 
 Machine: raspberrypi armv7l 
 Operating System: Linux 5.10.60-v7+ #1449 SMP Wed Aug 25 15:00:01 BST 2021 
-Log Start Time: 2021-11-24 20:37:42 
+Log Start Time: 2021-12-29 21:00:28 
 ========================================================================= 
 
 Every coins are in the band. Buy Nothing 
 
-NOTE: Log Print Time:  2021-11-24 20:37:42 
-NOTE: Elapsed Time in seconds: 0.00288796424865723 
+NOTE: Log Print Time:  2021-12-29 21:00:28 
+NOTE: Elapsed Time in seconds: 0.00120115280151367 
 
 ========================================================================= 
-Log End Time: 2021-11-24 20:37:42 
+Log End Time: 2021-12-29 21:00:28 
 Log Elapsed Time: 0 00:00:00 
 ========================================================================= 

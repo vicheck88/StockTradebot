@@ -1,0 +1,115 @@
+========================================================================= 
+Log Path: /home/pi/stockInfoCrawler/StockTradebot/log/logcoinLog.2022-01-09.log 
+Working Directory: /home/pi/stockInfoCrawler/StockTradebot/Rscript 
+User Name: pi 
+R Version: 3.6.2 (2019-12-12) 
+Machine: raspberrypi armv7l 
+Operating System: Linux 5.10.60-v7+ #1449 SMP Wed Aug 25 15:00:01 BST 2021 
+Log Start Time: 2022-01-09 21:00:33 
+========================================================================= 
+
+market=KRW-ATOM&side=ask&volume=0.457253318768114&price=43940&ord_type=limit 
+
+NOTE: Log Print Time:  2022-01-09 21:00:33 
+NOTE: Elapsed Time in seconds: 0.167442083358765 
+
+[1] 201
+
+NOTE: Log Print Time:  2022-01-09 21:00:33 
+NOTE: Elapsed Time in seconds: 0.00267124176025391 
+
+[1] "{\"uuid\":\"4db1bbe7-6a64-4a7c-965a-88c66e78c7ea\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"43940.0\",\"state\":\"wait\",\"market\":\"KRW-ATOM\",\"created_at\":\"2022-01-09T21:00:33+09:00\",\"volume\":\"0.45725331\",\"remaining_volume\":\"0.45725331\",\"reserved_fee\":\"0.0\",\"remaining_fee\":\"0.0\",\"paid_fee\":\"0.0\",\"locked\":\"0.45725331\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2022-01-09 21:00:33 
+NOTE: Elapsed Time in seconds: 0.00423264503479004 
+
+market=KRW-BTC&side=bid&volume=0.00148835698562811&price=51929000&ord_type=limit 
+
+NOTE: Log Print Time:  2022-01-09 21:00:34 
+NOTE: Elapsed Time in seconds: 0.423717021942139 
+
+[1] 201
+
+NOTE: Log Print Time:  2022-01-09 21:00:34 
+NOTE: Elapsed Time in seconds: 0.00264549255371094 
+
+[1] "{\"uuid\":\"73d22637-8c70-4566-923c-1d419eb1c31b\",\"side\":\"bid\",\"ord_type\":\"limit\",\"price\":\"51929000.0\",\"state\":\"wait\",\"market\":\"KRW-BTC\",\"created_at\":\"2022-01-09T21:00:34+09:00\",\"volume\":\"0.00148835\",\"remaining_volume\":\"0.00148835\",\"reserved_fee\":\"38.644263575\",\"remaining_fee\":\"38.644263575\",\"paid_fee\":\"0.0\",\"locked\":\"77327.171413575\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2022-01-09 21:00:34 
+NOTE: Elapsed Time in seconds: 0.00394511222839355 
+
+market=KRW-ELF&side=ask&volume=38.5954584194223&price=535&ord_type=limit 
+
+NOTE: Log Print Time:  2022-01-09 21:00:34 
+NOTE: Elapsed Time in seconds: 0.457346439361572 
+
+[1] 201
+
+NOTE: Log Print Time:  2022-01-09 21:00:34 
+NOTE: Elapsed Time in seconds: 0.00331878662109375 
+
+[1] "{\"uuid\":\"a014f397-4b8c-462d-933b-b0d029ff5b3b\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"535.0\",\"state\":\"wait\",\"market\":\"KRW-ELF\",\"created_at\":\"2022-01-09T21:00:34+09:00\",\"volume\":\"38.59545841\",\"remaining_volume\":\"38.59545841\",\"reserved_fee\":\"0.0\",\"remaining_fee\":\"0.0\",\"paid_fee\":\"0.0\",\"locked\":\"38.59545841\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2022-01-09 21:00:34 
+NOTE: Elapsed Time in seconds: 0.00633621215820312 
+
+market=KRW-ETH&side=bid&volume=0.00943846195813541&price=3878000&ord_type=limit 
+
+NOTE: Log Print Time:  2022-01-09 21:00:35 
+NOTE: Elapsed Time in seconds: 0.434175968170166 
+
+[1] 201
+
+NOTE: Log Print Time:  2022-01-09 21:00:35 
+NOTE: Elapsed Time in seconds: 0.00316286087036133 
+
+[1] "{\"uuid\":\"ca5caaf7-cec9-4bb2-b78d-a59cce66585b\",\"side\":\"bid\",\"ord_type\":\"limit\",\"price\":\"3878000.0\",\"state\":\"wait\",\"market\":\"KRW-ETH\",\"created_at\":\"2022-01-09T21:00:35+09:00\",\"volume\":\"0.00943846\",\"remaining_volume\":\"0.00943846\",\"reserved_fee\":\"18.30117394\",\"remaining_fee\":\"18.30117394\",\"paid_fee\":\"0.0\",\"locked\":\"36620.64905394\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2022-01-09 21:00:35 
+NOTE: Elapsed Time in seconds: 0.00434207916259766 
+
+market=KRW-KAVA&side=ask&volume=4.21146181611089&price=5870&ord_type=limit 
+
+NOTE: Log Print Time:  2022-01-09 21:00:35 
+NOTE: Elapsed Time in seconds: 0.502914667129517 
+
+[1] 201
+
+NOTE: Log Print Time:  2022-01-09 21:00:35 
+NOTE: Elapsed Time in seconds: 0.00376534461975098 
+
+[1] "{\"uuid\":\"043bfa08-c943-4814-bed4-92792d088525\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"5870.0\",\"state\":\"wait\",\"market\":\"KRW-KAVA\",\"created_at\":\"2022-01-09T21:00:35+09:00\",\"volume\":\"4.21146181\",\"remaining_volume\":\"4.21146181\",\"reserved_fee\":\"0.0\",\"remaining_fee\":\"0.0\",\"paid_fee\":\"0.0\",\"locked\":\"4.21146181\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2022-01-09 21:00:35 
+NOTE: Elapsed Time in seconds: 0.00490474700927734 
+
+market=KRW-LINK&side=ask&volume=0.729973175207715&price=33560&ord_type=limit 
+
+NOTE: Log Print Time:  2022-01-09 21:00:36 
+NOTE: Elapsed Time in seconds: 0.468281507492065 
+
+[1] 201
+
+NOTE: Log Print Time:  2022-01-09 21:00:36 
+NOTE: Elapsed Time in seconds: 0.00348448753356934 
+
+[1] "{\"uuid\":\"0175152a-055a-41b4-8b60-c565f2aeffc0\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"33560.0\",\"state\":\"wait\",\"market\":\"KRW-LINK\",\"created_at\":\"2022-01-09T21:00:36+09:00\",\"volume\":\"0.72997317\",\"remaining_volume\":\"0.72997317\",\"reserved_fee\":\"0.0\",\"remaining_fee\":\"0.0\",\"paid_fee\":\"0.0\",\"locked\":\"0.72997317\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2022-01-09 21:00:36 
+NOTE: Elapsed Time in seconds: 0.00483965873718262 
+
+market=KRW-POWR&side=ask&volume=31.1266871183407&price=801&ord_type=limit 
+
+NOTE: Log Print Time:  2022-01-09 21:00:36 
+NOTE: Elapsed Time in seconds: 0.408222675323486 
+
+[1] 201
+
+NOTE: Log Print Time:  2022-01-09 21:00:36 
+NOTE: Elapsed Time in seconds: 0.00273346900939941 
+
+[1] "{\"uuid\":\"870f74fd-4799-444c-8c4d-7f7ef36ccc79\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"801.0\",\"state\":\"wait\",\"market\":\"KRW-POWR\",\"created_at\":\"2022-01-09T21:00:36+09:00\",\"volume\":\"31.12668711\",\"remaining_volume\":\"31.12668711\",\"reserved_fee\":\"0.0\",\"remaining_fee\":\"0.0\",\"paid_fee\":\"0.0\",\"locked\":\"31.12668711\",\"executed_volume\":\"0.0\",\"trades_count\":0}"
+
+NOTE: Log Print Time:  2022-01-09 21:00:36 
+NOTE: Elapsed Time in seconds: 0.00365853309631348 
+
