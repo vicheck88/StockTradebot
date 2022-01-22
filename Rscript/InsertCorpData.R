@@ -1,5 +1,4 @@
 print(paste0(Sys.time()," : Starting Script"))
-setwd("/mnt/c/Users/vicen/Documents/StockTradebot/Rscript")
 
 library(RPostgres)
 library(DBI)
