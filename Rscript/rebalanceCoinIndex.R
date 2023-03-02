@@ -1,4 +1,4 @@
-#setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
+setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
 #setwd("C:/Users/vicen/Documents/Github/StockTradebot/Rscript")
 #setwd("C:/Users/vicen/Documents/StockTradebot/Rscript")
 source("./coinFunctionList.R",encoding="utf-8")
@@ -21,9 +21,10 @@ marketStrength<-min(0.95,NROW(momentumList[momentum>100])/NROW(momentumList))
 #지금 1달 간의 모멘텀 계산
 #상위 5개의 코인 매입
 momentumList<-getUpbitCoinMomentum("days","",c(10,20,30),c(0.5,0.3,0.2),getUpbitCoinList()$market)
-momentumStrength<-NROW(momentumList[momentum>100])/NROW(momentumList)
+momentumStrength<-NROW(momentumList[momentum>=150])/NROW(momentumList)
+momentumList<-momentumList[momentum>=150]
 momentumRatioLimit<-round(marketStrength*momentumStrength,2)
-momentumCoin<-getMomentumBalance(coinList,num,momentumRatioLimit,"EQUAL",momentumList)
+momentumCoin<-na.omit(getMomentumBalance(coinList,num,momentumRatioLimit,"EQUAL",momentumList))
 
 #인덱스
 #5개의 코인 구입
@@ -31,7 +32,8 @@ momentumCoin<-getMomentumBalance(coinList,num,momentumRatioLimit,"EQUAL",momentu
 indexLimitRatio <- marketStrength-momentumRatioLimit
 indexCoin<-getIndexBalance(coinList[1:num,],indexLimitRatio,"MARKET")
 
-coinMomentumUnionTable<-rbind(indexCoin,momentumCoin)
+coinMomentumUnionTable<-indexCoin
+if(NROW(momentumCoin)>0) coinMomentumUnionTable<-rbind(indexCoin,momentumCoin)
 coinMomentumUnionTable<-coinMomentumUnionTable[,.(ratio=sum(ratio)),by=c("symbol","market","market_cap")]
 
 failOrder<-c()
