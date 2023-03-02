@@ -14,16 +14,17 @@ coinList<-getUpbitCoinListDetail(coinNumLimit)
 #전체 시장에서 상승하는 모멘텀의 개수비율로 코인과 현금의 비중 조절
 #시총 상위 100개의 코인으로 모멘텀 계산
 #현금비중=100-margetStrength
-momentumList<-getUpbitCoinMomentum("days","",c(100),c(1), coinList$symbol)
+momentumList<-getUpbitCoinMomentum("days","",c(60),c(1), coinList$symbol)
 marketStrength<-min(0.95,NROW(momentumList[momentum>100])/NROW(momentumList))
 
 #모멘텀 방식: 0 ~ 50%, 인덱스: 나머지
 #지금 1달 간의 모멘텀 계산
 #상위 5개의 코인 매입
 momentumList<-getUpbitCoinMomentum("days","",c(10,20,30),c(0.5,0.3,0.2),getUpbitCoinList()$market)
-momentumStrength<-NROW(momentumList[momentum>100])/NROW(momentumList)
+momentumStrength<-NROW(momentumList[momentum>=150])/NROW(momentumList)
+momentumList<-momentumList[momentum>=150]
 momentumRatioLimit<-round(marketStrength*momentumStrength,2)
-momentumCoin<-getMomentumBalance(coinList,num,momentumRatioLimit,"EQUAL",momentumList)
+momentumCoin<-na.omit(getMomentumBalance(coinList,num,momentumRatioLimit,"EQUAL",momentumList))
 
 #인덱스
 #5개의 코인 구입
@@ -31,7 +32,8 @@ momentumCoin<-getMomentumBalance(coinList,num,momentumRatioLimit,"EQUAL",momentu
 indexLimitRatio <- marketStrength-momentumRatioLimit
 indexCoin<-getIndexBalance(coinList[1:num,],indexLimitRatio,"MARKET")
 
-coinMomentumUnionTable<-rbind(indexCoin,momentumCoin)
+coinMomentumUnionTable<-indexCoin
+if(NROW(momentumCoin)>0) coinMomentumUnionTable<-rbind(indexCoin,momentumCoin)
 coinMomentumUnionTable<-coinMomentumUnionTable[,.(ratio=sum(ratio)),by=c("symbol","market","market_cap")]
 
 failOrder<-c()
