@@ -85,19 +85,6 @@
             this.depositLabel = new System.Windows.Forms.Label();
             this.stockCodeLabel = new System.Windows.Forms.Label();
             this.tableLayoutPanel7 = new System.Windows.Forms.TableLayoutPanel();
-            this.axKHOpenAPI1 = new AxKHOpenAPILib.AxKHOpenAPI();
-            this.autoRuleDataGridView = new System.Windows.Forms.DataGridView();
-            this.거래규칙_번호 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.분석_R파일 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.거래규칙_매입제한_금액 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.거래규칙_매입제한_종목_개수 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.거래규칙_종목당_매수금액 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.거래규칙_매수_거래구분 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.거래규칙_매도_거래구분 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.거래규칙_업데이트시간 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.거래규칙_상태 = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.삭제 = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.수정 = new System.Windows.Forms.DataGridViewButtonColumn();
             this.tableLayoutPanel6 = new System.Windows.Forms.TableLayoutPanel();
             this.tabControl2 = new System.Windows.Forms.TabControl();
             this.tabPage6 = new System.Windows.Forms.TabPage();
@@ -115,6 +102,19 @@
             this.outstandingDataGridView = new System.Windows.Forms.DataGridView();
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.stockListDataGridView = new System.Windows.Forms.DataGridView();
+            this.axKHOpenAPI1 = new AxKHOpenAPILib.AxKHOpenAPI();
+            this.autoRuleDataGridView = new System.Windows.Forms.DataGridView();
+            this.거래규칙_번호 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.분석_R파일 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.거래규칙_매입제한_금액 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.거래규칙_매입제한_종목_개수 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.거래규칙_종목당_매수금액 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.거래규칙_매수_거래구분 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.거래규칙_매도_거래구분 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.거래규칙_업데이트시간 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.거래규칙_상태 = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.삭제 = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.수정 = new System.Windows.Forms.DataGridViewButtonColumn();
             this.axKHOpenAPI2 = new AxKHOpenAPILib.AxKHOpenAPI();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel4.SuspendLayout();
@@ -127,8 +127,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.limitNumberNumericUpDown)).BeginInit();
             this.tableLayoutPanel5.SuspendLayout();
             this.tableLayoutPanel7.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.axKHOpenAPI1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.autoRuleDataGridView)).BeginInit();
             this.tableLayoutPanel6.SuspendLayout();
             this.tabControl2.SuspendLayout();
             this.tabPage6.SuspendLayout();
@@ -142,6 +140,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.outstandingDataGridView)).BeginInit();
             this.tabPage5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.stockListDataGridView)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.axKHOpenAPI1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.autoRuleDataGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.axKHOpenAPI2)).BeginInit();
             this.SuspendLayout();
             // 
@@ -860,6 +860,216 @@
             this.tableLayoutPanel7.Size = new System.Drawing.Size(1246, 536);
             this.tableLayoutPanel7.TabIndex = 3;
             // 
+            // tableLayoutPanel6
+            // 
+            this.tableLayoutPanel6.ColumnCount = 2;
+            this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel6.Controls.Add(this.tabControl2, 1, 0);
+            this.tableLayoutPanel6.Controls.Add(this.tabControl1, 0, 0);
+            this.tableLayoutPanel6.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel6.Location = new System.Drawing.Point(3, 305);
+            this.tableLayoutPanel6.Name = "tableLayoutPanel6";
+            this.tableLayoutPanel6.RowCount = 1;
+            this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 207F));
+            this.tableLayoutPanel6.Size = new System.Drawing.Size(1240, 207);
+            this.tableLayoutPanel6.TabIndex = 5;
+            // 
+            // tabControl2
+            // 
+            this.tabControl2.Controls.Add(this.tabPage6);
+            this.tabControl2.Controls.Add(this.tabPage3);
+            this.tabControl2.Controls.Add(this.tabPage4);
+            this.tabControl2.Controls.Add(this.tabPage7);
+            this.tabControl2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl2.Location = new System.Drawing.Point(623, 3);
+            this.tabControl2.Name = "tabControl2";
+            this.tabControl2.SelectedIndex = 0;
+            this.tabControl2.Size = new System.Drawing.Size(614, 201);
+            this.tabControl2.TabIndex = 1;
+            // 
+            // tabPage6
+            // 
+            this.tabPage6.Controls.Add(this.orderRecordListBox);
+            this.tabPage6.Location = new System.Drawing.Point(4, 22);
+            this.tabPage6.Name = "tabPage6";
+            this.tabPage6.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage6.Size = new System.Drawing.Size(606, 175);
+            this.tabPage6.TabIndex = 2;
+            this.tabPage6.Text = "주문기록(체결)";
+            this.tabPage6.UseVisualStyleBackColor = true;
+            // 
+            // orderRecordListBox
+            // 
+            this.orderRecordListBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.orderRecordListBox.FormattingEnabled = true;
+            this.orderRecordListBox.ItemHeight = 12;
+            this.orderRecordListBox.Location = new System.Drawing.Point(3, 3);
+            this.orderRecordListBox.Name = "orderRecordListBox";
+            this.orderRecordListBox.Size = new System.Drawing.Size(600, 169);
+            this.orderRecordListBox.TabIndex = 0;
+            // 
+            // tabPage3
+            // 
+            this.tabPage3.Controls.Add(this.insertListBox);
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage3.Size = new System.Drawing.Size(606, 175);
+            this.tabPage3.TabIndex = 0;
+            this.tabPage3.Text = "편입종목";
+            this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // insertListBox
+            // 
+            this.insertListBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.insertListBox.FormattingEnabled = true;
+            this.insertListBox.ItemHeight = 12;
+            this.insertListBox.Location = new System.Drawing.Point(3, 3);
+            this.insertListBox.Margin = new System.Windows.Forms.Padding(2);
+            this.insertListBox.Name = "insertListBox";
+            this.insertListBox.Size = new System.Drawing.Size(600, 169);
+            this.insertListBox.TabIndex = 0;
+            // 
+            // tabPage4
+            // 
+            this.tabPage4.Controls.Add(this.deleteListBox);
+            this.tabPage4.Location = new System.Drawing.Point(4, 22);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(606, 175);
+            this.tabPage4.TabIndex = 1;
+            this.tabPage4.Text = "이탈종목";
+            this.tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // deleteListBox
+            // 
+            this.deleteListBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.deleteListBox.FormattingEnabled = true;
+            this.deleteListBox.ItemHeight = 12;
+            this.deleteListBox.Location = new System.Drawing.Point(3, 3);
+            this.deleteListBox.Margin = new System.Windows.Forms.Padding(2);
+            this.deleteListBox.Name = "deleteListBox";
+            this.deleteListBox.Size = new System.Drawing.Size(600, 169);
+            this.deleteListBox.TabIndex = 0;
+            // 
+            // tabPage7
+            // 
+            this.tabPage7.Controls.Add(this.orderListBox2);
+            this.tabPage7.Location = new System.Drawing.Point(4, 22);
+            this.tabPage7.Name = "tabPage7";
+            this.tabPage7.Size = new System.Drawing.Size(606, 175);
+            this.tabPage7.TabIndex = 3;
+            this.tabPage7.Text = "Debug";
+            this.tabPage7.UseVisualStyleBackColor = true;
+            // 
+            // orderListBox2
+            // 
+            this.orderListBox2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.orderListBox2.FormattingEnabled = true;
+            this.orderListBox2.ItemHeight = 12;
+            this.orderListBox2.Location = new System.Drawing.Point(0, 0);
+            this.orderListBox2.Name = "orderListBox2";
+            this.orderListBox2.Size = new System.Drawing.Size(606, 175);
+            this.orderListBox2.TabIndex = 1;
+            // 
+            // tabControl1
+            // 
+            this.tabControl1.Controls.Add(this.tabPage1);
+            this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage5);
+            this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl1.Location = new System.Drawing.Point(3, 3);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(614, 201);
+            this.tabControl1.TabIndex = 0;
+            // 
+            // tabPage1
+            // 
+            this.tabPage1.Controls.Add(this.balanceDataGridView);
+            this.tabPage1.Location = new System.Drawing.Point(4, 22);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(606, 175);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "잔고";
+            this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // balanceDataGridView
+            // 
+            this.balanceDataGridView.AllowUserToAddRows = false;
+            this.balanceDataGridView.AllowUserToDeleteRows = false;
+            this.balanceDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.balanceDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.balanceDataGridView.Location = new System.Drawing.Point(3, 3);
+            this.balanceDataGridView.Name = "balanceDataGridView";
+            this.balanceDataGridView.ReadOnly = true;
+            this.balanceDataGridView.RowHeadersVisible = false;
+            this.balanceDataGridView.RowHeadersWidth = 62;
+            this.balanceDataGridView.RowTemplate.Height = 23;
+            this.balanceDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.balanceDataGridView.Size = new System.Drawing.Size(600, 169);
+            this.balanceDataGridView.TabIndex = 0;
+            // 
+            // tabPage2
+            // 
+            this.tabPage2.Controls.Add(this.outstandingDataGridView);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(606, 175);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "미체결";
+            this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // outstandingDataGridView
+            // 
+            this.outstandingDataGridView.AllowUserToAddRows = false;
+            this.outstandingDataGridView.AllowUserToDeleteRows = false;
+            this.outstandingDataGridView.AllowUserToOrderColumns = true;
+            this.outstandingDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.outstandingDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.outstandingDataGridView.Location = new System.Drawing.Point(3, 3);
+            this.outstandingDataGridView.Name = "outstandingDataGridView";
+            this.outstandingDataGridView.ReadOnly = true;
+            this.outstandingDataGridView.RowHeadersVisible = false;
+            this.outstandingDataGridView.RowHeadersWidth = 62;
+            this.outstandingDataGridView.RowTemplate.Height = 23;
+            this.outstandingDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.outstandingDataGridView.Size = new System.Drawing.Size(600, 169);
+            this.outstandingDataGridView.TabIndex = 0;
+            // 
+            // tabPage5
+            // 
+            this.tabPage5.Controls.Add(this.stockListDataGridView);
+            this.tabPage5.Location = new System.Drawing.Point(4, 22);
+            this.tabPage5.Margin = new System.Windows.Forms.Padding(2);
+            this.tabPage5.Name = "tabPage5";
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(2);
+            this.tabPage5.Size = new System.Drawing.Size(606, 175);
+            this.tabPage5.TabIndex = 2;
+            this.tabPage5.Text = "종목리스트";
+            this.tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // stockListDataGridView
+            // 
+            this.stockListDataGridView.AccessibleRole = System.Windows.Forms.AccessibleRole.SplitButton;
+            this.stockListDataGridView.AllowUserToAddRows = false;
+            this.stockListDataGridView.AllowUserToDeleteRows = false;
+            this.stockListDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.stockListDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.stockListDataGridView.Location = new System.Drawing.Point(2, 2);
+            this.stockListDataGridView.Margin = new System.Windows.Forms.Padding(2);
+            this.stockListDataGridView.Name = "stockListDataGridView";
+            this.stockListDataGridView.RowHeadersVisible = false;
+            this.stockListDataGridView.RowHeadersWidth = 62;
+            this.stockListDataGridView.RowTemplate.Height = 30;
+            this.stockListDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.stockListDataGridView.Size = new System.Drawing.Size(602, 171);
+            this.stockListDataGridView.TabIndex = 0;
+            // 
             // axKHOpenAPI1
             // 
             this.axKHOpenAPI1.Enabled = true;
@@ -984,216 +1194,6 @@
             this.수정.Text = "수정";
             this.수정.UseColumnTextForButtonValue = true;
             // 
-            // tableLayoutPanel6
-            // 
-            this.tableLayoutPanel6.ColumnCount = 2;
-            this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel6.Controls.Add(this.tabControl2, 1, 0);
-            this.tableLayoutPanel6.Controls.Add(this.tabControl1, 0, 0);
-            this.tableLayoutPanel6.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel6.Location = new System.Drawing.Point(3, 305);
-            this.tableLayoutPanel6.Name = "tableLayoutPanel6";
-            this.tableLayoutPanel6.RowCount = 1;
-            this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 258F));
-            this.tableLayoutPanel6.Size = new System.Drawing.Size(1240, 207);
-            this.tableLayoutPanel6.TabIndex = 5;
-            // 
-            // tabControl2
-            // 
-            this.tabControl2.Controls.Add(this.tabPage6);
-            this.tabControl2.Controls.Add(this.tabPage3);
-            this.tabControl2.Controls.Add(this.tabPage4);
-            this.tabControl2.Controls.Add(this.tabPage7);
-            this.tabControl2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tabControl2.Location = new System.Drawing.Point(623, 3);
-            this.tabControl2.Name = "tabControl2";
-            this.tabControl2.SelectedIndex = 0;
-            this.tabControl2.Size = new System.Drawing.Size(614, 201);
-            this.tabControl2.TabIndex = 1;
-            // 
-            // tabPage6
-            // 
-            this.tabPage6.Controls.Add(this.orderRecordListBox);
-            this.tabPage6.Location = new System.Drawing.Point(4, 22);
-            this.tabPage6.Name = "tabPage6";
-            this.tabPage6.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage6.Size = new System.Drawing.Size(606, 175);
-            this.tabPage6.TabIndex = 2;
-            this.tabPage6.Text = "주문기록(체결)";
-            this.tabPage6.UseVisualStyleBackColor = true;
-            // 
-            // orderRecordListBox
-            // 
-            this.orderRecordListBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.orderRecordListBox.FormattingEnabled = true;
-            this.orderRecordListBox.ItemHeight = 12;
-            this.orderRecordListBox.Location = new System.Drawing.Point(3, 3);
-            this.orderRecordListBox.Name = "orderRecordListBox";
-            this.orderRecordListBox.Size = new System.Drawing.Size(600, 169);
-            this.orderRecordListBox.TabIndex = 0;
-            // 
-            // tabPage3
-            // 
-            this.tabPage3.Controls.Add(this.insertListBox);
-            this.tabPage3.Location = new System.Drawing.Point(4, 22);
-            this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(606, 188);
-            this.tabPage3.TabIndex = 0;
-            this.tabPage3.Text = "편입종목";
-            this.tabPage3.UseVisualStyleBackColor = true;
-            // 
-            // insertListBox
-            // 
-            this.insertListBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.insertListBox.FormattingEnabled = true;
-            this.insertListBox.ItemHeight = 12;
-            this.insertListBox.Location = new System.Drawing.Point(3, 3);
-            this.insertListBox.Margin = new System.Windows.Forms.Padding(2);
-            this.insertListBox.Name = "insertListBox";
-            this.insertListBox.Size = new System.Drawing.Size(600, 182);
-            this.insertListBox.TabIndex = 0;
-            // 
-            // tabPage4
-            // 
-            this.tabPage4.Controls.Add(this.deleteListBox);
-            this.tabPage4.Location = new System.Drawing.Point(4, 22);
-            this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(606, 188);
-            this.tabPage4.TabIndex = 1;
-            this.tabPage4.Text = "이탈종목";
-            this.tabPage4.UseVisualStyleBackColor = true;
-            // 
-            // deleteListBox
-            // 
-            this.deleteListBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.deleteListBox.FormattingEnabled = true;
-            this.deleteListBox.ItemHeight = 12;
-            this.deleteListBox.Location = new System.Drawing.Point(3, 3);
-            this.deleteListBox.Margin = new System.Windows.Forms.Padding(2);
-            this.deleteListBox.Name = "deleteListBox";
-            this.deleteListBox.Size = new System.Drawing.Size(600, 182);
-            this.deleteListBox.TabIndex = 0;
-            // 
-            // tabPage7
-            // 
-            this.tabPage7.Controls.Add(this.orderListBox2);
-            this.tabPage7.Location = new System.Drawing.Point(4, 22);
-            this.tabPage7.Name = "tabPage7";
-            this.tabPage7.Size = new System.Drawing.Size(606, 188);
-            this.tabPage7.TabIndex = 3;
-            this.tabPage7.Text = "Debug";
-            this.tabPage7.UseVisualStyleBackColor = true;
-            // 
-            // orderListBox2
-            // 
-            this.orderListBox2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.orderListBox2.FormattingEnabled = true;
-            this.orderListBox2.ItemHeight = 12;
-            this.orderListBox2.Location = new System.Drawing.Point(0, 0);
-            this.orderListBox2.Name = "orderListBox2";
-            this.orderListBox2.Size = new System.Drawing.Size(606, 188);
-            this.orderListBox2.TabIndex = 1;
-            // 
-            // tabControl1
-            // 
-            this.tabControl1.Controls.Add(this.tabPage1);
-            this.tabControl1.Controls.Add(this.tabPage2);
-            this.tabControl1.Controls.Add(this.tabPage5);
-            this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tabControl1.Location = new System.Drawing.Point(3, 3);
-            this.tabControl1.Name = "tabControl1";
-            this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(614, 201);
-            this.tabControl1.TabIndex = 0;
-            // 
-            // tabPage1
-            // 
-            this.tabPage1.Controls.Add(this.balanceDataGridView);
-            this.tabPage1.Location = new System.Drawing.Point(4, 22);
-            this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(606, 175);
-            this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "잔고";
-            this.tabPage1.UseVisualStyleBackColor = true;
-            // 
-            // balanceDataGridView
-            // 
-            this.balanceDataGridView.AllowUserToAddRows = false;
-            this.balanceDataGridView.AllowUserToDeleteRows = false;
-            this.balanceDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.balanceDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.balanceDataGridView.Location = new System.Drawing.Point(3, 3);
-            this.balanceDataGridView.Name = "balanceDataGridView";
-            this.balanceDataGridView.ReadOnly = true;
-            this.balanceDataGridView.RowHeadersVisible = false;
-            this.balanceDataGridView.RowHeadersWidth = 62;
-            this.balanceDataGridView.RowTemplate.Height = 23;
-            this.balanceDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.balanceDataGridView.Size = new System.Drawing.Size(600, 169);
-            this.balanceDataGridView.TabIndex = 0;
-            // 
-            // tabPage2
-            // 
-            this.tabPage2.Controls.Add(this.outstandingDataGridView);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
-            this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(606, 188);
-            this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "미체결";
-            this.tabPage2.UseVisualStyleBackColor = true;
-            // 
-            // outstandingDataGridView
-            // 
-            this.outstandingDataGridView.AllowUserToAddRows = false;
-            this.outstandingDataGridView.AllowUserToDeleteRows = false;
-            this.outstandingDataGridView.AllowUserToOrderColumns = true;
-            this.outstandingDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.outstandingDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.outstandingDataGridView.Location = new System.Drawing.Point(3, 3);
-            this.outstandingDataGridView.Name = "outstandingDataGridView";
-            this.outstandingDataGridView.ReadOnly = true;
-            this.outstandingDataGridView.RowHeadersVisible = false;
-            this.outstandingDataGridView.RowHeadersWidth = 62;
-            this.outstandingDataGridView.RowTemplate.Height = 23;
-            this.outstandingDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.outstandingDataGridView.Size = new System.Drawing.Size(600, 182);
-            this.outstandingDataGridView.TabIndex = 0;
-            // 
-            // tabPage5
-            // 
-            this.tabPage5.Controls.Add(this.stockListDataGridView);
-            this.tabPage5.Location = new System.Drawing.Point(4, 22);
-            this.tabPage5.Margin = new System.Windows.Forms.Padding(2);
-            this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(2);
-            this.tabPage5.Size = new System.Drawing.Size(606, 188);
-            this.tabPage5.TabIndex = 2;
-            this.tabPage5.Text = "종목리스트";
-            this.tabPage5.UseVisualStyleBackColor = true;
-            // 
-            // stockListDataGridView
-            // 
-            this.stockListDataGridView.AccessibleRole = System.Windows.Forms.AccessibleRole.SplitButton;
-            this.stockListDataGridView.AllowUserToAddRows = false;
-            this.stockListDataGridView.AllowUserToDeleteRows = false;
-            this.stockListDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.stockListDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.stockListDataGridView.Location = new System.Drawing.Point(2, 2);
-            this.stockListDataGridView.Margin = new System.Windows.Forms.Padding(2);
-            this.stockListDataGridView.Name = "stockListDataGridView";
-            this.stockListDataGridView.RowHeadersVisible = false;
-            this.stockListDataGridView.RowHeadersWidth = 62;
-            this.stockListDataGridView.RowTemplate.Height = 30;
-            this.stockListDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.stockListDataGridView.Size = new System.Drawing.Size(602, 184);
-            this.stockListDataGridView.TabIndex = 0;
-            // 
             // axKHOpenAPI2
             // 
             this.axKHOpenAPI2.Enabled = true;
@@ -1228,8 +1228,6 @@
             this.tableLayoutPanel5.ResumeLayout(false);
             this.tableLayoutPanel5.PerformLayout();
             this.tableLayoutPanel7.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.axKHOpenAPI1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.autoRuleDataGridView)).EndInit();
             this.tableLayoutPanel6.ResumeLayout(false);
             this.tabControl2.ResumeLayout(false);
             this.tabPage6.ResumeLayout(false);
@@ -1243,6 +1241,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.outstandingDataGridView)).EndInit();
             this.tabPage5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.stockListDataGridView)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.axKHOpenAPI1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.autoRuleDataGridView)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.axKHOpenAPI2)).EndInit();
             this.ResumeLayout(false);
 

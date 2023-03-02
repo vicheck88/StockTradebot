@@ -531,7 +531,7 @@ namespace StockTrade
                 foreach (var s in stockBalanceList)
                 {
                     s.종목코드 = s.종목코드.Replace("A", "").Trim();
-
+                    if (s.총평가금액 == "") continue;
                     if (stocksToBuy.Keys.Contains(s.종목코드))
                     {
                         var st = stocksToBuy[s.종목코드];
