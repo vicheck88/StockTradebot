@@ -20,8 +20,6 @@ latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.월별기업�
 
 print(paste0(Sys.time()," : Starting to get current coporation list"))
 
-<<<<<<< HEAD
-  print(paste0(Sys.time()," : Starting to get current coporation list"))
   
   day<-str_remove_all(availableDate,"-")
   #전달 말 등록된 기업정보
