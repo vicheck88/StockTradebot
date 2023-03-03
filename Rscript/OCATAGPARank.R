@@ -105,7 +105,8 @@ buySheet<-combinedSheet[평가금액<목표금액]
 buyRes<-orderStocks(apiConfig,account,buySheet) #매수 다음
 
 print("failed stocks")
-failedStocks<-buyRes[rt_cd!='0']
+print(sellRes[rt_cd!='0'])
+print(buyRes[rt_cd!='0'])
 
 cnt<-0
 failNum<-nrow(buyRes[rt_cd!='0'])
