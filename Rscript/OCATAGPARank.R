@@ -1,5 +1,5 @@
 #Sys.setlocale('LC_ALL','en_US.UTF-8')
-source("~/StockTradebot/Rscript/Han2FunctionList.R")
+source("~/stockInfoCrawler/StockTradebot/Rscript/Han2FunctionList.R")
 pkg = c('RPostgres', 'DBI','stringr')
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
 if (length(new.pkg)) {
@@ -54,7 +54,7 @@ orderData<-function(data){
 }
 
 stocknum<-15
-goalBalanceSum<-63000000
+goalBalanceSum<-64000000
 
 output<-filter(corpTable)
 output<-orderData(output)

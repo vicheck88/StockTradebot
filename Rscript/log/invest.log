@@ -1,0 +1,19 @@
+$RPostgres
+ [1] "RPostgres"  "jsonlite"   "data.table" "httr"       "stats"     
+ [6] "graphics"   "grDevices"  "utils"      "datasets"   "methods"   
+[11] "base"      
+
+$DBI
+ [1] "DBI"        "RPostgres"  "jsonlite"   "data.table" "httr"      
+ [6] "stats"      "graphics"   "grDevices"  "utils"      "datasets"  
+[11] "methods"    "base"      
+
+$stringr
+ [1] "stringr"    "DBI"        "RPostgres"  "jsonlite"   "data.table"
+ [6] "httr"       "stats"      "graphics"   "grDevices"  "utils"     
+[11] "datasets"   "methods"    "base"      
+
+Error: lexical error: invalid char in json text.
+                                       ~/config.json
+                     (right here) ------^
+Execution halted
