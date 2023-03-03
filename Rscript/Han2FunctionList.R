@@ -115,7 +115,11 @@ orderStock<-function(apiConfig,account,token,code,qty,price){
               ORD_UNPR=as.character(price)
   )
   response<-POST(orderUrl,add_headers(headers),body=toJSON(body,auto_unbox=T))
-  return(fromJSON(rawToChar(response$content)))
+  res<-fromJSON(rawToChar(response$content))
+  res$code<-code
+  res$qty<-qty
+  res$price<-price
+  return(res)
 }
 
 orderStocks<-function(apiConfig, account, stockTable){
@@ -134,8 +138,9 @@ orderStocks<-function(apiConfig, account, stockTable){
       next;
     }
     r<-orderStock(apiConfig,account,token,code,qty,price)
+    r$idx<-i
     print(paste("rc_cd:",r$rt_cd," msg_cd:",r$msg_cd," msg:",r$msg1))
-    res<-rbind(res,r)
+    res<-rbind(res,as.data.table(r))
     Sys.sleep(0.1)
   }
   revokeToken(apiConfig,account,token)

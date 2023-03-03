@@ -1,5 +1,6 @@
 #Sys.setlocale('LC_ALL','en_US.UTF-8')
-source("~/stockInfoCrawler/StockTradebot/Rscript/Han2FunctionList.R")
+#source("~/StockTradebot/Rscript/Han2FunctionList.R") #macOS에서 읽는 경우
+source("~/stockInfoCrawler/StockTradebot/Rscript/Han2FunctionList.R") #라즈베리에서 읽는 경우
 pkg = c('RPostgres', 'DBI','stringr')
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
 if (length(new.pkg)) {
@@ -96,9 +97,25 @@ print("Final stock list")
 print(combinedSheet)
 
 print("Sell orders")
-sellRes<-orderStocks(apiConfig,account,combinedSheet[평가금액>목표금액]) #매도 먼저
+sellSheet<-combinedSheet[평가금액>목표금액]
+sellRes<-orderStocks(apiConfig,account,sellSheet) #매도 먼저
+
 print("Buy orders")
-buyRes<-orderStocks(apiConfig,account,combinedSheet[평가금액<목표금액]) #매수 다음
+buySheet<-combinedSheet[평가금액<목표금액]
+buyRes<-orderStocks(apiConfig,account,buySheet) #매수 다음
+
+print("failed stocks")
+failedStocks<-buyRes[rt_cd!='0']
+
+cnt<-0
+failNum<-nrow(buyRes[rt_cd!='0'])
+while(failNum>0 & cnt<=10){
+  cnt<-cnt+1
+  rebuySheet<-buySheet[buyRes[rt_cd!='0']$idx]
+  rebuyRes<-orderStocks(apiConfig,account,rebuySheet)
+  failNum<-nrow(rebuyRes[rt_cd!='0'])
+  Sys.sleep(30)
+}
 
 res<-rbind(sellRes,buyRes)
 
