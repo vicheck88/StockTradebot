@@ -110,9 +110,11 @@ print(buyRes[rt_cd!='0'])
 
 cnt<-0
 failNum<-nrow(buyRes[rt_cd!='0'])
+rebuySheet<-buySheet
+rebuyRes<-buyRes
 while(failNum>0 & cnt<=10){
   cnt<-cnt+1
-  rebuySheet<-buySheet[buyRes[rt_cd!='0']$idx]
+  rebuySheet<-rebuySheet[rebuyRes[rt_cd!='0']$idx]
   rebuyRes<-orderStocks(apiConfig,account,rebuySheet)
   failNum<-nrow(rebuyRes[rt_cd!='0'])
   Sys.sleep(30)
