@@ -116,6 +116,7 @@ orderStock<-function(apiConfig,account,token,code,qty,price){
   )
   response<-POST(orderUrl,add_headers(headers),body=toJSON(body,auto_unbox=T))
   res<-fromJSON(rawToChar(response$content))
+  res$output<-NULL
   res$code<-code
   res$qty<-qty
   res$price<-price
