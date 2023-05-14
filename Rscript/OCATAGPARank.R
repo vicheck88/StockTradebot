@@ -1,6 +1,8 @@
 #Sys.setlocale('LC_ALL','en_US.UTF-8')
-#source("~/StockTradebot/Rscript/Han2FunctionList.R") #macOS에서 읽는 경우
-source("~/stockInfoCrawler/StockTradebot/Rscript/Han2FunctionList.R") #라즈베리에서 읽는 경우
+source("~/StockTradebot/Rscript/Han2FunctionList.R") #macOS에서 읽는 경우
+source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
+#source("~/stockInfoCrawler/StockTradebot/Rscript/Han2FunctionList.R") #라즈베리에서 읽는 경우
+#source("~/stockInfoCrawler/StockTradebot/Rscript/telegramAPI.R") #라즈베리에서 읽는 경우
 pkg = c('RPostgres', 'DBI','stringr')
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
 if (length(new.pkg)) {
@@ -18,8 +20,8 @@ apiConfig<-config$api$config$prod
 account<-config$api$account$prod$main
 
 #재무제표 이상한 기업 우선 거르기
-#최근 2년 간 분기재무제표에서 매출, 매출원가가 음수인 경우가 한 번이라도 있다면 목록에서 제거
-prevDate<-str_replace(substring(Sys.Date()-730,1,7),'-','.')
+#최근 1년 간 분기재무제표에서 매출, 매출원가가 음수인 경우가 한 번이라도 있다면 목록에서 제거
+prevDate<-str_replace(substring(Sys.Date()-365,1,7),'-','.')
 sql<-sprintf("select * from metainfo.월별기업정보 a
 where 일자=(select max(일자) from metainfo.월별기업정보)
 and not exists (
@@ -54,8 +56,9 @@ orderData<-function(data){
   return(data)
 }
 
-stocknum<-15
-goalBalanceSum<-63000000
+args<-commandArgs(trailingOnly = TRUE)
+stocknum<-as.numeric(args[1])
+goalBalanceSum<-as.numeric(args[2])
 
 output<-filter(corpTable)
 output<-orderData(output)
@@ -96,13 +99,36 @@ combinedSheet<-combinedSheet[,c('종목코드','종목명','보유수량','목�
 print("Final stock list")
 print(combinedSheet)
 
+for(i in nrow(combinedSheet)){
+  sendMessage("Stocks to buy")
+  row<-combinedSheet[i,]
+  text<-paste0("code: ",row$종목코드," name: ",row$종목명," qty: ",row$보유수량," goalPrice: ",row$목표금액," curPrice: ",row$평가금액)
+  sendMessage(text)
+}
+
+
 print("Sell orders")
+
 sellSheet<-combinedSheet[평가금액>목표금액]
 sellRes<-orderStocks(apiConfig,account,sellSheet) #매도 먼저
+for(i in nrow(sellRes)){
+  sendMessage("Sell orders")
+  row<-sellRes[i,]
+  text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
+  sendMessage(text)
+}
+
 
 print("Buy orders")
 buySheet<-combinedSheet[평가금액<목표금액]
 buyRes<-orderStocks(apiConfig,account,buySheet) #매수 다음
+for(i in nrow(sellRes)){
+  sendMessage("Buy orders")
+  row<-sellRes[i,]
+  text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
+  sendMessage(text)
+}
+
 
 print("failed stocks")
 print(sellRes[rt_cd!='0'])
