@@ -54,8 +54,12 @@ orderData<-function(data){
   return(data)
 }
 
-stocknum<-15
-goalBalanceSum<-64000000
+args = commandArgs(trailingOnly=TRUE)
+stocknum <- as.numeric(args[1])
+goalBalanceSum <- as.numeric(args[2])
+
+print(paste0("Number of Stocks: ",stocknum))
+print(paste0("Total stock balance: ",goalBalanceSum))
 
 output<-filter(corpTable)
 output<-orderData(output)

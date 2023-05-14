@@ -1,0 +1,376 @@
+$RPostgres
+ [1] "RPostgres"  "jsonlite"   "data.table" "httr"       "stats"     
+ [6] "graphics"   "grDevices"  "utils"      "datasets"   "methods"   
+[11] "base"      
+
+$DBI
+ [1] "DBI"        "RPostgres"  "jsonlite"   "data.table" "httr"      
+ [6] "stats"      "graphics"   "grDevices"  "utils"      "datasets"  
+[11] "methods"    "base"      
+
+$stringr
+ [1] "stringr"    "DBI"        "RPostgres"  "jsonlite"   "data.table"
+ [6] "httr"       "stats"      "graphics"   "grDevices"  "utils"     
+[11] "datasets"   "methods"    "base"      
+
+[1] "Number of Stocks: 15"
+[1] "Total stock balance: 6.4e+07"
+[1] "Selected stocks"
+          일자 종목코드       종목명 시장구분      산업분류 현재가(종가)
+ 1: 2023-04-28   098660     에스티오   KOSDAQ     섬유·의류         2630
+ 2: 2023-04-28   225590   패션플랫폼   KOSDAQ     섬유·의류         1375
+ 3: 2023-04-28   335870       윙스풋   KOSDAQ          유통         2230
+ 4: 2023-04-28   026040 제이에스티나   KOSDAQ      기타제조         2760
+ 5: 2023-04-28   215480 토박스코리아   KOSDAQ          유통         4400
+ 6: 2023-04-28   115610     이미지스   KOSDAQ        반도체         2415
+ 7: 2023-04-28   204020       그리티   KOSDAQ     섬유·의류         2765
+ 8: 2023-04-28   252500   세화피앤씨   KOSDAQ          화학         1069
+ 9: 2023-04-28   344860       이노진   KOSDAQ          화학         3640
+10: 2023-04-28   067920       이글루   KOSDAQ    소프트웨어         6280
+11: 2023-04-28   153490   우리이앤엘   KOSDAQ        반도체         1099
+12: 2023-04-28   096870       엘디티   KOSDAQ        반도체         3585
+13: 2023-04-28   134060       이퓨쳐   KOSDAQ 출판·매체복제         6520
+14: 2023-04-28   258790   소프트캠프   KOSDAQ 출판·매체복제         1690
+15: 2023-04-28   047080   한빛소프트   KOSDAQ  디지털컨텐츠         2975
+       시가총액 주당배당금 배당수익률 관리여부      자산 유동자산     부채
+ 1: 32877566880        110       4.18        - 6.040e+10 3.28e+10 3.05e+10
+ 2: 36625480375          0       0.00        - 9.770e+10 6.15e+10 3.01e+10
+ 3: 37199571060          0       0.00        - 4.710e+10 3.15e+10 2.16e+10
+ 4: 45550460400        100       3.62        - 5.920e+10 3.67e+10 1.26e+10
+ 5: 42305810800          0       0.00        - 4.160e+10 3.15e+10 9.00e+09
+ 6: 37017786540          0       0.00        - 1.660e+10 1.40e+10 6.10e+09
+ 7: 55707643950          0       0.00        - 8.850e+10 7.02e+10 2.02e+10
+ 8: 44348950910         15       1.40        - 4.070e+10 2.97e+10 3.60e+09
+ 9: 43789200000          0       0.00        - 7.900e+09 6.20e+09 1.20e+09
+10: 69055627320        160       2.55        - 9.100e+10 3.96e+10 2.03e+10
+11: 56576520000          0       0.00        - 1.088e+11 8.72e+10 3.34e+10
+12: 23942064000          0       0.00        - 1.720e+10 1.19e+10 1.80e+09
+13: 31095510000          0       0.00        - 2.440e+10 1.70e+10 2.80e+09
+14: 42235269960          0       0.00        - 3.260e+10 2.16e+10 1.58e+10
+15: 73846526950          0       0.00        - 4.390e+10 3.90e+10 1.91e+10
+    유동부채     자본   자본금    매출액 매출총이익 영업이익 지배주주순이익
+ 1: 2.53e+10 2.99e+10 6.30e+09 7.320e+10  4.300e+10 3.00e+09        1.7e+09
+ 2: 1.64e+10 6.76e+10 2.70e+09 1.144e+11  7.370e+10 1.19e+10        9.6e+09
+ 3: 1.90e+10 2.55e+10 1.50e+09 5.430e+10  2.870e+10 3.70e+09             NA
+ 4: 9.30e+09 4.65e+10 8.70e+09 7.790e+10  5.160e+10 2.60e+09        3.1e+09
+ 5: 8.80e+09 3.26e+10 4.80e+09 5.110e+10  3.050e+10 4.90e+09        4.0e+09
+ 6: 4.70e+09 1.05e+10 7.70e+09 2.200e+10  6.800e+09 1.50e+09             NA
+ 7: 1.70e+10 6.83e+10 1.05e+10 1.431e+11  8.360e+10 2.90e+09        2.0e+09
+ 8: 3.50e+09 3.71e+10 4.10e+09 3.790e+10  2.030e+10 9.00e+08             NA
+ 9: 1.20e+09 6.70e+09 9.00e+08 5.000e+09  3.800e+09 1.10e+09             NA
+10: 1.85e+10 7.07e+10 5.50e+09 1.031e+11  1.031e+11 8.00e+09        7.2e+09
+11: 3.23e+10 7.54e+10 2.57e+10 1.361e+11  3.970e+10 2.70e+09        5.4e+09
+12: 1.50e+09 1.54e+10 3.30e+09 1.180e+10  3.700e+09 1.50e+09             NA
+13: 1.10e+09 2.17e+10 2.40e+09 1.110e+10  7.800e+09 1.90e+09             NA
+14: 1.38e+10 1.68e+10 2.50e+09 1.890e+10  1.430e+10 1.30e+09        9.0e+08
+15: 1.77e+10 2.49e+10 1.24e+10 5.620e+10  5.620e+10 3.50e+09        1.9e+09
+    당기순이익 영업활동으로인한현금흐름 재무활동으로인한현금흐름
+ 1:   1.70e+09                 4.10e+09                -3.30e+09
+ 2:   9.80e+09                 7.00e+09                 1.37e+10
+ 3:  -1.68e+10                 1.50e+09                -4.10e+09
+ 4:   1.30e+09                 3.50e+09                -8.70e+09
+ 5:   4.20e+09                 2.10e+09                -1.40e+09
+ 6:   1.80e+09                 1.90e+09                 9.00e+08
+ 7:   1.80e+09                 8.00e+08                -3.60e+09
+ 8:   1.40e+09                 2.00e+09                -6.00e+08
+ 9:   9.00e+08                 4.00e+08                 0.00e+00
+10:   7.60e+09                 1.06e+10                -6.80e+09
+11:   5.40e+09                 2.85e+10                -6.00e+09
+12:   2.10e+09                 3.40e+09                 0.00e+00
+13:   2.70e+09                 2.40e+09                -1.20e+09
+14:   6.00e+08                 6.00e+08                 3.00e+08
+15:   3.30e+09                 7.00e+08                 1.00e+08
+    투자활동으로인한현금흐름 유상증자 SIZERANK QUALITYRANK VALUERANK
+ 1:                -2.00e+09       NA       19          50         0
+ 2:                -2.76e+10       NA       35          40         0
+ 3:                -2.00e+08       NA       43          82         0
+ 4:                 7.00e+09       NA      100          27         0
+ 5:                -5.00e+09       NA       81          46         0
+ 6:                -3.00e+08       NA       40         135         0
+ 7:                 4.40e+09       NA      155          25         0
+ 8:                -3.10e+09       NA       95         123         0
+ 9:                -1.00e+08       NA       91         129         0
+10:                -1.50e+09       NA      229           8         0
+11:                -3.23e+10       NA      158          86         0
+12:                 0.00e+00       NA        3         241         0
+13:                -3.40e+09       NA       14         233         0
+14:                -8.00e+08       NA       80         185         0
+15:                 8.00e+08       NA      266           7         0
+    MOMENTUMRANK TOTALRANK
+ 1:            0        69
+ 2:            0        75
+ 3:            0       125
+ 4:            0       127
+ 5:            0       127
+ 6:            0       175
+ 7:            0       180
+ 8:            0       218
+ 9:            0       220
+10:            0       237
+11:            0       244
+12:            0       244
+13:            0       247
+14:            0       265
+15:            0       273
+[1] "Final stock list"
+    종목코드       종목명 보유수량 목표금액 평가금액
+ 1:   026040 제이에스티나     1465  4266667  4072700
+ 2:   047080   한빛소프트     1346  4266667  4024540
+ 3:   053060         세동     2079        0  3966732
+ 4:   054220   비츠로시스     3436        0  2470484
+ 5:   058530   파나케이아      185        0   299700
+ 6:   067920       이글루      580  4266667  3613400
+ 7:   096870       엘디티     1126  4266667  4087380
+ 8:   098660     에스티오     1527  4266667  4099995
+ 9:   115610     이미지스     1862  4266667  4589830
+10:   134060       이퓨쳐      676  4266667  4387240
+11:   153490   우리이앤엘     4026  4266667  4360158
+12:   204020       그리티     1458  4266667  4053240
+13:   215480 토박스코리아      943  4266667  4224640
+14:   225590   패션플랫폼     2788  4266667  3808408
+15:   252500   세화피앤씨     3652  4266667  3849208
+16:   258790   소프트캠프        0  4266667        0
+17:   335870       윙스풋     1505  4266667  3326050
+18:   344860       이노진     1010  4266667  3610750
+[1] "Sell orders"
+[1] "code: 053060  name: 세동  qty: -2079  price: 1908  ordersum: -3966732"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 054220  name: 비츠로시스  qty: -3436  price: 720  ordersum: -2473920"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 058530  name: 파나케이아  qty: -185  price: 1620  ordersum: -299700"
+[1] "rc_cd: 7  msg_cd: APBK0066  msg: 거래정지종목(주식)은 취소주문만 가능(정정불가)합니다."
+[1] "code: 115610  name: 이미지스  qty: -132  price: 2465  ordersum: -325380"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 134060  name: 이퓨쳐  qty: -19  price: 6490  ordersum: -123310"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 153490  name: 우리이앤엘  qty: -94  price: 1085  ordersum: -101990"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "Buy orders"
+[1] "code: 026040  name: 제이에스티나  qty: 69  price: 2780  ordersum: 191820"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 047080  name: 한빛소프트  qty: 80  price: 2990  ordersum: 239200"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 067920  name: 이글루  qty: 104  price: 6230  ordersum: 647920"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 096870  name: 엘디티  qty: 49  price: 3630  ordersum: 177870"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 098660  name: 에스티오  qty: 62  price: 2685  ordersum: 166470"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 204020  name: 그리티  qty: 76  price: 2780  ordersum: 211280"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 215480  name: 토박스코리아  qty: 9  price: 4480  ordersum: 40320"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 225590  name: 패션플랫폼  qty: 337  price: 1365  ordersum: 460005"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 252500  name: 세화피앤씨  qty: 396  price: 1054  ordersum: 417384"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 258790  name: 소프트캠프  qty: 2527  price: 1688  ordersum: 4265576"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 335870  name: 윙스풋  qty: 425  price: 2210  ordersum: 939250"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 344860  name: 이노진  qty: 183  price: 3575  ordersum: 654225"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "failed stocks"
+   rt_cd   msg_cd                                                  msg1   code
+1:     7 APBK0066 거래정지종목(주식)은 취소주문만 가능(정정불가)합니다. 058530
+    qty price idx
+1: -185  1620   3
+    rt_cd   msg_cd                         msg1   code  qty price idx
+ 1:     7 APBK0952 주문가능금액을 초과 했습니다 047080   80  2990   2
+ 2:     7 APBK0952 주문가능금액을 초과 했습니다 067920  104  6230   3
+ 3:     7 APBK0952 주문가능금액을 초과 했습니다 096870   49  3630   4
+ 4:     7 APBK0952 주문가능금액을 초과 했습니다 098660   62  2685   5
+ 5:     7 APBK0952 주문가능금액을 초과 했습니다 204020   76  2780   6
+ 6:     7 APBK0952 주문가능금액을 초과 했습니다 225590  337  1365   8
+ 7:     7 APBK0952 주문가능금액을 초과 했습니다 252500  396  1054   9
+ 8:     7 APBK0952 주문가능금액을 초과 했습니다 258790 2527  1688  10
+ 9:     7 APBK0952 주문가능금액을 초과 했습니다 335870  425  2210  11
+10:     7 APBK0952 주문가능금액을 초과 했습니다 344860  183  3575  12
+[1] "code: 047080  name: 한빛소프트  qty: 80  price: 2990  ordersum: 239200"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 067920  name: 이글루  qty: 104  price: 6230  ordersum: 647920"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 096870  name: 엘디티  qty: 39  price: 3660  ordersum: 142740"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 098660  name: 에스티오  qty: 62  price: 2685  ordersum: 166470"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 204020  name: 그리티  qty: 76  price: 2780  ordersum: 211280"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 225590  name: 패션플랫폼  qty: 337  price: 1365  ordersum: 460005"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 252500  name: 세화피앤씨  qty: 396  price: 1054  ordersum: 417384"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 258790  name: 소프트캠프  qty: 2526  price: 1689  ordersum: 4266414"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 335870  name: 윙스풋  qty: 425  price: 2210  ordersum: 939250"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 344860  name: 이노진  qty: 183  price: 3575  ordersum: 654225"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 047080  name: 한빛소프트  qty: 80  price: 2990  ordersum: 239200"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 067920  name: 이글루  qty: 104  price: 6230  ordersum: 647920"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 096870  name: 엘디티  qty: 39  price: 3660  ordersum: 142740"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 098660  name: 에스티오  qty: 62  price: 2685  ordersum: 166470"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 204020  name: 그리티  qty: 76  price: 2780  ordersum: 211280"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 225590  name: 패션플랫폼  qty: 335  price: 1366  ordersum: 457610"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 252500  name: 세화피앤씨  qty: 380  price: 1058  ordersum: 402040"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 258790  name: 소프트캠프  qty: 2526  price: 1689  ordersum: 4266414"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 335870  name: 윙스풋  qty: 425  price: 2210  ordersum: 939250"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 344860  name: 이노진  qty: 183  price: 3575  ordersum: 654225"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 047080  name: 한빛소프트  qty: 80  price: 2990  ordersum: 239200"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 067920  name: 이글루  qty: 105  price: 6220  ordersum: 653100"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 096870  name: 엘디티  qty: 39  price: 3660  ordersum: 142740"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 098660  name: 에스티오  qty: 56  price: 2695  ordersum: 150920"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 204020  name: 그리티  qty: 76  price: 2780  ordersum: 211280"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 225590  name: 패션플랫폼  qty: 335  price: 1366  ordersum: 457610"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 252500  name: 세화피앤씨  qty: 380  price: 1058  ordersum: 402040"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 258790  name: 소프트캠프  qty: 2526  price: 1689  ordersum: 4266414"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 335870  name: 윙스풋  qty: 425  price: 2210  ordersum: 939250"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 344860  name: 이노진  qty: 183  price: 3575  ordersum: 654225"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 047080  name: 한빛소프트  qty: 85  price: 2980  ordersum: 253300"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 067920  name: 이글루  qty: 103  price: 6240  ordersum: 642720"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 096870  name: 엘디티  qty: 39  price: 3660  ordersum: 142740"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 098660  name: 에스티오  qty: 56  price: 2695  ordersum: 150920"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 204020  name: 그리티  qty: 76  price: 2780  ordersum: 211280"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 225590  name: 패션플랫폼  qty: 335  price: 1366  ordersum: 457610"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 252500  name: 세화피앤씨  qty: 384  price: 1057  ordersum: 405888"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 258790  name: 소프트캠프  qty: 2526  price: 1689  ordersum: 4266414"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 335870  name: 윙스풋  qty: 429  price: 2205  ordersum: 945945"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 344860  name: 이노진  qty: 183  price: 3575  ordersum: 654225"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 047080  name: 한빛소프트  qty: 85  price: 2980  ordersum: 253300"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 067920  name: 이글루  qty: 105  price: 6220  ordersum: 653100"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 096870  name: 엘디티  qty: 39  price: 3660  ordersum: 142740"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 098660  name: 에스티오  qty: 56  price: 2695  ordersum: 150920"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 204020  name: 그리티  qty: 76  price: 2780  ordersum: 211280"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 225590  name: 패션플랫폼  qty: 337  price: 1365  ordersum: 460005"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 252500  name: 세화피앤씨  qty: 384  price: 1057  ordersum: 405888"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 258790  name: 소프트캠프  qty: 2527  price: 1688  ordersum: 4265576"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 335870  name: 윙스풋  qty: 429  price: 2205  ordersum: 945945"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 344860  name: 이노진  qty: 181  price: 3580  ordersum: 647980"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 047080  name: 한빛소프트  qty: 85  price: 2980  ordersum: 253300"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 067920  name: 이글루  qty: 102  price: 6250  ordersum: 637500"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 096870  name: 엘디티  qty: 39  price: 3660  ordersum: 142740"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 098660  name: 에스티오  qty: 56  price: 2695  ordersum: 150920"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 204020  name: 그리티  qty: 82  price: 2770  ordersum: 227140"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 225590  name: 패션플랫폼  qty: 337  price: 1365  ordersum: 460005"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 252500  name: 세화피앤씨  qty: 384  price: 1057  ordersum: 405888"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 258790  name: 소프트캠프  qty: 2521  price: 1692  ordersum: 4265532"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 335870  name: 윙스풋  qty: 429  price: 2205  ordersum: 945945"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 344860  name: 이노진  qty: 181  price: 3580  ordersum: 647980"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 047080  name: 한빛소프트  qty: 88  price: 2975  ordersum: 261800"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 067920  name: 이글루  qty: 102  price: 6250  ordersum: 637500"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 098660  name: 에스티오  qty: 56  price: 2695  ordersum: 150920"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 204020  name: 그리티  qty: 82  price: 2770  ordersum: 227140"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 225590  name: 패션플랫폼  qty: 337  price: 1365  ordersum: 460005"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 252500  name: 세화피앤씨  qty: 380  price: 1058  ordersum: 402040"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 258790  name: 소프트캠프  qty: 2521  price: 1692  ordersum: 4265532"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 335870  name: 윙스풋  qty: 429  price: 2205  ordersum: 945945"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 344860  name: 이노진  qty: 181  price: 3580  ordersum: 647980"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 047080  name: 한빛소프트  qty: 90  price: 2970  ordersum: 267300"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 067920  name: 이글루  qty: 105  price: 6220  ordersum: 653100"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 098660  name: 에스티오  qty: 56  price: 2695  ordersum: 150920"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 204020  name: 그리티  qty: 82  price: 2770  ordersum: 227140"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 225590  name: 패션플랫폼  qty: 335  price: 1366  ordersum: 457610"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 252500  name: 세화피앤씨  qty: 365  price: 1062  ordersum: 387630"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 258790  name: 소프트캠프  qty: 2521  price: 1692  ordersum: 4265532"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 335870  name: 윙스풋  qty: 429  price: 2205  ordersum: 945945"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 344860  name: 이노진  qty: 181  price: 3580  ordersum: 647980"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 067920  name: 이글루  qty: 102  price: 6250  ordersum: 637500"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 098660  name: 에스티오  qty: 56  price: 2695  ordersum: 150920"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 204020  name: 그리티  qty: 82  price: 2770  ordersum: 227140"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 225590  name: 패션플랫폼  qty: 335  price: 1366  ordersum: 457610"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 252500  name: 세화피앤씨  qty: 365  price: 1062  ordersum: 387630"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 258790  name: 소프트캠프  qty: 2509  price: 1700  ordersum: 4265300"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 335870  name: 윙스풋  qty: 425  price: 2210  ordersum: 939250"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 344860  name: 이노진  qty: 181  price: 3580  ordersum: 647980"
+[1] "rc_cd: 7  msg_cd: APBK0952  msg: 주문가능금액을 초과 했습니다"
+[1] "code: 067920  name: 이글루  qty: 105  price: 6220  ordersum: 653100"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 098660  name: 에스티오  qty: 56  price: 2695  ordersum: 150920"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 204020  name: 그리티  qty: 82  price: 2770  ordersum: 227140"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 225590  name: 패션플랫폼  qty: 337  price: 1365  ordersum: 460005"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 252500  name: 세화피앤씨  qty: 365  price: 1062  ordersum: 387630"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 258790  name: 소프트캠프  qty: 2508  price: 1701  ordersum: 4266108"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 335870  name: 윙스풋  qty: 425  price: 2210  ordersum: 939250"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
+[1] "code: 344860  name: 이노진  qty: 185  price: 3570  ordersum: 660450"
+[1] "rc_cd: 0  msg_cd: APBK0013  msg: 주문 전송 완료 되었습니다."
