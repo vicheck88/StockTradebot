@@ -8,6 +8,9 @@ conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$hos
 #함수 불러돌이기
 source("./RQuantFunctionList.R",encoding="utf-8")
 
+source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
+#source("~/stockInfoCrawler/StockTradebot/Rscript/telegramAPI.R") #라즈베리에서 읽는 경우
+
 #전월 말 날짜 구하기
 print(paste0(Sys.time()," : Starting to get date"))
 
@@ -73,7 +76,10 @@ fsQ$일자<-as.character(fsQ$일자)
 dbWriteTable(conn,SQL("metainfo.분기재무제표"),newfsQ,append=TRUE,row.names=FALSE)
 dbWriteTable(conn,SQL("metainfo.연간재무제표"),newfsY,append=TRUE,row.names=FALSE)
 
-print(paste0(Sys.time()," : Complete updating FS"))
+
+text<-paste0(Sys.time()," : Complete updating FS")
+print(text)
+sendMessage(text)
 
 #현재 날짜가 기록된 날짜보다 늦을 경우
 if(latestDate!=availableDate){
@@ -92,4 +98,5 @@ if(latestDate!=availableDate){
   
   res<-dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,append=TRUE)
   print(paste0(Sys.time()," : Finished"))
+  sendMessage("Finished to summarize financial data")
 } else{ print(paste0(Sys.time()," : Already updated. Script finished"))}
