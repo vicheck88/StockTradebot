@@ -4,13 +4,10 @@ if (length(new.pkg)) {
   install.packages(new.pkg, dependencies = TRUE)}
 sapply(pkg,library,character.only=T)
 
-#config<-fromJSON("~/config.json")
-#telegramApi<-config$telegram
-#token<-telegramApi$token
-#chatId<-telegramApi$charid
-
-token<-'6037996673:AAFZKhcVpxI3ZmUAIp8nt8SBgmby6_p-0BI'
-chatId<-'5889990804'
+config<-fromJSON("~/config.json")
+telegramApi<-config$telegram
+token<-telegramApi$token
+chatId<-telegramApi$chatId
 
 telegramUrl<-"https://api.telegram.org/"
 
