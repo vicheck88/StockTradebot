@@ -104,6 +104,7 @@ for(i in nrow(combinedSheet)){
   row<-combinedSheet[i,]
   text<-paste0("code: ",row$종목코드," name: ",row$종목명," qty: ",row$보유수량," goalPrice: ",row$목표금액," curPrice: ",row$평가금액)
   sendMessage(text)
+  Sys.sleep(0.04)
 }
 
 
@@ -116,6 +117,7 @@ for(i in nrow(sellRes)){
   row<-sellRes[i,]
   text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
   sendMessage(text)
+  Sys.sleep(0.04)
 }
 
 
@@ -127,6 +129,7 @@ for(i in nrow(sellRes)){
   row<-sellRes[i,]
   text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
   sendMessage(text)
+  Sys.sleep(0.04)
 }
 
 
