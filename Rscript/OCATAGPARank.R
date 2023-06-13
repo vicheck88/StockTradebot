@@ -22,14 +22,18 @@ account<-config$api$account$prod$main
 #재무제표 이상한 기업 우선 거르기
 #최근 1년 간 분기재무제표에서 매출, 매출원가가 음수인 경우가 한 번이라도 있다면 목록에서 제거
 prevDate<-str_replace(substring(Sys.Date()-365,1,7),'-','.')
+
 sql<-sprintf("select * from metainfo.월별기업정보 a
 where 일자=(select max(일자) from metainfo.월별기업정보)
 and not exists (
-select 1 from metainfo.분기재무제표 c
+select 1 from (
+select * from metainfo.분기재무제표 c
+union all
+select * from metainfo.연간재무제표 y
+) m
 where 일자>'%s' 
 and (계정='매출액' or 계정='매출원가')
-and 값<0 and a.종목코드=c.종목코드
-)",prevDate) 
+and 값<0 and a.종목코드=m.종목코드)",prevDate) 
 
 corpTable<-dbGetQuery(conn,SQL(sql))
 setDT(corpTable)
@@ -101,12 +105,11 @@ combinedSheet<-combinedSheet[,c('종목코드','종목명','보유수량','목�
 
 print("Final stock list")
 print(combinedSheet)
-
+sendMessage("Stocks to buy",0)
 for(i in nrow(combinedSheet)){
-  sendMessage("Stocks to buy")
-  row<-combinedSheet[i,]
+    row<-combinedSheet[i,]
   text<-paste0("code: ",row$종목코드," name: ",row$종목명," qty: ",row$보유수량," goalPrice: ",row$목표금액," curPrice: ",row$평가금액)
-  sendMessage(text)
+  sendMessage(text,0)
   Sys.sleep(0.04)
 }
 
@@ -115,11 +118,11 @@ print("Sell orders")
 
 sellSheet<-combinedSheet[평가금액>목표금액]
 sellRes<-orderStocks(apiConfig,account,sellSheet) #매도 먼저
+sendMessage("Sell orders",0)
 for(i in nrow(sellRes)){
-  sendMessage("Sell orders")
-  row<-sellRes[i,]
+    row<-sellRes[i,]
   text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
-  sendMessage(text)
+  sendMessage(text,0)
   Sys.sleep(0.04)
 }
 
@@ -127,11 +130,11 @@ for(i in nrow(sellRes)){
 print("Buy orders")
 buySheet<-combinedSheet[평가금액<목표금액]
 buyRes<-orderStocks(apiConfig,account,buySheet) #매수 다음
-for(i in nrow(sellRes)){
-  sendMessage("Buy orders")
+sendMessage("Buy orders",0)
+for(i in nrow(buyRes)){
   row<-sellRes[i,]
   text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
-  sendMessage(text)
+  sendMessage(text,0)
   Sys.sleep(0.04)
 }
 
@@ -148,6 +151,13 @@ while(failNum>0 & cnt<=10){
   cnt<-cnt+1
   rebuySheet<-rebuySheet[rebuyRes[rt_cd!='0']$idx]
   rebuyRes<-orderStocks(apiConfig,account,rebuySheet)
+  sendMessage("Rebuy orders")
+  for(i in nrow(rebuyRes)){
+    row<-rebuyRes[i,]
+    text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
+    sendMessage(text,0)
+    Sys.sleep(0.04)
+  }
   failNum<-nrow(rebuyRes[rt_cd!='0'])
   Sys.sleep(30)
 }

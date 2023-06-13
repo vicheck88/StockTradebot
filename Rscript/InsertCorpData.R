@@ -3,13 +3,13 @@ print(paste0(Sys.time()," : Starting Script"))
 library(RPostgres)
 library(DBI)
 library(jsonlite)
-dbConfig=read_json("./config.json")$database
+dbConfig=read_json("~/config.json")$database
 conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
 #함수 불러돌이기
 source("./RQuantFunctionList.R",encoding="utf-8")
 
-source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
-#source("~/stockInfoCrawler/StockTradebot/Rscript/telegramAPI.R") #라즈베리에서 읽는 경우
+#source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
+source("./telegramAPI.R") #라즈베리에서 읽는 경우
 
 #전월 말 날짜 구하기
 print(paste0(Sys.time()," : Starting to get date"))
@@ -79,7 +79,7 @@ dbWriteTable(conn,SQL("metainfo.연간재무제표"),newfsY,append=TRUE,row.name
 
 text<-paste0(Sys.time()," : Complete updating FS")
 print(text)
-sendMessage(text)
+print(paste0("telegream message send: ",sendMessage(text,0)))
 
 #현재 날짜가 기록된 날짜보다 늦을 경우
 if(latestDate!=availableDate){
@@ -98,5 +98,5 @@ if(latestDate!=availableDate){
   
   res<-dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,append=TRUE)
   print(paste0(Sys.time()," : Finished"))
-  sendMessage("Finished to summarize financial data")
+  print(paste0("telegram message send: ",sendMessage("Finished to summarize financial data",0)))
 } else{ print(paste0(Sys.time()," : Already updated. Script finished"))}

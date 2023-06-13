@@ -11,8 +11,16 @@ chatId<-telegramApi$chatId
 
 telegramUrl<-"https://api.telegram.org/"
 
-sendMessage<-function(text){
-  url<-paste0(telegramUrl,"bot",token,"/sendMessage?chat_id=",chatId,"&text=",text)
-  response<-POST(url)
-  print(paste0("sendMessage: ",response$status_code))
+sendMessage<-function(text,count=0){
+  url<-paste0(telegramUrl,"bot",token,"/sendMessage?chat_id=",chatId,"&text=",URLencode(text))
+  tryCatch(
+    print(paste0("sendMessage: ",POST(url)$status_code)),
+    error=function(e){
+      print(paste0("error: ",e))
+      print(paste0("send again: count ",count))
+      Sys.sleep(2)
+      if(count<10) sendMessage(text,count+1)
+      }
+    )
 }
+
