@@ -4,18 +4,24 @@ if (length(new.pkg)) {
   install.packages(new.pkg, dependencies = TRUE)}
 sapply(pkg,library,character.only=T)
 
-#config<-fromJSON("~/config.json")
-#telegramApi<-config$telegram
-#token<-telegramApi$token
-#chatId<-telegramApi$charid
-
-token<-'6037996673:AAFZKhcVpxI3ZmUAIp8nt8SBgmby6_p-0BI'
-chatId<-'5889990804'
-
-telegramUrl<-"https://api.telegram.org/"
-
-sendMessage<-function(text){
-  url<-paste0(telegramUrl,"bot",token,"/sendMessage?chat_id=",chatId,"&text=",text)
-  response<-POST(url)
-  print(paste0("sendMessage: ",response$status_code))
+getTelegramInfo<-function(){
+  config<-fromJSON("~/config.json")
+  telegramApi<-config$telegram
+  telegramApi$telegramUrl<-"https://api.telegram.org/"
+  return(telegramApi)
 }
+
+sendMessage<-function(text,count=0){
+  telegramInfo<-getTelegramInfo()
+  url<-paste0(telegramUrl,"bot",telegramInfo$token,"/sendMessage?chat_id=",telegramInfo$chatId,"&text=",URLencode(text))
+  tryCatch(
+    print(paste0("sendMessage: ",POST(url)$status_code)),
+    error=function(e){
+      print(paste0("error: ",e))
+      print(paste0("send again: count ",count))
+      Sys.sleep(2)
+      if(count<10) sendMessage(text,count+1)
+      }
+    )
+}
+
