@@ -6,7 +6,7 @@ pkg = c('quantmod','jsonlite', 'stringr', 'logr',
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
 
 logDir<-"/home/pi/stockInfoCrawler/StockTradebot/log"
-#logDir<-"C:/coinTestLog"
+logDir<-"./coinTestLog"
 
 if (length(new.pkg)) {
   install.packages(new.pkg, dependencies = TRUE)}
@@ -45,7 +45,7 @@ getUpbitCoinListDetail<-function(num){
   coinTable<-coinMarketCapTable[upbitCoinTable,on=c(symbol="market")]
   coinTable<-coinTable[order(-market_cap)]
   coinTable<-unique(coinTable,fromLast=FALSE,by="symbol")
-  coinTable<-na.omit(coinTable)
+  coinTable<-coinTable[!is.na(name)]
   coinTable<-subset(coinTable,select=-english_name)
   return(coinTable)
 }
@@ -98,7 +98,7 @@ getCurrentUpbitPrice<-function(coinList){
   else priceList<-data.table(market=character(),trade_price=double())
   return(priceList)
 }
-getCoinPriceHistory<-function(coinList,type,unit,count){
+getCoinPriceHistory<-function(coinList,type,unit,count,to=NULL){
   #type: minutes, days, weeks, months
   #unit: 분봉(minutes), 상관없음(others)
   #coinList<-paste("KRW",coinList,sep="-")
@@ -107,6 +107,7 @@ getCoinPriceHistory<-function(coinList,type,unit,count){
   } else {candle<-type}
   url <- paste0('https://api.upbit.com/v1/candles/'
                 ,candle,'?market=',coinList,'&count=',count)
+  if(!is.null(to)) url<-paste0(url,'&to=',to)
   h<-new_handle()
   handle_setheaders(h, .list=list(Accepts="application/json"))
   

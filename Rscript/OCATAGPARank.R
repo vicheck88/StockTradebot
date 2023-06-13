@@ -105,9 +105,9 @@ combinedSheet<-combinedSheet[,c('종목코드','종목명','보유수량','목�
 
 print("Final stock list")
 print(combinedSheet)
-sendMessage("Stocks to buy",0)
-for(i in nrow(combinedSheet)){
-    row<-combinedSheet[i,]
+sendMessage("Stocks to buy")
+for(i in 1:nrow(combinedSheet)){
+  row<-combinedSheet[i,]
   text<-paste0("code: ",row$종목코드," name: ",row$종목명," qty: ",row$보유수량," goalPrice: ",row$목표금액," curPrice: ",row$평가금액)
   sendMessage(text,0)
   Sys.sleep(0.04)
@@ -118,9 +118,9 @@ print("Sell orders")
 
 sellSheet<-combinedSheet[평가금액>목표금액]
 sellRes<-orderStocks(apiConfig,account,sellSheet) #매도 먼저
-sendMessage("Sell orders",0)
-for(i in nrow(sellRes)){
-    row<-sellRes[i,]
+sendMessage("Sell orders")
+for(i in 1:nrow(sellRes)){
+  row<-sellRes[i,]
   text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
   sendMessage(text,0)
   Sys.sleep(0.04)
@@ -130,9 +130,9 @@ for(i in nrow(sellRes)){
 print("Buy orders")
 buySheet<-combinedSheet[평가금액<목표금액]
 buyRes<-orderStocks(apiConfig,account,buySheet) #매수 다음
-sendMessage("Buy orders",0)
-for(i in nrow(buyRes)){
-  row<-sellRes[i,]
+sendMessage("Buy orders")
+for(i in 1:nrow(buyRes)){
+  row<-buyRes[i,]
   text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
   sendMessage(text,0)
   Sys.sleep(0.04)
@@ -152,7 +152,8 @@ while(failNum>0 & cnt<=10){
   rebuySheet<-rebuySheet[rebuyRes[rt_cd!='0']$idx]
   rebuyRes<-orderStocks(apiConfig,account,rebuySheet)
   sendMessage("Rebuy orders")
-  for(i in nrow(rebuyRes)){
+  for(i in 1:nrow(rebuyRes)){
+    sendMessage("Buy orders")
     row<-rebuyRes[i,]
     text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
     sendMessage(text,0)
