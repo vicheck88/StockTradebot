@@ -28,8 +28,6 @@ currentQQQPrice<-getCurrentOverseasPrice(apiConfig,account,tmptoken,"QQQ",'NAS')
 revokeToken(apiConfig,account,tmptoken)
 tmptoken<-NULL
 prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),QQQ.Adjusted=currentQQQPrice)))
-rets = Return.calculate(prices)
-rets<-as.data.table(rets)
 
 movingAvg<-NULL
 for(i in c(5,10,20,30,60,100,200)){

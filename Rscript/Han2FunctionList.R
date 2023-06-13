@@ -40,7 +40,7 @@ getCurrentOverseasPrice<-function(apiConfig, account, token, code, excdcode){
     Authorization=paste('Bearer',token),
     appkey=account$appkey,
     appsecret=account$appsecret,
-    tr_id='HHDFS00000300'
+    tr_id=apiConfig$overseasCurrentStockPrice
   )
   query<-list(AUTH='',EXCD=excdcode,SYMB=code)
   response<-GET(priceUrl,add_headers(headers),query=query)

@@ -12,12 +12,8 @@ getTelegramInfo<-function(){
 }
 
 sendMessage<-function(text,count=0){
-<<<<<<< HEAD
-  url<-paste0(telegramUrl,"bot",token,"/sendMessage?chat_id=",chatId,"&text=",URLencode(text))
-=======
   telegramInfo<-getTelegramInfo()
-  url<-paste0(telegramUrl,"bot",telegramInfo$token,"/sendMessage?chat_id=",telegramInfo$chatId,"&text=",URLencode(text))
->>>>>>> 8747992209be075ed7e72bdd0e7c058ddb4a50b7
+  url<-paste0(telegramInfo$telegramUrl,"bot",telegramInfo$token,"/sendMessage?chat_id=",telegramInfo$chatId,"&text=",URLencode(text))
   tryCatch(
     print(paste0("sendMessage: ",POST(url)$status_code)),
     error=function(e){
