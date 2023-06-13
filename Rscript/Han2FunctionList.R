@@ -71,7 +71,7 @@ getPresentOverseasBalancesheet<-function(apiConfig,account){
     Authorization=paste('Bearer',token),
     appkey=account$appkey,
     appsecret=account$appsecret,
-    tr_id=account$overseasPresentBalanceTrid
+    tr_id=apiConfig$overseasPresentBalanceTrid
   )
   
   query<-list(CANO=substr(account$accNo,1,8),

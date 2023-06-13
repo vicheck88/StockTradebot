@@ -84,64 +84,69 @@ combinedSheet[,주문구분:=34]
 print("Final stock list")
 print(combinedSheet)
 
-sendMessage("Stocks to buy")
-for(i in 1:nrow(combinedSheet)){
-  row<-combinedSheet[i,]
-  text<-paste0("code: ",row$종목코드," name: ",row$종목명," qty: ",row$보유수량," goalPrice: ",row$목표금액," curPrice: ",row$평가금액)
-  sendMessage(text,0)
-  Sys.sleep(0.04)
-}
-
-
-print("Sell orders")
-sellSheet<-combinedSheet[평가금액>목표금액]
-sellRes<-orderOverseasStocks(apiConfig,account,sellSheet) #매도 먼저
-
-sendMessage("Sell orders")
-for(i in nrow(sellRes)){
-  row<-sellRes[i,]
-  text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
-  sendMessage(text,0)
-  Sys.sleep(0.04)
-}
-
-
-print("Buy orders")
-buySheet<-combinedSheet[평가금액<목표금액]
-buyRes<-orderOverseasStocks(apiConfig,account,buySheet) #매수 다음
-sendMessage("Buy orders")
-for(i in nrow(buyRes)){
-  row<-buyRes[i,]
-  text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
-  sendMessage(text,0)
-  Sys.sleep(0.04)
-}
-
-
-print("failed stocks")
-if(!is.null(sellRes)) print(sellRes[rt_cd!='0'])
-if(!is.null(buyRes)) print(buyRes[rt_cd!='0'])
-
-cnt<-0
-failNum<-nrow(buyRes[rt_cd!='0'])
-rebuySheet<-buySheet
-rebuyRes<-buyRes
-while(failNum>0 & cnt<=10){
-  cnt<-cnt+1
-  rebuySheet<-rebuySheet[rebuyRes[rt_cd!='0']$idx]
-  rebuyRes<-orderStocks(apiConfig,account,rebuySheet)
-  for(i in nrow(rebuyRes)){
-    sendMessage("Buy orders")
-    row<-rebuyRes[i,]
+if(nrow(combinedSheet)>0){
+  sendMessage("Stocks to buy")
+  for(i in 1:nrow(combinedSheet)){
+    row<-combinedSheet[i,]
+    text<-paste0("code: ",row$종목코드," name: ",row$종목명," qty: ",row$보유수량," goalPrice: ",row$목표금액," curPrice: ",row$평가금액)
+    sendMessage(text,0)
+    Sys.sleep(0.04)
+  }
+  
+  
+  print("Sell orders")
+  sellSheet<-combinedSheet[평가금액>목표금액]
+  sellRes<-orderOverseasStocks(apiConfig,account,sellSheet) #매도 먼저
+  
+  sendMessage("Sell orders")
+  for(i in nrow(sellRes)){
+    row<-sellRes[i,]
     text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
     sendMessage(text,0)
     Sys.sleep(0.04)
   }
-  failNum<-nrow(rebuyRes[rt_cd!='0'])
-  Sys.sleep(30)
+  
+  
+  print("Buy orders")
+  buySheet<-combinedSheet[평가금액<목표금액]
+  buyRes<-orderOverseasStocks(apiConfig,account,buySheet) #매수 다음
+  sendMessage("Buy orders")
+  for(i in nrow(buyRes)){
+    row<-buyRes[i,]
+    text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
+    sendMessage(text,0)
+    Sys.sleep(0.04)
+  }
+  
+  
+  print("failed stocks")
+  if(!is.null(sellRes)) print(sellRes[rt_cd!='0'])
+  if(!is.null(buyRes)) print(buyRes[rt_cd!='0'])
+  
+  cnt<-0
+  failNum<-nrow(buyRes[rt_cd!='0'])
+  rebuySheet<-buySheet
+  rebuyRes<-buyRes
+  while(failNum>0 & cnt<=10){
+    cnt<-cnt+1
+    rebuySheet<-rebuySheet[rebuyRes[rt_cd!='0']$idx]
+    rebuyRes<-orderStocks(apiConfig,account,rebuySheet)
+    for(i in nrow(rebuyRes)){
+      sendMessage("Buy orders")
+      row<-rebuyRes[i,]
+      text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
+      sendMessage(text,0)
+      Sys.sleep(0.04)
+    }
+    failNum<-nrow(rebuyRes[rt_cd!='0'])
+    Sys.sleep(30)
+  }
+  
+  res<-rbind(sellRes,buyRes)
+  
 }
 
-res<-rbind(sellRes,buyRes)
+
 
 
 
