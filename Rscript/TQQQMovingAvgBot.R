@@ -5,12 +5,19 @@ source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
 #source("~/stockInfoCrawler/StockTradebot/Rscript/Han2FunctionList.R") #라즈베리에서 읽는 경우
 #source("~/stockInfoCrawler/StockTradebot/Rscript/telegramAPI.R") #라즈베리에서 읽는 경우
 
-pkg = c('data.table','xts','quantmod','stringr')
+pkg = c('data.table','xts','quantmod','stringr','timeDate','lubridate')
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
 if (length(new.pkg)) {
   install.packages(new.pkg, dependencies = TRUE)}
 sapply(pkg,library,character.only=T)
 
+newYorkTime<-with_tz(Sys.time(),"America/New_York")
+weekday<-as.POSIXlt(newYorkTime)$wday
+holidays<-with_tz(holidayNYSE(year = getRmetricsOptions("currentYear"))@Data,"America/New_York")
+
+if(weekday %in% c(0,6) | as.Date(newYorkTime) %in% holidays){
+  stop("Today is weekend, or holiday")
+}
 config<-fromJSON("~/config.json")
 #apiConfig<-config$api$config$dev
 apiConfig<-config$api$config$prod
@@ -28,8 +35,6 @@ currentQQQPrice<-getCurrentOverseasPrice(apiConfig,account,tmptoken,"QQQ",'NAS')
 revokeToken(apiConfig,account,tmptoken)
 tmptoken<-NULL
 prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),QQQ.Adjusted=currentQQQPrice)))
-rets = Return.calculate(prices)
-rets<-as.data.table(rets)
 
 movingAvg<-NULL
 for(i in c(5,10,20,30,60,100,200)){
