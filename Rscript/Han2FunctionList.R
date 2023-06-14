@@ -243,7 +243,7 @@ orderOverseasStock<-function(apiConfig,account,token,excdcode,code,qty,price,ord
              OVRS_EXCG_CD=excdcode,
              PDNO=code,
              ORD_QTY=as.character(abs(qty)),
-             OVRS_ORD_UNPR=as.character(floor(price,2)),
+             OVRS_ORD_UNPR=as.character(round(price,2)),
              ORD_SVR_DVSN_CD='0',
              ORD_DVSN=as.character(ordertype)
   )
@@ -268,7 +268,7 @@ orderOverseasStocks<-function(apiConfig, account, stockTable){
     price<-getCurrentOverseasPrice(apiConfig,account,token,code,excdcode2)
     curQty<-stockTable[i,]$보유수량
     priceSum<-stockTable[i,]$목표금액-price*curQty
-    if(ordertype==34) price<-price*(1+sign(priceSum)/100) #LOC 매수/매도는 일부러 가격을 변경
+    if(ordertype=='34') price<-price*(1+sign(priceSum)/100) #LOC 매수/매도는 일부러 가격을 변경
     qty<-floor(priceSum/price)
     print(paste("code:",code," name:",stockTable[i,]$종목명," qty:",qty," price:",price, " ordersum:",qty*price))
     if(qty==0){
