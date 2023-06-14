@@ -24,14 +24,17 @@ apiConfig<-config$api$config$prod
 #account<-config$api$account$dev
 account<-config$api$account$prod$main
 
-tmptoken<-getToken(apiConfig,account)
+
 
 symbols = c('QQQ')
 getSymbols(symbols, src = 'yahoo')
 prices = do.call(cbind,lapply(symbols, function(x) Ad(get(x))))
 prices<-as.data.table(prices)
 
+tmptoken<-getToken(apiConfig,account)
 currentQQQPrice<-getCurrentOverseasPrice(apiConfig,account,tmptoken,"QQQ",'NAS')
+tqqqPrice<-getCurrentOverseasPrice(apiConfig,account,tmptoken,"TQQQ",'NAS')
+bilPrice<-getCurrentOverseasPrice(apiConfig,account,tmptoken,"BIL",'AMS')
 revokeToken(apiConfig,account,tmptoken)
 tmptoken<-NULL
 prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),QQQ.Adjusted=currentQQQPrice)))
@@ -56,17 +59,25 @@ TQQQGoalRatio<-floor(currentDisparity$QQQ.Adjusted.MA.200)*0.5
 TQQQGoalRatio<-min(1,TQQQGoalRatio)
 TQQQGoalRatio<-max(0,TQQQGoalRatio)
 
+#bondRatio
+bondRatio<-(1-TQQQGoalRatio)
+
 currentBalance<-getPresentOverseasBalancesheet(apiConfig,account)
 if(currentBalance$status_code!='200'){
   stop("Fail to get current balance. Stop script")
 }
 
-totalBalanceSum<-as.numeric(currentBalance$summary[crcy_cd=="USD",frcr_dncl_amt_2])
+totalBalanceSum<-as.numeric(currentBalance$summary[crcy_cd=="USD",frcr_drwg_psbl_amt_1])
 if(nrow(currentBalance$sheet)>0){
   totalBalanceSum<-totalBalanceSum+sum(as.numeric(currentBalance$sheet[buy_crcy_cd=="USD",frcr_evlu_amt2]))
 }
+
 goalBalanceSum<-totalBalanceSum*TQQQGoalRatio
-goalBalanceSheet<-data.table(종목코드=c('TQQQ'),거래소_현재가='NAS',거래소='NASD',목표금액=goalBalanceSum,signal=sign(currentDisparity$QQQ.Adjusted.MA.200))
+bondBalanceSum<-totalBalanceSum-goalBalanceSum
+
+goalBalanceSheet<-data.table(종목코드=c('TQQQ'),거래소_현재가='NAS',거래소='NASD',현재가=tqqqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity$QQQ.Adjusted.MA.200),주문구분='34')
+goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=c('BIL'),거래소_현재가='AMS',거래소='AMEX',현재가=bilPrice,목표금액=bondBalanceSum,signal=0,주문구분='34'))
+
 
 if(nrow(currentBalance$sheet)>0){
   currentBalanceSheet<-currentBalance$sheet[,c('pdno','prdt_name','ovrs_excg_cd','ccld_qty_smtl1','frcr_evlu_amt2','buy_crcy_cd')]  
@@ -83,21 +94,17 @@ combinedSheet[,보유수량:=as.numeric(보유수량)]
 combinedSheet[is.na(목표금액)]$목표금액<-0
 combinedSheet[is.na(평가금액)]$평가금액<-0
 combinedSheet[is.na(보유수량)]$보유수량<-0
+combinedSheet[is.na(매수통화코드)]$매수통화코드<-"USD"
 
-combinedSheet<-combinedSheet[(signal>0 & 목표금액>평가금액) | (signal<0 & 목표금액<평가금액)]
-combinedSheet[,주문구분:=34]
+combinedSheet<-combinedSheet[(signal>0 & 목표금액>평가금액) | (signal<0 & 목표금액<평가금액) | (signal==0 & 평가금액!=목표금액)]
+if("BIL" %in% combinedSheet$종목코드){
+  if(combinedSheet[종목코드=="BIL",평가금액]>bondBalanceSum) combinedSheet[종목코드=="BIL",주문구분:="00"]
+}
+
 print("Final stock list")
 print(combinedSheet)
 
 if(nrow(combinedSheet)>0){
-  sendMessage("Stocks to buy")
-  for(i in 1:nrow(combinedSheet)){
-    row<-combinedSheet[i,]
-    text<-paste0("code: ",row$종목코드," name: ",row$종목명," qty: ",row$보유수량," goalPrice: ",row$목표금액," curPrice: ",row$평가금액)
-    sendMessage(text,0)
-    Sys.sleep(0.04)
-  }
-  
   
   print("Sell orders")
   sellSheet<-combinedSheet[평가금액>목표금액]
