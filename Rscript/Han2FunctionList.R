@@ -243,7 +243,7 @@ orderOverseasStock<-function(apiConfig,account,token,excdcode,code,qty,price,ord
              OVRS_EXCG_CD=excdcode,
              PDNO=code,
              ORD_QTY=as.character(abs(qty)),
-             OVRS_ORD_UNPR=as.character(round(price,2)),
+             OVRS_ORD_UNPR=as.character(floor(price,2)),
              ORD_SVR_DVSN_CD='0',
              ORD_DVSN=as.character(ordertype)
   )
