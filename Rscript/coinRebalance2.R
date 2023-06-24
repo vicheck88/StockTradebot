@@ -45,13 +45,13 @@ getInvestRatio<-function(table){
       addRatio<-floor(disparity)*0.5
     }  else addRatio<-floor(disparity)*0.25
     if(i>1){
-      prevRatio<-table[i-1,]$investRatio
+      prevRatio<-table[i-1,]$ratio
       if(addRatio>=0) addRatio<-max(prevRatio,addRatio)
       if(addRatio<0) addRatio<-min(1+addRatio,prevRatio)
     }
     newRatio<-min(1,addRatio)
     newRatio<-max(0,newRatio)
-    table$investRatio[i]<-newRatio
+    table$ratio[i]<-newRatio
   }
   return(table)
 }
@@ -64,13 +64,11 @@ failOrder<-c()
 balanceCombinedTable<-merge(currentRatio,currentBalance,by="market",all=TRUE)
 balanceCombinedTable[,totalBalance:=totalBalance]
 balanceCombinedTable<-balanceCombinedTable[market!="KRW-KRW"]
-balanceCombinedTable[is.na(investRatio)]$investRatio<-0
+balanceCombinedTable[is.na(ratio)]$ratio<-0
 balanceCombinedTable[is.na(balance)]$balance<-0
 balanceCombinedTable[is.na(curvolume)]$curvolume<-0
 balanceCombinedTable[,symbol:=sapply(strsplit(market,"-"),function(x)x[2])]
-balanceCombinedTable[,targetBalance:=totalBalance*investRatio]
-balanceCombinedTable[,curRatio:=balance/totalBalance]
-balanceCombinedTable[,diffRatio:=abs(curRatio-investRatio)]
+balanceCombinedTable[,targetBalance:=totalBalance*ratio]
 
 for(i in 1:5){
   if(length(failOrder)==0){

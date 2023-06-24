@@ -1,0 +1,71 @@
+Loading required package: zoo
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+
+Attaching package: ‘xts’
+
+The following objects are masked from ‘package:data.table’:
+
+    first, last
+
+Loading required package: TTR
+Registered S3 method overwritten by 'quantmod':
+  method            from
+  as.zoo.data.frame zoo 
+
+Attaching package: ‘lubridate’
+
+The following objects are masked from ‘package:data.table’:
+
+    hour, isoweek, mday, minute, month, quarter, second, wday, week,
+    yday, year
+
+The following objects are masked from ‘package:base’:
+
+    date, intersect, setdiff, union
+
+$data.table
+ [1] "jsonlite"   "data.table" "httr"       "stats"      "graphics"  
+ [6] "grDevices"  "utils"      "datasets"   "methods"    "base"      
+
+$xts
+ [1] "xts"        "zoo"        "jsonlite"   "data.table" "httr"      
+ [6] "stats"      "graphics"   "grDevices"  "utils"      "datasets"  
+[11] "methods"    "base"      
+
+$quantmod
+ [1] "quantmod"   "TTR"        "xts"        "zoo"        "jsonlite"  
+ [6] "data.table" "httr"       "stats"      "graphics"   "grDevices" 
+[11] "utils"      "datasets"   "methods"    "base"      
+
+$stringr
+ [1] "stringr"    "quantmod"   "TTR"        "xts"        "zoo"       
+ [6] "jsonlite"   "data.table" "httr"       "stats"      "graphics"  
+[11] "grDevices"  "utils"      "datasets"   "methods"    "base"      
+
+$timeDate
+ [1] "timeDate"   "stringr"    "quantmod"   "TTR"        "xts"       
+ [6] "zoo"        "jsonlite"   "data.table" "httr"       "stats"     
+[11] "graphics"   "grDevices"  "utils"      "datasets"   "methods"   
+[16] "base"      
+
+$lubridate
+ [1] "lubridate"  "timeDate"   "stringr"    "quantmod"   "TTR"       
+ [6] "xts"        "zoo"        "jsonlite"   "data.table" "httr"      
+[11] "stats"      "graphics"   "grDevices"  "utils"      "datasets"  
+[16] "methods"    "base"      
+
+[1] "QQQ"
+[1] TRUE
+[1] "Final stock list"
+   종목코드 거래소 거래소_현재가 현재가 목표금액 signal 주문구분
+1:     TQQQ   NASD           NAS 39.008   8813.5      1       34
+                             종목명 보유수량 평가금액 매수통화코드
+1: PROSHARES TRUST ULTRAPRO QQQ USD      225     8775          USD
+Error in nrow(sellRes) : object 'sellRes' not found
+Execution halted
