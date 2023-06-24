@@ -57,7 +57,7 @@ getInvestRatio<-function(table){
 }
 
 coinPriceHistory<-coinPriceHistory[,getInvestRatio(.SD),by=market]
-currentRatio<-coinPriceHistory[,tail(.SD,1),by=market][,.(market,investRatio)]
+currentRatio<-coinPriceHistory[,tail(.SD,1),by=market][,.(market,ratio)]
 
 
 failOrder<-c()
