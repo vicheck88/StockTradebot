@@ -61,8 +61,8 @@ TQQQGoalRatio<-max(0,TQQQGoalRatio)
 
 #sendMessage
 message<-paste0("QQQ price: ",currentPrice$QQQ.Adjusted)
-message<-paste0(message,"\nQQQ 200 MA: ",currentPrice$QQQ.Adjusted.MA.200)
-message<-paste0(message,"\nQQQ Disparity: ",currentDisparity$QQQ.Adjusted.MA.200)
+message<-paste0(message,"\nQQQ 200 MA: ",round(currentPrice$QQQ.Adjusted.MA.200,2))
+message<-paste0(message,"\nQQQ Disparity: ", round(currentDisparity$QQQ.Adjusted.MA.200,2))
 message<-paste0(message,"\nToday TQQQ Ratio: ",TQQQGoalRatio)
 sendMessage(message)
 
