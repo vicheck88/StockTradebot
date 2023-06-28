@@ -6,6 +6,7 @@ library(data.table)
 library(xts)
 library(PerformanceAnalytics)
 library(quantmod)
+library(lubridate)
 
 
 
@@ -20,19 +21,29 @@ coinList<-getUpbitCoinListDetail(coinNumLimit)
 indexCoin<-getIndexBalance(coinList[1:num,],1,"MARKET")
 #이평선
 type<-"days"
+#type<-"minutes"
 movingAvgDay<-30
+#movingAvgDay<-240
 unit<-60
+unit<-240
 count<-200
 
 #과거 가격들 구하기(2000일)
 date<-Sys.Date()+1
 coinPriceHistory<-NULL
-totalCount<-0
-for(i in 1:10){
-  toDate<-paste0(as.Date(date)-1,'T09:00:00')
+curRowNum<-0
+for(i in 1:100){
+  if(type=="days"){
+    toDate<-paste0(as.Date(date)-1,'T09:00:00')
+  } else if(type=="minutes"){
+    toDate<-as_datetime(date)-240*60
+    toDate<-str_replace(toDate," ","T")
+  }
   coinPriceHistory<-rbind(coinPriceHistory,getCoinPriceHistory(indexCoin$market,type,unit,count,toDate))
+  coinPriceHistory<-unique(coinPriceHistory)
   date<-coinPriceHistory[,min(candle_date_time_kst)]
-  totalCount<-totalCount+count
+  if(nrow(coinPriceHistory)==curRowNum) {break}
+  curRowNum<-nrow(coinPriceHistory)
 }
 
 coinPriceHistory<-coinPriceHistory[,.(market,candle_date_time_kst,trade_price)]
@@ -40,7 +51,7 @@ setkeyv(coinPriceHistory,c("market","candle_date_time_kst"))
 
 #이동평균선 구하기
 movingAvg<-coinPriceHistory[,.(movingAvg=rollmean(trade_price,movingAvgDay,align='right')),by=market]
-movingAvg<-movingAvg[,.(movingAvg=c(rep(NA,totalCount-.N),movingAvg)),by=market]
+movingAvg<-movingAvg[,.(movingAvg=c(rep(NA,nrow(coinPriceHistory)-.N),movingAvg)),by=market]
 coinPriceHistory<-cbind(coinPriceHistory,movingAvg=movingAvg$movingAvg)
 coinPriceHistory[,disparity:=trade_price/movingAvg*100-100]
 coinPriceHistory<-na.omit(coinPriceHistory)
