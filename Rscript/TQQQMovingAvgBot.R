@@ -114,7 +114,7 @@ print(combinedSheet)
 
 if(nrow(combinedSheet)>0){
   sellSheet<-combinedSheet[평가금액>목표금액]
-  if(nrow(sellRes)>0){
+  if(nrow(sellSheet)>0){
     print("Sell orders")
     sellRes<-orderOverseasStocks(apiConfig,account,sellSheet) #매도 먼저
     sendMessage("Sell orders")
@@ -138,8 +138,8 @@ if(nrow(combinedSheet)>0){
     }
   }
   print("failed stocks")
-  if(!is.null(sellRes)) print(sellRes[rt_cd!='0'])
-  if(!is.null(buyRes)) print(buyRes[rt_cd!='0'])
+  if(exists("sellRes")) print(sellRes[rt_cd!='0'])
+  if(exists("buyRes")) print(buyRes[rt_cd!='0'])
   
   cnt<-0
   failNum<-nrow(buyRes[rt_cd!='0'])
@@ -148,7 +148,7 @@ if(nrow(combinedSheet)>0){
   while(failNum>0 & cnt<=10){
     cnt<-cnt+1
     rebuySheet<-rebuySheet[rebuyRes[rt_cd!='0']$idx]
-    rebuyRes<-orderStocks(apiConfig,account,rebuySheet)
+    rebuyRes<-orderOverseasStocks(apiConfig,account,rebuySheet)
     for(i in nrow(rebuyRes)){
       sendMessage("Buy orders")
       row<-rebuyRes[i,]
@@ -160,8 +160,9 @@ if(nrow(combinedSheet)>0){
     Sys.sleep(30)
   }
   
-  res<-rbind(sellRes,buyRes)
-  
+  res<-NULL
+  if(exists("sellRes")) res<-rbind(res,sellRes)
+  if(exists("buyRes")) res<-rbind(res,buyRes)
 }
 
 
