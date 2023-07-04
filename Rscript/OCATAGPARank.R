@@ -71,6 +71,9 @@ if(length(args)==0){
   goalBalanceSum<-as.numeric(args[2])
 }
 
+print(paste0("Number of Stocks: ",stocknum))
+print(paste0("Total stock balance: ",goalBalanceSum))
+
 output<-filter(corpTable)
 output<-orderData(output)
 output<-output[1:stocknum]
