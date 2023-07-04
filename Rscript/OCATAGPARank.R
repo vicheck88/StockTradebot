@@ -85,7 +85,7 @@ print(output)
 
 goalBalanceSheet<-output[,c('종목코드','종목명')]
 goalBalanceSheet$목표비율<-1
-goalBalanceSheet$목표금액<-goalBalanceSheet[,목표비율/sum(목표비율)]*goalBalanceSum
+goalBalanceSheet$목표금액<-floor(goalBalanceSheet[,목표비율/sum(목표비율)]*goalBalanceSum)
 
 
 if(currentBalance$rt_cd!='0' | currentBalance$status_code!='200'){
