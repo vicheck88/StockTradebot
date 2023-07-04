@@ -164,8 +164,3 @@ if(nrow(combinedSheet)>0){
   if(exists("sellRes")) res<-rbind(res,sellRes)
   if(exists("buyRes")) res<-rbind(res,buyRes)
 }
-
-
-
-
-

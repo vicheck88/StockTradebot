@@ -60,12 +60,23 @@ orderData<-function(data){
   return(data)
 }
 
+currentBalance<-getBalancesheet(apiConfig,account)
+totalBalanceSum<-currentBalance$summary$tot_evlu_amt
 
 args<-commandArgs(trailingOnly = TRUE)
+<<<<<<< HEAD
 stocknum<-as.numeric(args[1])
 goalBalanceSum<-as.numeric(args[2])
 print(paste0("Number of Stocks: ",stocknum))
 print(paste0("Total stock balance: ",goalBalanceSum))
+if(length(args)==0){
+  stocknum<-15
+  goalBalanceSum<-as.numeric(totalBalanceSum)  
+} else{
+  stocknum<-as.numeric(args[1])
+  goalBalanceSum<-as.numeric(args[2])
+}
+>>>>>>> c84eb706733b179ce8e3096bfdd71c2d19231eac
 
 output<-filter(corpTable)
 output<-orderData(output)
@@ -79,8 +90,6 @@ goalBalanceSheet<-output[,c('종목코드','종목명')]
 goalBalanceSheet$목표비율<-1
 goalBalanceSheet$목표금액<-goalBalanceSheet[,목표비율/sum(목표비율)]*goalBalanceSum
 
-currentBalance<-getBalancesheet(apiConfig,account)
-totalBalanceSum<-currentBalance$summary$tot_evlu_amt
 
 if(currentBalance$rt_cd!='0' | currentBalance$status_code!='200'){
   stop("Fail to get current balance. Stop script")

@@ -62,10 +62,11 @@ $lubridate
 
 [1] "QQQ"
 [1] TRUE
+[1] "sendMessage: 200"
 [1] "Final stock list"
    종목코드 거래소 거래소_현재가 현재가 목표금액 signal 주문구분
-1:     TQQQ   NASD           NAS 39.008   8813.5      1       34
+1:     TQQQ   NASD           NAS   41.2   9350.9      1       34
                              종목명 보유수량 평가금액 매수통화코드
-1: PROSHARES TRUST ULTRAPRO QQQ USD      225     8775          USD
+1: PROSHARES TRUST ULTRAPRO QQQ USD      225     9288          USD
 Error in nrow(sellRes) : object 'sellRes' not found
 Execution halted
