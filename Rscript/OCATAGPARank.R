@@ -64,11 +64,6 @@ currentBalance<-getBalancesheet(apiConfig,account)
 totalBalanceSum<-currentBalance$summary$tot_evlu_amt
 
 args<-commandArgs(trailingOnly = TRUE)
-<<<<<<< HEAD
-stocknum<-as.numeric(args[1])
-goalBalanceSum<-as.numeric(args[2])
-print(paste0("Number of Stocks: ",stocknum))
-print(paste0("Total stock balance: ",goalBalanceSum))
 if(length(args)==0){
   stocknum<-15
   goalBalanceSum<-as.numeric(totalBalanceSum)  
@@ -76,7 +71,6 @@ if(length(args)==0){
   stocknum<-as.numeric(args[1])
   goalBalanceSum<-as.numeric(args[2])
 }
->>>>>>> c84eb706733b179ce8e3096bfdd71c2d19231eac
 
 print(paste0("Number of Stocks: ",stocknum))
 print(paste0("Total stock balance: ",goalBalanceSum))
