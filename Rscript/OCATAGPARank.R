@@ -78,6 +78,9 @@ if(length(args)==0){
 }
 >>>>>>> c84eb706733b179ce8e3096bfdd71c2d19231eac
 
+print(paste0("Number of Stocks: ",stocknum))
+print(paste0("Total stock balance: ",goalBalanceSum))
+
 output<-filter(corpTable)
 output<-orderData(output)
 output<-output[1:stocknum]
