@@ -18,6 +18,7 @@ holidays<-with_tz(holidayNYSE(year = getRmetricsOptions("currentYear"))@Data,"Am
 if(weekday %in% c(0,6) | as.Date(newYorkTime) %in% as.Date(holidays)){
   stop("Today is weekend, or holiday")
 }
+
 config<-fromJSON("~/config.json")
 #apiConfig<-config$api$config$dev
 apiConfig<-config$api$config$prod
