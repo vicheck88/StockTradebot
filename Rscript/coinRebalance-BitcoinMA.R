@@ -78,15 +78,22 @@ balanceCombinedTable[is.na(curvolume)]$curvolume<-0
 balanceCombinedTable[,symbol:=sapply(strsplit(market,"-"),function(x)x[2])]
 balanceCombinedTable[,targetBalance:=totalBalance*ratio]
 
-for(i in 1:5){
-  if(length(failOrder)==0){
-      orderTable<-createOrderTable(balanceCombinedTable)
+failOrder<-c()
+orderTable<-createOrderTable(balanceCombinedTable)
+if(nrow(orderTable)>0){
+  for(i in 1:5){
+    if(length(failOrder)==0){
       failOrder<-orderCoin(orderTable[side=="ask"])
       failOrder<-c(failOrder,orderCoin(orderTable[side=="bid"]))
-  } else{
-    orderTable<-orderTable[market %in% failOrder]
-    failOrder<-orderCoin(orderTable)
+    } else{
+      orderTable<-orderTable[market %in% failOrder]
+      sendMessage(paste0("Fail to order: ",paste(failOrder,collapse=",")))
+      failOrder<-orderCoin(orderTable)
+    }
+    if(length(failOrder)==0) {
+      sendMessage("Coin order complete")
+      break;
+    }
+    Sys.sleep(60*10)
   }
-  if(length(failOrder)==0) break;
-  Sys.sleep(60*10)
 }
