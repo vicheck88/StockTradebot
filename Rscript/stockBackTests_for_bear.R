@@ -48,19 +48,32 @@ rets<-rets[,-"QQQ.Adjusted"]
 rets<-as.xts(rets)
 rets$Cash<-0
 
-getTQQQInvestRatio<-function(table){
+getTQQQInvestRatio<-function(table,nrow){
   for(i in 1:nrow(table)){
     disparity<-table[i,]$QQQDisparity
-    #TQQQratio
-    addRatio<-floor(disparity)*0.5
-    if(i>1){
-      prevRatio<-table[i-1,]$investRatio
-      if(addRatio>=0) addRatio<-max(prevRatio,addRatio)
-      if(addRatio<0) addRatio<-min(1+addRatio,prevRatio)
+    if(is.na(disparity)) next
+    if(disparity>0) next
+  
+    regTable<-tail(table[index<=table[i,index]],nrow)
+    regression<-summary(lm(regTable$QQQ.Adjusted~seq(1,nrow(regTable))))
+    coef<-regression$coefficients[2,1]
+    pval<-regression$coefficients[2,4]
+    signal<- pval<0.01 & coef<0 & disparity<=(-15)
+    
+    if(signal) {
+      ratio<-min(floor(-(disparity+15)/3)*0.05+0.2,1)
+      table[i,]$disparityFlag<-F
+    } else if(i>1 & disparity< -3){
+        prevRatio<-table[i-1,]$TQQQinvestRatio
+        prevDisparityFlag<-table[i-1,]$disparityFlag
+        if(disparity> -9 & prevDisparityFlag==F) {
+          ratio <- prevRatio*0.5
+          table[i,]$disparityFlag=T
+        } else ratio<-prevRatio
     }
-    newRatio<-min(1,addRatio)
-    newRatio<-max(0,newRatio)
-    table[i,]$TQQQinvestRatio<-newRatio
+    else ratio<-0
+    
+    table[i,]$TQQQinvestRatio<-ratio
   }
   return(table)
 }
@@ -69,13 +82,15 @@ priceWithRatio<-as.data.table(priceWith200MA)
 priceWithRatio[,TQQQinvestRatio:=0]
 priceWithRatio[,SQQQinvestRatio:=0]
 priceWithRatio[,CashinvestRatio:=0]
-priceWithRatio<-priceWithRatio[,getTQQQInvestRatio(.SD)]
+priceWithRatio[,disparityFlag:=F]
+
+priceWithRatio<-priceWithRatio[,getTQQQInvestRatio(.SD,100)]
 priceWithRatio[,CashinvestRatio:=1-TQQQinvestRatio]
+priceWithRatio[,-disparityFlag]
 priceWithRatio<-as.xts(priceWithRatio)
 
 Tactical = Return.portfolio(rets[,c("TQQQ.Adjusted","Cash")], priceWithRatio[,c("TQQQinvestRatio","CashinvestRatio")], verbose = TRUE)
 
-portfolios = na.omit(cbind(rets[,1], Tactical$returns)) %>%
-  setNames(c('Hold', 'MA strategy'))
+portfolios = na.omit(cbind(rets[,1], Tactical$returns))
 
 charts.PerformanceSummary(portfolios, main = "Buy & Hold vs Tactical")

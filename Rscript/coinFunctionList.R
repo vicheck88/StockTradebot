@@ -1,11 +1,10 @@
-#setwd("C:/Users/vicen/Documents/Github/StockTradebot/Rscript")
 
-pkg = c('quantmod','jsonlite', 'stringr', 'logr',
+pkg = c('quantmod','jsonlite', 'stringr',
         'jose','openssl','PerformanceAnalytics','xts','curl','data.table',
         'httr')
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
 
-logDir<-"/home/pi/stockInfoCrawler/StockTradebot/log"
+
 
 if (length(new.pkg)) {
   install.packages(new.pkg, dependencies = TRUE)}
@@ -141,20 +140,18 @@ getUpbitCoinMomentum<-function(candleType,unit,momentumPeriod, weight, coinList)
 }
 
 getCurrentBalance<-function(){
-  logPath<-paste0(logDir,"coinLog.",Sys.Date(),".log")
-  log_open(logPath)
-  
-  log_print("CURRENT BALANCE")
+
+  print("CURRENT BALANCE")
   krwCoinList<-getUpbitCoinList()
   balanceList<-getCurrentUpbitAccountInfo()
   
   KRWRow<-balanceList[1,]
   balanceList<-merge(balanceList,krwCoinList[,1],by.x="currency",by.y="market")
   balanceList<-rbind(KRWRow,balanceList)
-  log_print(balanceList)
+  print(balanceList)
   
   balanceList[,market:=paste0("KRW-",currency)]
-  log_print("CURRENT COIN PRICE")
+  print("CURRENT COIN PRICE")
   price=getCurrentUpbitPrice(balanceList$market[-1])
   price<-rbind(price,as.list(c("KRW-KRW",1)))
   
@@ -232,19 +229,16 @@ createOrderTable<-function(balanceCombinedTable){
   return(balanceCombinedTable[,.(market,side,volume,price,ord_type)])
 }
 
-
 orderCoin<-function(order){
-  logPath<-paste0(logDir,"coinLog.",Sys.Date(),".log")
-  log_open(logPath)
   query<-paste0("market=",order$market,"&side=",order$side,"&volume=",order$volume,"&price=",order$price,"&ord_type=",order$ord_type)
   tokenList<-sapply(query,function(x) createJwtToken(x,runif(1,1000,33553))) 
   url<-"https://api.upbit.com/v1/orders"
   failOrder<-c()
   for(i in 1:NROW(order)){
     res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
-    log_print(query[i])
-    log_print(res$status_code)
-    log_print(rawToChar(res$content))
+    print(query[i])
+    print(res$status_code)
+    print(rawToChar(res$content))
     if(res$status_code!="201") failOrder<-c(failOrder,order[i,]$market)
     Sys.sleep(0.3)
   }

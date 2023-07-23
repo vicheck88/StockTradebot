@@ -10,7 +10,6 @@ library(lubridate)
 
 
 
-
 num<-1
 coinNumLimit<-2
 bandLimit<-0.3
@@ -20,23 +19,22 @@ bandLimit<-0.3
 coinList<-getUpbitCoinListDetail(coinNumLimit)
 indexCoin<-getIndexBalance(coinList[1:num,],1,"MARKET")
 #이평선
-type<-"days"
-#type<-"minutes"
+#type<-"days"
+type<-"minutes"
 movingAvgDay<-30
-#movingAvgDay<-240
 unit<-60
-unit<-240
+#unit<-240
 count<-200
 
 #과거 가격들 구하기(2000일)
 date<-Sys.Date()+1
 coinPriceHistory<-NULL
 curRowNum<-0
-for(i in 1:100){
+for(i in 1:1000){
   if(type=="days"){
     toDate<-paste0(as.Date(date)-1,'T09:00:00')
   } else if(type=="minutes"){
-    toDate<-as_datetime(date)-240*60
+    toDate<-as_datetime(date)-60
     toDate<-str_replace(toDate," ","T")
   }
   coinPriceHistory<-rbind(coinPriceHistory,getCoinPriceHistory(indexCoin$market,type,unit,count,toDate))
@@ -48,13 +46,34 @@ for(i in 1:100){
 
 coinPriceHistory<-coinPriceHistory[,.(market,candle_date_time_kst,trade_price)]
 setkeyv(coinPriceHistory,c("market","candle_date_time_kst"))
+coinPriceHistory[candle_date_time_kst %like% "T09:00:00",isDayStart:=T]
 
-#이동평균선 구하기
-movingAvg<-coinPriceHistory[,.(movingAvg=rollmean(trade_price,movingAvgDay,align='right')),by=market]
-movingAvg<-movingAvg[,.(movingAvg=c(rep(NA,nrow(coinPriceHistory)-.N),movingAvg)),by=market]
-coinPriceHistory<-cbind(coinPriceHistory,movingAvg=movingAvg$movingAvg)
+#이동평균선 구하기(Day 기준)
+movingAvg<-coinPriceHistory[isDayStart==T,.(movingAvg=frollmean(trade_price,movingAvgDay,align='right')),by=market]
+movingAvg$candle_date_time_kst<-coinPriceHistory[isDayStart==T,candle_date_time_kst]
+coinPriceHistory<-movingAvg[coinPriceHistory,on=c("market","candle_date_time_kst")]
+
+for(i in 1:nrow(coinPriceHistory)){
+  row<-coinPriceHistory[i,]
+  time<-row$candle_date_time_kst
+  subTable<-coinPriceHistory[isDayStart==T][time>=candle_date_time_kst]
+  if(nrow(subTable)<movingAvgDay) next
+  subTable<-rbind(subTable,row)
+  subTable<-subTable[(nrow(subTable)-movingAvgDay):nrow(subTable),]
+  v<-last(subTable[,frollmean(trade_price,movingAvgDay,align="right")])
+  coinPriceHistory[i,]$movingAvg<-v
+}
+
+
+minDay<-min(coinPriceHistory[is.na(movingAvg)==F,candle_date_time_kst])
+coinPriceHistory<-coinPriceHistory[candle_date_time_kst>=minDay]
+
+
+#for(i in 2:nrow(coinPriceHistory)){
+#  if(is.na(coinPriceHistory[i,]$movingAvg)) 
+#    coinPriceHistory[i,]$movingAvg=coinPriceHistory[i-1]$movingAvg
+#}
 coinPriceHistory[,disparity:=trade_price/movingAvg*100-100]
-coinPriceHistory<-na.omit(coinPriceHistory)
 
 #이평선과 비교해 높을 경우 매수, 낮을 경우 매도
 #구입: 1%부터 1%당 현금 10%씩
@@ -62,7 +81,6 @@ coinPriceHistory<-na.omit(coinPriceHistory)
 
 targetRatio<-1
 coinPriceHistory$investRatio<-0
-
 
 getInvestRatio<-function(table){
   for(i in 1:nrow(table)){
@@ -84,29 +102,24 @@ getInvestRatio<-function(table){
 }
 coinPriceHistory<-coinPriceHistory[,getInvestRatio(.SD),by=market]
 
+#시간단위일 경우 시간변경 필요
+#coinPriceHistory[,candle_date_time_kst:=as.Date(coinPriceHistory[,min(candle_date_time_kst)])+(.I-1)*2]
 
 coinRatioTable<-coinPriceHistory[market=="KRW-BTC",.(candle_date_time_kst,investRatio)]
-coinRatioTable[,candle_date_time_kst:=as.Date(candle_date_time_kst)]
+coinRatioTable[,candle_date_time_kst:=as_datetime(candle_date_time_kst,tz=Sys.timezone())]
 coinRatioTable[,cashRatio:=1-investRatio]
 
 coinAdjusted<-coinPriceHistory[market=="KRW-BTC",.(candle_date_time_kst,trade_price)]
-coinAdjusted<-coinAdjusted[,candle_date_time_kst:=as.Date(candle_date_time_kst)]
+coinAdjusted<-coinAdjusted[,candle_date_time_kst:=as_datetime(candle_date_time_kst,tz=Sys.timezone())]
 coinAdjusted[,prevValue:=shift(trade_price,1)]
 coinAdjusted[,adjustedPrice:=(trade_price/prevValue)-1]
 coinAdjusted<-coinAdjusted[,.(candle_date_time_kst,adjustedPrice)]
+coinAdjusted$adjustedCache<-0
 
-symbols = c('SHY')
-getSymbols(symbols, src = 'yahoo')
-rets = Return.calculate(Ad(SHY))
-
-coinAdjusted<-as.xts(coinAdjusted)
-
-rets<-na.omit(cbind(coinAdjusted,rets))
-rets<-replace(rets,is.na(rets),0)
+rets<-as.xts(coinAdjusted)
+rets<-na.omit(rets)
 coinRatioTable<-coinRatioTable[-1,]
-
 coinRatioTable<-as.xts(coinRatioTable)
-
 Tactical = Return.portfolio(rets, coinRatioTable, verbose = TRUE)
 
 portfolios = na.omit(cbind(rets[,1], Tactical$returns)) %>%
