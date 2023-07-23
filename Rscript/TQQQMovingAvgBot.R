@@ -15,7 +15,7 @@ newYorkTime<-with_tz(Sys.time(),"America/New_York")
 weekday<-as.POSIXlt(newYorkTime)$wday
 holidays<-with_tz(holidayNYSE(year = getRmetricsOptions("currentYear"))@Data,"America/New_York")
 
-if(weekday %in% c(0,6) | as.Date(newYorkTime) %in% holidays){
+if(weekday %in% c(0,6) | as.Date(newYorkTime) %in% as.Date(holidays)){
   stop("Today is weekend, or holiday")
 }
 config<-fromJSON("~/config.json")
