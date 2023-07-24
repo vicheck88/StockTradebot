@@ -1,7 +1,7 @@
-#setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
-setwd("/Users/chhan/StockTradebot/Rscript")
-source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
-#source("~/stockInfoCrawler/StockTradebot/Rscript/telegramAPI.R") #라즈베리에서 읽는 경우
+setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
+#setwd("/Users/chhan/StockTradebot/Rscript")
+#source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
+source("~/stockInfoCrawler/StockTradebot/Rscript/telegramAPI.R") #라즈베리에서 읽는 경우
 source("./coinFunctionList.R",encoding="utf-8")
 
 num<-1
