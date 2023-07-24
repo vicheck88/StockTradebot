@@ -128,9 +128,12 @@ if(nrow(combinedSheet)>0){
   }
   buySheet<-combinedSheet[평가금액<목표금액]
   if(nrow(buySheet)>0){
-    print("Buy orders")
     buyRes<-orderOverseasStocks(apiConfig,account,buySheet) #매수 다음
-    sendMessage("Buy orders")
+    
+    if(nrow(buyRes)>0) {
+      print("Buy orders")
+      sendMessage("Buy orders")
+    }
     for(i in nrow(buyRes)){
       row<-buyRes[i,]
       text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)

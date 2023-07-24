@@ -77,10 +77,17 @@ balanceCombinedTable[is.na(balance)]$balance<-0
 balanceCombinedTable[is.na(curvolume)]$curvolume<-0
 balanceCombinedTable[,symbol:=sapply(strsplit(market,"-"),function(x)x[2])]
 balanceCombinedTable[,targetBalance:=totalBalance*ratio]
+print(balanceCombinedTable)
 
 failOrder<-c()
 orderTable<-createOrderTable(balanceCombinedTable)
+
 if(nrow(orderTable)>0){
+  print(orderTable)
+  for(i in 1:nrow(orderTable)){
+    row<-orderTable[i,]
+    sendMessage(paste0("market: ",row$market," curBalance: ",row$balance," targetBalance: ",row$targetBalance))
+  }
   for(i in 1:5){
     if(length(failOrder)==0){
       failOrder<-orderCoin(orderTable[side=="ask"])
