@@ -62,8 +62,8 @@ currentRatio<-coinPriceHistory[,tail(.SD,1),by=market][,.(market,ratio)]
 latestCoinPriceHistory<-tail(coinPriceHistory,1)
 #sendMessage
 message<-paste0("Bitcoin price: ",latestCoinPriceHistory$trade_price)
-message<-paste0(message,"\nBitcoin 30 MA: ",round(latestCoinPriceHistory$movingAvg))
-message<-paste0(message,"\nBitcoin Disparity: ", round(latestCoinPriceHistory$disparity))
+message<-paste0(message,"\nBitcoin 30 MA: ",round(latestCoinPriceHistory$movingAvg,2))
+message<-paste0(message,"\nBitcoin Disparity: ", round(latestCoinPriceHistory$disparity,2))
 message<-paste0(message,"\nBitcoin Ratio: ",latestCoinPriceHistory$ratio)
 sendMessage(message)
 

@@ -1,0 +1,42 @@
+Loading required package: xts
+Loading required package: zoo
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+
+Attaching package: ‘xts’
+
+The following objects are masked from ‘package:data.table’:
+
+    first, last
+
+Loading required package: TTR
+Registered S3 method overwritten by 'quantmod':
+  method            from
+  as.zoo.data.frame zoo 
+Loading required package: openssl
+
+Attaching package: ‘PerformanceAnalytics’
+
+The following object is masked from ‘package:graphics’:
+
+    legend
+
+
+Attaching package: ‘curl’
+
+The following object is masked from ‘package:httr’:
+
+    handle_reset
+
+[1] "CURRENT BALANCE"
+   currency balance locked avg_buy_price avg_buy_price_modified unit_currency
+1:      KRW   5e+05      0             0                   TRUE           KRW
+[1] "CURRENT COIN PRICE"
+[1] "sendMessage: 200"
+    market ratio currency balance curvolume totalBalance symbol targetBalance
+1: KRW-BTC     0     <NA>       0         0        5e+05    BTC             0
