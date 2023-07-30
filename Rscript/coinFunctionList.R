@@ -11,7 +11,7 @@ if (length(new.pkg)) {
 sapply(pkg,library,character.only=T)
 
 getCoinMarketCapList<-function(num){
-  coinMarket_api_key<-fromJSON("./config.json")$coinmarketcap_key$api_key
+  coinMarket_api_key<-fromJSON("~/config.json")$coinmarketcap_key$api_key
   url<-paste0("https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?limit=",num)
   h<-new_handle()
   handle_setheaders(h, .list=list("X-CMC_PRO_API_KEY"=coinMarket_api_key, Accepts="application/json"))
