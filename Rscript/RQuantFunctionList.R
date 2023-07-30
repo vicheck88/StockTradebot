@@ -161,7 +161,7 @@ adjustedPriceFromNaver<-function(interval, cnt, code){
       # url 생성
       url = paste0(
         'https://fchart.stock.naver.com/sise.nhn?symbol='
-        ,code,'&timeframe=',interval,'&count=',cnt,'&requestType=0')
+        ,code,'&timeframe=',interval,'&count=',cnt+1,'&requestType=0')
       
       # 이 후 과정은 위와 동일함
       # 데이터 다운로드
@@ -171,7 +171,7 @@ adjustedPriceFromNaver<-function(interval, cnt, code){
         html_attr("data") 
       
       # 데이터 나누기
-      price = read_delim(data_html, delim = '|')
+      price = read_delim(I(data_html), delim = '|')
       
       # 필요한 열만 선택 후 클렌징
       price = price[c(1, 5)] 
