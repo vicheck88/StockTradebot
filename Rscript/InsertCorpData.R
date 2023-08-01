@@ -6,7 +6,7 @@ library(jsonlite)
 dbConfig=read_json("./config.json")$database
 conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
 #함수 불러돌이기
-source("./RQuantFunctionList.R",encoding="utf-8")
+source("~/StockTradebot/Rscript/RQuantFunctionList.R",encoding="utf-8")
 
 source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
 #source("~/stockInfoCrawler/StockTradebot/Rscript/telegramAPI.R") #라즈베리에서 읽는 경우
@@ -14,12 +14,14 @@ source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
 #전월 말 날짜 구하기
 print(paste0(Sys.time()," : Starting to get date"))
 
-availableDate<-getLastBizdayofMonth(3)
+availableDate<-getLastBizdayofMonth(2)
 if(month(Sys.Date())==month(availableDate[2])) {
   availableDate<-availableDate[1]
 } else{
   availableDate<-availableDate[2]
 }
+
+
 latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.월별기업정보"))[,1]
 
 while(TRUE){
