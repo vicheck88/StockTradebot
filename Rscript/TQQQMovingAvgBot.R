@@ -35,7 +35,7 @@ prices<-as.data.table(prices)
 tmptoken<-getToken(apiConfig,account)
 currentQQQPrice<-getCurrentOverseasPrice(apiConfig,account,tmptoken,"QQQ",'NAS')
 tqqqPrice<-getCurrentOverseasPrice(apiConfig,account,tmptoken,"TQQQ",'NAS')
-bilPrice<-getCurrentOverseasPrice(apiConfig,account,tmptoken,"BIL",'AMS')
+sgovPrice<-getCurrentOverseasPrice(apiConfig,account,tmptoken,"SGOV",'AMS')
 revokeToken(apiConfig,account,tmptoken)
 tmptoken<-NULL
 prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),QQQ.Adjusted=currentQQQPrice)))
@@ -67,10 +67,6 @@ message<-paste0(message,"\nQQQ Disparity: ", round(currentDisparity$QQQ.Adjusted
 message<-paste0(message,"\nToday TQQQ Ratio: ",TQQQGoalRatio)
 sendMessage(message)
 
-
-#bondRatio
-bondRatio<-(1-TQQQGoalRatio)
-
 currentBalance<-getPresentOverseasBalancesheet(apiConfig,account)
 if(currentBalance$status_code!='200'){
   stop("Fail to get current balance. Stop script")
@@ -85,7 +81,7 @@ goalBalanceSum<-totalBalanceSum*TQQQGoalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
 
 goalBalanceSheet<-data.table(종목코드=c('TQQQ'),거래소_현재가='NAS',거래소='NASD',현재가=tqqqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity$QQQ.Adjusted.MA.200),주문구분='34')
-goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=c('BIL'),거래소_현재가='AMS',거래소='AMEX',현재가=bilPrice,목표금액=bondBalanceSum,signal=0,주문구분='34'))
+goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=c('SGOV'),거래소_현재가='AMS',거래소='AMEX',현재가=sgovPrice,목표금액=bondBalanceSum,signal=0,주문구분='34'))
 
 
 if(nrow(currentBalance$sheet)>0){
