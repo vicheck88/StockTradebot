@@ -57,6 +57,8 @@ getInvestRatio<-function(table){
 }
 
 coinPriceHistory<-coinPriceHistory[,getInvestRatio(.SD),by=market]
+coinPriceHistory$ratio<-1
+
 currentRatio<-coinPriceHistory[,tail(.SD,1),by=market][,.(market,ratio)]
 
 latestCoinPriceHistory<-tail(coinPriceHistory,1)
@@ -90,8 +92,8 @@ if(nrow(orderTable)>0){
   result<-orderCoin(orderTable[side=="ask"])
   result<-c(result,orderCoin(orderTable[side=="bid"]))
   if(length(result)>0){
-    for(i in 1:nrow(result)){
-      sendMessage(result[i])
+    for(msg in result){
+      sendMessage(msg)
     }
   }
 }

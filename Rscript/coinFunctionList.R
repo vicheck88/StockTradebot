@@ -214,12 +214,12 @@ createOrderTable<-function(balanceCombinedTable){
   
   balanceCombinedTable<-balanceCombinedTable[,.(market,diff,curvolume,sellall)]
   names(balanceCombinedTable)<-c("market","buyamount","currentvolume","sellall")
-  
+  fee<-0.0005
   balanceCombinedTable<-balanceCombinedTable[buyamount!=0]
   balanceCombinedTable$ord_type<-'limit'
   balanceCombinedTable$side<-'bid'
   balanceCombinedTable[buyamount<0]$side<-'ask'
-  balanceCombinedTable[,buyamount:=abs(buyamount)]
+  balanceCombinedTable[,buyamount:=floor(abs(buyamount)*(1-fee))]
   balanceCombinedTable[,price:=getCurrentUpbitPrice(balanceCombinedTable$market)$trade_price]
   balanceCombinedTable[,volume:=buyamount/price]
   balanceCombinedTable[sellall==T]$volume<-balanceCombinedTable[sellall==T]$currentvolume
@@ -239,7 +239,7 @@ orderCoin<-function(order){
     print(res$status_code)
     print(rawToChar(res$content))
     msg<-paste0("coin: ",order[i,]$market," code: ",res$status_code, " content:",res$content)
-    if(res$status_code!="201") result<-c(result,msg)
+    result<-c(result,msg)
     Sys.sleep(0.3)
   }
   return(result)
