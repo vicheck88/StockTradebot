@@ -6,7 +6,7 @@ library(jsonlite)
 dbConfig=read_json("~/config.json")$database
 conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
 #함수 불러돌이기
-source("~/StockTradebot/Rscript/RQuantFunctionList.R",encoding="utf-8")
+source("~/stockInfoCrawler/StockTradebot/Rscript/RQuantFunctionList.R",encoding="utf-8")
 
 #source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
 source("./telegramAPI.R") #라즈베리에서 읽는 경우

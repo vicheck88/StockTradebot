@@ -145,7 +145,7 @@ getCurrentBalance<-function(){
   krwCoinList<-getUpbitCoinList()
   balanceList<-getCurrentUpbitAccountInfo()
   
-  KRWRow<-balanceList[1,]
+  KRWRow<-balanceList[currency=="KRW"]
   balanceList<-merge(balanceList,krwCoinList[,1],by.x="currency",by.y="market")
   balanceList<-rbind(KRWRow,balanceList)
   print(balanceList)
@@ -228,19 +228,21 @@ createOrderTable<-function(balanceCombinedTable){
 }
 
 orderCoin<-function(order){
+  if(nrow(order)==0) return(c())
   query<-paste0("market=",order$market,"&side=",order$side,"&volume=",order$volume,"&price=",order$price,"&ord_type=",order$ord_type)
   tokenList<-sapply(query,function(x) createJwtToken(x,runif(1,1,100000000))) 
   url<-"https://api.upbit.com/v1/orders"
-  failOrder<-c()
+  result<-c()
   for(i in 1:NROW(order)){
     res<-POST(url,add_headers(Authorization=paste0("Bearer ",tokenList[i])),body=as.list(order[i,]),encode='json')  
     print(query[i])
     print(res$status_code)
     print(rawToChar(res$content))
-    if(res$status_code!="201") failOrder<-c(failOrder,order[i,]$market)
+    msg<-paste0("coin: ",order[i,]$market," code: ",res$status_code, " content:",res$content)
+    if(res$status_code!="201") result<-c(result,msg)
     Sys.sleep(0.3)
   }
-  return(failOrder)
+  return(result)
 }
 
 getMinimumOrderUnit<-function(coinList){

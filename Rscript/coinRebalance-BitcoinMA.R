@@ -61,7 +61,6 @@ currentRatio<-coinPriceHistory[,tail(.SD,1),by=market][,.(market,ratio)]
 
 latestCoinPriceHistory<-tail(coinPriceHistory,1)
 
-failOrder<-c()
 balanceCombinedTable<-merge(currentRatio,currentBalance,by="market",all=TRUE)
 balanceCombinedTable[,totalBalance:=totalBalance]
 balanceCombinedTable<-balanceCombinedTable[market!="KRW-KRW"]
@@ -69,10 +68,9 @@ balanceCombinedTable[is.na(ratio)]$ratio<-0
 balanceCombinedTable[is.na(balance)]$balance<-0
 balanceCombinedTable[is.na(curvolume)]$curvolume<-0
 balanceCombinedTable[,symbol:=sapply(strsplit(market,"-"),function(x)x[2])]
-balanceCombinedTable[,targetBalance:=totalBalance*ratio]
+balanceCombinedTable[,targetBalance:=floor(totalBalance*ratio*0.995)]
 print(balanceCombinedTable)
 
-failOrder<-c()
 orderTable<-createOrderTable(balanceCombinedTable)
 
 if(nrow(orderTable)>0){
@@ -87,21 +85,13 @@ if(nrow(orderTable)>0){
     sendMessage(message)
     
     row<-orderTable[i,]
-    sendMessage(paste0("market: ",row$market," curBalance: ",row$balance," targetBalance: ",row$targetBalance))
+    sendMessage(paste0("market: ",row$market," side: ",row$side," curPrice: ",row$price," targetVolume: ",row$volume))
   }
-  for(i in 1:5){
-    if(length(failOrder)==0){
-      failOrder<-orderCoin(orderTable[side=="ask"])
-      failOrder<-c(failOrder,orderCoin(orderTable[side=="bid"]))
-    } else{
-      orderTable<-orderTable[market %in% failOrder]
-      sendMessage(paste0("Fail to order: ",paste(failOrder,collapse=",")))
-      failOrder<-orderCoin(orderTable)
+  result<-orderCoin(orderTable[side=="ask"])
+  result<-c(result,orderCoin(orderTable[side=="bid"]))
+  if(length(result)>0){
+    for(i in 1:nrow(result)){
+      sendMessage(result[i])
     }
-    if(length(failOrder)==0) {
-      sendMessage("Coin order complete")
-      break;
-    }
-    Sys.sleep(60*10)
   }
 }

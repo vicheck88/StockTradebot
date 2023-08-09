@@ -34,9 +34,12 @@ The following object is masked from ‘package:httr’:
     handle_reset
 
 [1] "CURRENT BALANCE"
-   currency balance locked avg_buy_price avg_buy_price_modified unit_currency
-1:      KRW   5e+05      0             0                   TRUE           KRW
+   currency      balance locked avg_buy_price avg_buy_price_modified
+1:      KRW 2.387040e+03      0             0                   TRUE
+2:      BTC 1.266643e-02      0      39266335                  FALSE
+   unit_currency
+1:           KRW
+2:           KRW
 [1] "CURRENT COIN PRICE"
-[1] "sendMessage: 200"
-    market ratio currency balance curvolume totalBalance symbol targetBalance
-1: KRW-BTC     0     <NA>       0         0        5e+05    BTC             0
+    market ratio currency  balance  curvolume totalBalance symbol targetBalance
+1: KRW-BTC     1      BTC 501945.3 0.01266643     504332.3    BTC        501810
