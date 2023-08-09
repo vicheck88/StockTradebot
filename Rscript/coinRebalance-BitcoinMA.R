@@ -95,8 +95,8 @@ if(nrow(orderTable)>0){
   result<-orderCoin(orderTable[side=="ask"])
   result<-c(result,orderCoin(orderTable[side=="bid"]))
   if(length(result)>0){
-    for(i in 1:nrow(result)){
-      sendMessage(result[i])
+    for(msg in result){
+      sendMessage(msg)
     }
   }
 }

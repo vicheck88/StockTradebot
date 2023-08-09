@@ -241,7 +241,7 @@ orderCoin<-function(order){
     print(res$status_code)
     print(rawToChar(res$content))
     msg<-paste0("coin: ",order[i,]$market," code: ",res$status_code, " content:",res$content)
-    if(res$status_code!="201") result<-c(result,msg)
+    result<-c(result,msg)
     Sys.sleep(0.3)
   }
   return(result)
