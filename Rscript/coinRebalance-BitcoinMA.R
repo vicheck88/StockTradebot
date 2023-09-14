@@ -57,7 +57,6 @@ getInvestRatio<-function(table){
 }
 
 coinPriceHistory<-coinPriceHistory[,getInvestRatio(.SD),by=market]
-coinPriceHistory$ratio<-1
 
 currentRatio<-coinPriceHistory[,tail(.SD,1),by=market][,.(market,ratio)]
 

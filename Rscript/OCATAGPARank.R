@@ -66,7 +66,7 @@ totalBalanceSum<-currentBalance$summary$tot_evlu_amt
 args<-commandArgs(trailingOnly = TRUE)
 if(length(args)==0){
   stocknum<-15
-  goalBalanceSum<-as.numeric(totalBalanceSum)  
+  goalBalanceSum<-as.integer(as.integer(totalBalanceSum)/10000)*10000
 } else{
   stocknum<-as.numeric(args[1])
   goalBalanceSum<-as.numeric(args[2])
@@ -166,7 +166,7 @@ while(failNum>0 & cnt<=10){
     Sys.sleep(0.04)
   }
   failNum<-nrow(rebuyRes[rt_cd!='0'])
-  Sys.sleep(30)
+  Sys.sleep(600)
 }
 
 res<-rbind(sellRes,buyRes)

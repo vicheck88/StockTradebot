@@ -238,7 +238,7 @@ orderCoin<-function(order){
     print(query[i])
     print(res$status_code)
     print(rawToChar(res$content))
-    msg<-paste0("coin: ",order[i,]$market," code: ",res$status_code, " content:",res$content)
+    msg<-paste0("coin: ",order[i,]$market," code: ",res$status_code, " content:",rawToChar(res$content))
     result<-c(result,msg)
     Sys.sleep(0.3)
   }

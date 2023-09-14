@@ -35,11 +35,19 @@ The following object is masked from ‘package:httr’:
 
 [1] "CURRENT BALANCE"
    currency      balance locked avg_buy_price avg_buy_price_modified
-1:      KRW 2.387040e+03      0             0                   TRUE
-2:      BTC 1.266643e-02      0      39266335                  FALSE
+1:      KRW 2.415681e+05      0             0                   TRUE
+2:      BTC 6.636390e-03      0      36020000                  FALSE
    unit_currency
 1:           KRW
 2:           KRW
 [1] "CURRENT COIN PRICE"
     market ratio currency  balance  curvolume totalBalance symbol targetBalance
-1: KRW-BTC     1      BTC 501945.3 0.01266643     504332.3    BTC        501810
+1: KRW-BTC     0      BTC 238199.9 0.00663639       479768    BTC             0
+    market side     volume    price ord_type
+1: KRW-BTC  ask 0.00663639 35885000    limit
+[1] "sendMessage: 200"
+[1] "sendMessage: 200"
+[1] "market=KRW-BTC&side=ask&volume=0.00663639&price=35885000&ord_type=limit"
+[1] 201
+[1] "{\"uuid\":\"b6751193-b552-43a4-aa25-9d9f63c79331\",\"side\":\"ask\",\"ord_type\":\"limit\",\"price\":\"35885000\",\"state\":\"wait\",\"market\":\"KRW-BTC\",\"created_at\":\"2023-09-15T07:00:14.180192+09:00\",\"volume\":\"0.00663639\",\"remaining_volume\":\"0.00663639\",\"reserved_fee\":\"0\",\"remaining_fee\":\"0\",\"paid_fee\":\"0\",\"locked\":\"0.00663639\",\"executed_volume\":\"0\",\"trades_count\":0}"
+[1] "sendMessage: 200"
