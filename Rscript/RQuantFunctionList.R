@@ -399,8 +399,8 @@ extractFSEntities<-function(corpData,data){
                    영업활동으로인한현금흐름=tmp['영업활동으로인한현금흐름'],
                    재무활동으로인한현금흐름=tmp['재무활동으로인한현금흐름'],
                    투자활동으로인한현금흐름=tmp['투자활동으로인한현금흐름'],
-                   유상증자=tmp['유상증자'],
-                   잉여현금흐름=fcf)]
+                   잉여현금흐름=fcf,
+                   유상증자=tmp['유상증자'])]
   
   return(corpData)
 }
