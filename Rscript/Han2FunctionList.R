@@ -34,8 +34,27 @@ getHashkey<-function(body){
   response<-POST(keyUrl,add_headers(headers),body=body)
   return(content(response)$HASH)
 }
+
+isKoreanHoliday<-function(apiConfig,account,date){
+  token<-getToken(apiConfig,account)
+  holidayUrl<-paste0(apiConfig$url,'/uapi/overseas-price/v1/quotations/price') 
+  headers<-c(
+    Authorization=paste('Bearer',token),
+    appkey=account$appkey,
+    appsecret=account$appsecret,
+    tr_id='CTCA0903R',
+    custtype='P'
+  )
+  query<-list(BASS_DT=date,CTX_AREA_NK='',CTX_AREA_FK='')
+  response<-GET(holidayUrl,add_headers(headers),query=query)
+  res<-fromJSON(rawToChar(response$content))
+  revokeToken(apiConfig,account,token)
+  if(res$rt_cd!=0) return(-1)
+  return(res$output[1,]$opnd_yn)
+}
+
 getCurrentOverseasPrice<-function(apiConfig, account, token, code, excdcode){
-  priceUrl<-paste0(apiConfig$url,'/uapi/overseas-price/v1/quotations/price') 
+  priceUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/quotations/chk-holiday') 
   headers<-c(
     Authorization=paste('Bearer',token),
     appkey=account$appkey,

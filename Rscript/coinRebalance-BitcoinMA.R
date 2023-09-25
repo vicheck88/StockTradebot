@@ -40,7 +40,7 @@ coinPriceHistory<-na.omit(coinPriceHistory)
 getInvestRatio<-function(table){
   for(i in 1:nrow(table)){
     disparity<-table[i,]$disparity
-    
+    table$signal[i]<-sign(disparity)
     if(disparity>0) {
       addRatio<-floor(disparity)*0.5
     }  else addRatio<-floor(disparity)*0.25
@@ -63,6 +63,7 @@ currentRatio<-coinPriceHistory[,tail(.SD,1),by=market][,.(market,ratio)]
 latestCoinPriceHistory<-tail(coinPriceHistory,1)
 
 balanceCombinedTable<-merge(currentRatio,currentBalance,by="market",all=TRUE)
+balanceCombinedTable<-merge(balanceCombinedTable,latestCoinPriceHistory[,.(market,signal)],by="market",all=TRUE)
 balanceCombinedTable[,totalBalance:=totalBalance]
 balanceCombinedTable<-balanceCombinedTable[market!="KRW-KRW"]
 balanceCombinedTable[is.na(ratio)]$ratio<-0
@@ -70,6 +71,7 @@ balanceCombinedTable[is.na(balance)]$balance<-0
 balanceCombinedTable[is.na(curvolume)]$curvolume<-0
 balanceCombinedTable[,symbol:=sapply(strsplit(market,"-"),function(x)x[2])]
 balanceCombinedTable[,targetBalance:=floor(totalBalance*ratio*0.995)]
+balanceCombinedTable<-balanceCombinedTable[(signal>0 && targetBalance>balance) || (signal<0 && targetBalance<balance)]
 print(balanceCombinedTable)
 
 orderTable<-createOrderTable(balanceCombinedTable)
