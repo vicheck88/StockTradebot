@@ -382,9 +382,12 @@ extractFSEntities<-function(corpData,data){
 
 #  data[,일자:=corpData[[1]]]
 #  data<-subset(data,select=c(5,1,2,3,4))
-  capex<-data[계정 %in% c("유형자산의증가","무형자산의증가")][,sum(값)]-data[계정 %in% c("유형자산의감소","무형자산의감소")][,sum(값)]
-  fcf<-data[계정=="영업활동으로인한현금흐름"]$값
-  if(!is.na(capex)) fcf<-fcf-capex
+  ocf<-data[계정=="영업활동으로인한현금흐름"]$값
+  if(length(ocf)>0){
+    capex<-data[계정 %in% c("유형자산의증가","무형자산의증가")][,sum(값)]-data[계정 %in% c("유형자산의감소","무형자산의감소")][,sum(값)]
+    if(!is.na(capex)) fcf<-ocf-capex
+  } else fcf<-0
+  
   
   value_type <- c('지배주주순이익','자본','자본금','영업활동으로인한현금흐름',
                   '재무활동으로인한현금흐름','투자활동으로인한현금흐름','매출액','매출총이익','영업이익',
