@@ -81,7 +81,7 @@ goalBalanceSum<-totalBalanceSum*TQQQGoalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
 
 goalBalanceSheet<-data.table(종목코드=c('TQQQ'),거래소_현재가='NAS',거래소='NASD',현재가=tqqqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity$QQQ.Adjusted.MA.200),주문구분='34')
-goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=c('SGOV'),거래소_현재가='AMS',거래소='AMEX',현재가=sgovPrice,목표금액=bondBalanceSum,signal=0,주문구분='34'))
+goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=c('SGOV'),거래소_현재가='AMS',거래소='AMEX',현재가=sgovPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
 
 
 if(nrow(currentBalance$sheet)>0){
@@ -102,9 +102,6 @@ combinedSheet[is.na(보유수량)]$보유수량<-0
 combinedSheet[is.na(매수통화코드)]$매수통화코드<-"USD"
 
 combinedSheet<-combinedSheet[(signal>0 & 목표금액>평가금액) | (signal<0 & 목표금액<평가금액) | (signal==0 & 평가금액!=목표금액)]
-if("BIL" %in% combinedSheet$종목코드){
-  if(combinedSheet[종목코드=="BIL",평가금액]>bondBalanceSum) combinedSheet[종목코드=="BIL",주문구분:="00"]
-}
 
 print("Final stock list")
 print(combinedSheet)
