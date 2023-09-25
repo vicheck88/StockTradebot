@@ -349,6 +349,7 @@ cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew)
       if(length(unique(qDate))>=4 & curQRange<=1){
         data<-qData[qRank<=4]
       } else{ data<-yData[yRank==1] }
+      data$일자<-as.character(data$일자)
       result <- extractFSEntities(corpData, data)
     },
     error=function(e) print(paste0("Fail to Read: ",code," Date:",businessDate))
@@ -381,7 +382,9 @@ extractFSEntities<-function(corpData,data){
 
 #  data[,일자:=corpData[[1]]]
 #  data<-subset(data,select=c(5,1,2,3,4))
-  
+  capex<-data[계정 %in% c("유형자산의증가","무형자산의증가")][,sum(값)]-data[계정 %in% c("유형자산의감소","무형자산의감소")][,sum(값)]
+  fcf<-data[계정=="영업활동으로인한현금흐름"]$값
+  if(!is.na(capex)) fcf<-fcf-capex
   
   value_type <- c('지배주주순이익','자본','자본금','영업활동으로인한현금흐름',
                   '재무활동으로인한현금흐름','투자활동으로인한현금흐름','매출액','매출총이익','영업이익',
@@ -396,7 +399,8 @@ extractFSEntities<-function(corpData,data){
                    영업활동으로인한현금흐름=tmp['영업활동으로인한현금흐름'],
                    재무활동으로인한현금흐름=tmp['재무활동으로인한현금흐름'],
                    투자활동으로인한현금흐름=tmp['투자활동으로인한현금흐름'],
-                   유상증자=tmp['유상증자'])]
+                   유상증자=tmp['유상증자'],
+                   잉여현금흐름=fcf)]
   
   return(corpData)
 }
