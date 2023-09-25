@@ -265,6 +265,7 @@ cleanFSHtmlToDataFrame<-function(type,htmlData){
   names(data_fs)<-c("종목코드","종류","계정","일자","값")
   data_fs$값<-data_fs$값*100000000
   data_fs<-data_fs[!is.na(data_fs$값),]
+  data_fs<-data_fs[,.(값=sum(값)),by=eval(names(data_fs)[-5])]
   data_fs<-data_fs[!duplicated(data_fs), ]
   return(data_fs)
 }
