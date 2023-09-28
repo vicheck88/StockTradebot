@@ -231,10 +231,10 @@ cleanFSHtmlToDataFrame<-function(type,htmlData){
   data_CF$name<-'현금흐름표'
   data_fs<-rbind(data_IS,data_BS,data_CF)
   # 데이터 클랜징
-  data_fs[, 1] = gsub('계산에 참여한 계정 펼치기','',data_fs$`IFRS(연결)`)
+  data_fs[, 1] = gsub('계산에 참여한 계정 펼치기','',data_fs[,1][[1]])
   
   rownames(data_fs) = NULL
-  ftype<-data_fs$`IFRS(연결)`
+  ftype<-data_fs[,1][[1]]
   data_fs<-data_fs[,-1]
   
   Name<-data_fs[,length(names(data_fs))][[1]]
