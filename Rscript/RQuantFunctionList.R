@@ -229,7 +229,7 @@ cleanFSHtmlToDataFrame<-function(type,htmlData){
   data_IS$name<-'포괄손익계산서'
   data_BS$name<-'재무상태표'
   data_CF$name<-'현금흐름표'
-  data_fs<-rbind(data_IS,data_BS,data_CF)
+  data_fs<-as.data.table(rbind(data_IS,data_BS,data_CF))
   # 데이터 클랜징
   data_fs[, 1] = gsub('계산에 참여한 계정 펼치기','',data_fs[,1][[1]])
   
@@ -237,29 +237,20 @@ cleanFSHtmlToDataFrame<-function(type,htmlData){
   ftype<-data_fs[,1][[1]]
   data_fs<-data_fs[,-1]
   
-  Name<-data_fs[,length(names(data_fs))][[1]]
-  data_fs<-data_fs[,-length(names(data_fs))]
-  
-  data_fs = sapply(data_fs, function(x) {
-    str_replace_all(x, ',', '') %>%
-      as.numeric()
-  }) %>%
-    data.frame(., row.names = rownames(data_fs))
-  
-  data_fs$'계정'<-ftype
-  data_fs$code<-names(htmlData)
-  data_fs$'항목'<-Name
+  Name<-data_fs[,length(names(data_fs)),with=FALSE][[1]]
+  data_fs<-data_fs[,-length(names(data_fs)),with=FALSE]
+  data_fs<-data_fs[,lapply(.SD,function(x){as.numeric(str_replace_all(x,',',''))})]
+  data_fs[,c("계정","항목","code"):=list(ftype,Name,names(htmlData))]
   data_fs<-subset(data_fs,select=c(6,7,5,1,2,3,4))
-  
   date<-names(data_fs)[4:7]
-  date<-str_replace_all(date,'[X]','')
+  date<-str_replace_all(date,'/','.')
   names(data_fs)[4:7]<-date
   if(type=='Q') {names(data_fs)[4:7]<-date} else{
     month<-substr(date,6,7)
     if(month[length(date)]!=month[1]) data_fs<-data_fs[,-length(names(data_fs))]
   }
   
-  data_fs<-as.data.table(data_fs)
+  
   data_fs<-melt.data.table(data_fs,1:3)
   
   names(data_fs)<-c("종목코드","종류","계정","일자","값")
