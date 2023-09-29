@@ -43,41 +43,32 @@ while(TRUE){
 corpList<-dbGetQuery(conn,SQL("select distinct 종목코드 from metainfo.월별기업정보"))$종목코드
 corpList<-unique(c(corpList,corpTable$종목코드))
 
-print(paste0(Sys.time()," : Starting to get FS"))
-#최신 재무제표 받기
-htmlData<-getFSHtmlFromFnGuide(corpList)
-
-fsQ<-rbindlist(lapply(corpList,function(x){
-    cleanFSHtmlToDataFrame('Q',htmlData[x])
-}))
-fsY<-rbindlist(lapply(corpList,function(x){
-    cleanFSHtmlToDataFrame('Y',htmlData[x])  
-}))
-
 dbDisconnect(conn)
 conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
 
 print(paste0(Sys.time()," : Starting to write FS"))
-FfsY<-data.table(dbGetQuery(conn,SQL("SELECT * from metainfo.연간재무제표")))
-FfsQ<-data.table(dbGetQuery(conn,SQL("SELECT * from metainfo.분기재무제표")))
-
-names(fsQ)<-names(FfsQ[,-'등록일자'])
-names(fsY)<-names(FfsY[,-'등록일자'])
-newfsQ<-fsetdiff(fsQ,FfsQ[,-'등록일자'])
-newfsY<-fsetdiff(fsY,FfsY[,-'등록일자'])
-newfsQ$등록일자<-Sys.Date()
-newfsY$등록일자<-Sys.Date()
-
-names(newfsQ)<-names(FfsQ)
-names(newfsY)<-names(FfsY)
-fsY<-rbind(FfsY,newfsY)
-fsQ<-rbind(FfsQ,newfsQ)
-fsY$일자<-as.character(fsY$일자)
-fsQ$일자<-as.character(fsQ$일자)
-
-dbWriteTable(conn,SQL("metainfo.분기재무제표"),newfsQ,append=TRUE,row.names=FALSE)
-dbWriteTable(conn,SQL("metainfo.연간재무제표"),newfsY,append=TRUE,row.names=FALSE)
-
+for(code in corpList){
+  tryCatch({
+    htmlData<-getFSHtmlFromFnGuide(code)
+    fsQ<-cleanFSHtmlToDataFrame('Q',htmlData[code])
+    fsY<-cleanFSHtmlToDataFrame('Y',htmlData[code])
+    FfsY<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.연간재무제표 WHERE 종목코드='%s'",code))))
+    FfsQ<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.분기재무제표 WHERE 종목코드='%s'",code))))
+    names(fsQ)<-names(FfsQ[,-'등록일자'])
+    names(fsY)<-names(FfsY[,-'등록일자'])
+    newfsQ<-fsetdiff(fsQ,FfsQ[,-'등록일자'])
+    newfsY<-fsetdiff(fsY,FfsY[,-'등록일자'])
+    newfsQ$등록일자<-Sys.Date()
+    newfsY$등록일자<-Sys.Date()
+    names(newfsQ)<-names(FfsQ)
+    names(newfsY)<-names(FfsY)
+    dbWriteTable(conn,SQL("metainfo.분기재무제표"),newfsQ,append=TRUE,row.names=FALSE)
+    dbWriteTable(conn,SQL("metainfo.연간재무제표"),newfsY,append=TRUE,row.names=FALSE)
+    print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "Success: ",code))
+  },error=function(e){
+    print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "Fail: ",code))
+  })
+}
 
 text<-paste0(Sys.time()," : Complete updating FS")
 print(text)

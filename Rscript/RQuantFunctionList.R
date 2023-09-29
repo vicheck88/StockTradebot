@@ -209,8 +209,6 @@ getFSHtmlFromFnGuide<-function(codeList){
       read_html() %>%
       html_table()
     htmlData[[code]]<-data
-    print(paste0(Sys.time()," : [",i,"/",length(codeList),"] Success: ",code))
-    i<-i+1
   }
   return(htmlData)
 }
