@@ -247,7 +247,7 @@ cleanFSHtmlToDataFrame<-function(type,htmlData){
   names(data_fs)[4:7]<-date
   if(type=='Q') {names(data_fs)[4:7]<-date} else{
     month<-substr(date,6,7)
-    if(month[length(date)]!=month[1]) data_fs<-data_fs[,-length(names(data_fs))]
+    if(month[length(date)]!=month[1]) data_fs<-data_fs[,-length(names(data_fs)),with=FALSE]
   }
   
   
