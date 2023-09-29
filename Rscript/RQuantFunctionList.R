@@ -241,7 +241,7 @@ cleanFSHtmlToDataFrame<-function(type,htmlData){
   data_fs<-data_fs[,-length(names(data_fs)),with=FALSE]
   data_fs<-data_fs[,lapply(.SD,function(x){as.numeric(str_replace_all(x,',',''))})]
   data_fs[,c("계정","항목","code"):=list(ftype,Name,names(htmlData))]
-  data_fs<-subset(data_fs,select=c(6,7,5,1,2,3,4))
+  data_fs<-subset(data_fs,select=c(7,6,5,1,2,3,4))
   date<-names(data_fs)[4:7]
   date<-str_replace_all(date,'/','.')
   names(data_fs)[4:7]<-date
@@ -249,13 +249,10 @@ cleanFSHtmlToDataFrame<-function(type,htmlData){
     month<-substr(date,6,7)
     if(month[length(date)]!=month[1]) data_fs<-data_fs[,-length(names(data_fs)),with=FALSE]
   }
-  
-  
   data_fs<-melt.data.table(data_fs,1:3)
-  
   names(data_fs)<-c("종목코드","종류","계정","일자","값")
-  data_fs$값<-data_fs$값*100000000
   data_fs<-na.omit(data_fs)
+  data_fs$값<-data_fs$값*100000000
   data_fs<-data_fs[,.(값=sum(값)),by=eval(names(data_fs)[-5])]
   data_fs<-data_fs[!duplicated(data_fs), ]
   return(data_fs)
