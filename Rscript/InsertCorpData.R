@@ -52,8 +52,10 @@ for(code in corpList){
     htmlData<-getFSHtmlFromFnGuide(code)
     fsQ<-cleanFSHtmlToDataFrame('Q',htmlData[code])
     fsY<-cleanFSHtmlToDataFrame('Y',htmlData[code])
+    
     FfsY<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.연간재무제표 WHERE 종목코드='%s'",code))))
     FfsQ<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.분기재무제표 WHERE 종목코드='%s'",code))))
+    
     names(fsQ)<-names(FfsQ[,-'등록일자'])
     names(fsY)<-names(FfsY[,-'등록일자'])
     newfsQ<-fsetdiff(fsQ,FfsQ[,-'등록일자'])
@@ -62,9 +64,9 @@ for(code in corpList){
     newfsY$등록일자<-Sys.Date()
     names(newfsQ)<-names(FfsQ)
     names(newfsY)<-names(FfsY)
-    dbWriteTable(conn,SQL("metainfo.분기재무제표"),newfsQ,append=TRUE,row.names=FALSE)
-    dbWriteTable(conn,SQL("metainfo.연간재무제표"),newfsY,append=TRUE,row.names=FALSE)
-    print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "Success: ",code))
+    #dbWriteTable(conn,SQL("metainfo.분기재무제표"),newfsQ,append=TRUE,row.names=FALSE)
+    #dbWriteTable(conn,SQL("metainfo.연간재무제표"),newfsY,append=TRUE,row.names=FALSE)
+    print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "Success: code: ",code," Quarter: ",nrow(newfsQ)," Year: ",nrow(newfsY)))
   },error=function(e){
     print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "Fail: ",code))
   })
