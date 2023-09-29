@@ -64,8 +64,8 @@ for(code in corpList){
     newfsY$등록일자<-Sys.Date()
     names(newfsQ)<-names(FfsQ)
     names(newfsY)<-names(FfsY)
-    #dbWriteTable(conn,SQL("metainfo.분기재무제표"),newfsQ,append=TRUE,row.names=FALSE)
-    #dbWriteTable(conn,SQL("metainfo.연간재무제표"),newfsY,append=TRUE,row.names=FALSE)
+    dbWriteTable(conn,SQL("metainfo.분기재무제표"),newfsQ,append=TRUE,row.names=FALSE)
+    dbWriteTable(conn,SQL("metainfo.연간재무제표"),newfsY,append=TRUE,row.names=FALSE)
     print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "Success: code: ",code," Quarter: ",nrow(newfsQ)," Year: ",nrow(newfsY)))
   },error=function(e){
     print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "Fail: ",code))
@@ -82,6 +82,9 @@ if(latestDate!=availableDate){
   fs<-NULL
   for(i in 1:nrow(corpTable)){
     oldN<-NROW(fs)
+    code<-corpTable[i,종목코드]
+    fsY<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.연간재무제표 WHERE 종목코드='%s'",code))))
+    fsQ<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.분기재무제표 WHERE 종목코드='%s'",code))))
     res<-cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,TRUE)
     if(!is.null(fs) & !is.null(res)) names(res)<-names(fs)
     fs<-rbind(fs,res)
