@@ -83,8 +83,10 @@ if(latestDate!=availableDate){
   for(i in 1:nrow(corpTable)){
     oldN<-NROW(fs)
     code<-corpTable[i,종목코드]
-    fsY<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.연간재무제표 WHERE 종목코드='%s'",code))))
-    fsQ<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.분기재무제표 WHERE 종목코드='%s'",code))))
+    fsY<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.연간재무제표 WHERE 종목코드='%s'",code," order by 등록일자 desc"))))
+    fsQ<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.분기재무제표 WHERE 종목코드='%s'",code," order by 등록일자 desc"))))
+    fsY<-unique(fsY,by=names(fsY)[1:4])
+    fsQ<-unique(fsQ,by=names(fsQ)[1:4])
     res<-cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,TRUE)
     if(!is.null(fs) & !is.null(res)) names(res)<-names(fs)
     fs<-rbind(fs,res)
