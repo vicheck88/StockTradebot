@@ -72,7 +72,7 @@ balanceCombinedTable[is.na(ratio)]$ratio<-0
 balanceCombinedTable[is.na(balance)]$balance<-0
 balanceCombinedTable[is.na(curvolume)]$curvolume<-0
 balanceCombinedTable[,symbol:=sapply(strsplit(market,"-"),function(x)x[2])]
-balanceCombinedTable[,targetBalance:=floor(totalBalance*ratio*0.995)]
+balanceCombinedTable[,targetBalance:=totalBalance*ratio]
 balanceCombinedTable<-balanceCombinedTable[(signal>0 && targetBalance>balance) || (signal<0 && targetBalance<balance)]
 print(balanceCombinedTable)
 
