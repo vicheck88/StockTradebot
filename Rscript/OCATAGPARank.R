@@ -51,7 +51,7 @@ filter<-function(data){
 }
 orderData<-function(data){
   data[,SIZERANK:=rank(시가총액)]
-  data[,QUALITYRANK:=rank(-(매출총이익+영업활동으로인한현금흐름)/자산)]
+  data[,QUALITYRANK:=rank(-(매출총이익+잉여현금흐름)/자산)]
   data[,VALUERANK:=0]
   data[,MOMENTUMRANK:=0]
   data[,TOTALRANK:=QUALITYRANK+SIZERANK+VALUERANK+MOMENTUMRANK]
