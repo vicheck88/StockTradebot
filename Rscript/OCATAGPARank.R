@@ -41,11 +41,11 @@ setDT(corpTable)
 filter<-function(data){
   dat<-data[관리여부!="관리종목"]
   dat<-dat[is.na(매출총이익)==F]
-  dat<-dat[is.na(영업활동으로인한현금흐름)==F]
+  dat<-dat[is.na(잉여현금흐름)==F]
   dat<-dat[is.na(자산)==F]
   dat<-dat[매출액>=매출총이익] #매출원가가 -인 경우 제외
   dat<-dat[자본>자본금] #자본잠식상태가 아님
-  dat<-dat[영업활동으로인한현금흐름>0]
+  dat<-dat[잉여현금흐름>0]
   dat<-dat[매출총이익>0]
   dat<-dat[is.na(유상증자)] #최근 1년간 유상증자 안함
   return(dat)
