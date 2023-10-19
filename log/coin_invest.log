@@ -34,14 +34,14 @@ The following object is masked from ‘package:httr’:
     handle_reset
 
 [1] "CURRENT BALANCE"
-   currency      balance locked avg_buy_price avg_buy_price_modified
-1:      KRW 2.349499e+05      0             0                   TRUE
-2:      BTC 6.599220e-03      0      36208546                  FALSE
+   currency    balance locked avg_buy_price avg_buy_price_modified
+1:      KRW 0.49957905      0             0                   TRUE
+2:      BTC 0.01303894      0      36584323                  FALSE
    unit_currency
 1:           KRW
 2:           KRW
 [1] "CURRENT COIN PRICE"
-Empty data.table (0 rows and 9 cols): market,ratio,currency,balance,curvolume,signal...
-Error in parse_url(url) : length(url) == 1 is not TRUE
-Calls: createOrderTable ... build_url -> stopifnot -> is.url -> parse_url -> stopifnot
-Execution halted
+    market ratio currency  balance  curvolume signal totalBalance symbol
+1: KRW-BTC     1      BTC 506119.5 0.01303894      1       506120    BTC
+   targetBalance
+1:        506120

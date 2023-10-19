@@ -32,12 +32,12 @@ getSymbols(symbols, src = 'yahoo')
 prices = do.call(cbind,lapply(symbols, function(x) Ad(get(x))))
 prices<-as.data.table(prices)
 
-tmptoken<-getToken(apiConfig,account)
-currentQQQPrice<-getCurrentOverseasPrice(apiConfig,account,tmptoken,"QQQ",'NAS')
-tqqqPrice<-getCurrentOverseasPrice(apiConfig,account,tmptoken,"TQQQ",'NAS')
-sgovPrice<-getCurrentOverseasPrice(apiConfig,account,tmptoken,"SGOV",'AMS')
-revokeToken(apiConfig,account,tmptoken)
-tmptoken<-NULL
+token<-getToken(apiConfig,account)
+
+currentQQQPrice<-getCurrentOverseasPrice(apiConfig,account,token,"QQQ",'NAS')
+tqqqPrice<-getCurrentOverseasPrice(apiConfig,account,token,"TQQQ",'NAS')
+sgovPrice<-getCurrentOverseasPrice(apiConfig,account,token,"SGOV",'AMS')
+
 prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),QQQ.Adjusted=currentQQQPrice)))
 
 movingAvg<-NULL
@@ -67,7 +67,7 @@ message<-paste0(message,"\nQQQ Disparity: ", round(currentDisparity$QQQ.Adjusted
 message<-paste0(message,"\nToday TQQQ Ratio: ",TQQQGoalRatio)
 sendMessage(message)
 
-currentBalance<-getPresentOverseasBalancesheet(apiConfig,account)
+currentBalance<-getPresentOverseasBalancesheet(token,apiConfig,account)
 if(currentBalance$status_code!='200'){
   stop("Fail to get current balance. Stop script")
 }
@@ -110,7 +110,7 @@ if(nrow(combinedSheet)>0){
   sellSheet<-combinedSheet[평가금액>목표금액]
   if(nrow(sellSheet)>0){
     print("Sell orders")
-    sellRes<-orderOverseasStocks(apiConfig,account,sellSheet) #매도 먼저
+    sellRes<-orderOverseasStocks(token,apiConfig,account,sellSheet) #매도 먼저
     sendMessage("Sell orders")
     for(i in nrow(sellRes)){
       row<-sellRes[i,]
@@ -121,7 +121,7 @@ if(nrow(combinedSheet)>0){
   }
   buySheet<-combinedSheet[평가금액<목표금액]
   if(nrow(buySheet)>0){
-    buyRes<-orderOverseasStocks(apiConfig,account,buySheet) #매수 다음
+    buyRes<-orderOverseasStocks(token,apiConfig,account,buySheet) #매수 다음
     
     if(nrow(buyRes)>0) {
       print("Buy orders")
@@ -145,7 +145,7 @@ if(nrow(combinedSheet)>0){
   while(failNum>0 & cnt<=10){
     cnt<-cnt+1
     rebuySheet<-rebuySheet[rebuyRes[rt_cd!='0']$idx]
-    rebuyRes<-orderOverseasStocks(apiConfig,account,rebuySheet)
+    rebuyRes<-orderOverseasStocks(token,apiConfig,account,rebuySheet)
     for(i in nrow(rebuyRes)){
       sendMessage("Buy orders")
       row<-rebuyRes[i,]
@@ -161,3 +161,4 @@ if(nrow(combinedSheet)>0){
   if(exists("sellRes")) res<-rbind(res,sellRes)
   if(exists("buyRes")) res<-rbind(res,buyRes)
 }
+revokeToken(apiConfig,account,token)
