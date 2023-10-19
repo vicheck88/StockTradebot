@@ -35,8 +35,8 @@ getHashkey<-function(body){
   return(content(response)$HASH)
 }
 
-isKoreanHoliday<-function(apiConfig,account,date){
-  token<-getToken(apiConfig,account)
+isKoreanHoliday<-function(token,apiConfig,account,date){
+  #token<-getToken(apiConfig,account)
   holidayUrl<-paste0(apiConfig$url,'/uapi/overseas-price/v1/quotations/price') 
   headers<-c(
     Authorization=paste('Bearer',token),
@@ -48,7 +48,7 @@ isKoreanHoliday<-function(apiConfig,account,date){
   query<-list(BASS_DT=date,CTX_AREA_NK='',CTX_AREA_FK='')
   response<-GET(holidayUrl,add_headers(headers),query=query)
   res<-fromJSON(rawToChar(response$content))
-  revokeToken(apiConfig,account,token)
+  #revokeToken(apiConfig,account,token)
   if(res$rt_cd!=0) return(-1)
   return(res$output[1,]$opnd_yn)
 }
@@ -82,10 +82,10 @@ getCurrentPrice<-function(apiConfig,account, token, code){
   if(res$rt_cd!=0) return(-1)
   return(as.numeric(res$output$stck_prpr))
 }
-getPresentOverseasBalancesheet<-function(apiConfig,account){
+getPresentOverseasBalancesheet<-function(token,apiConfig,account){
   output<-NULL
   balanceUrl<-paste(apiConfig$url,'/uapi/overseas-stock/v1/trading/inquire-present-balance',sep='')
-  token<-getToken(apiConfig,account)
+  #token<-getToken(apiConfig,account)
   headers<-c(
     Authorization=paste('Bearer',token),
     appkey=account$appkey,
@@ -108,9 +108,9 @@ getPresentOverseasBalancesheet<-function(apiConfig,account){
   output$summary<-as.data.table(res$output2)
   return(output)
 }
-getOverseasBalancesheet<-function(apiConfig,account, tr_cont='',CTX_AREA_FK200='',CTX_AREA_NK200='',output=NULL){
+getOverseasBalancesheet<-function(token,apiConfig,account, tr_cont='',CTX_AREA_FK200='',CTX_AREA_NK200='',output=NULL){
   balanceUrl<-paste(apiConfig$url,'/uapi/overseas-stock/v1/trading/inquire-balance',sep='')
-  token<-getToken(apiConfig,account)
+  #token<-getToken(apiConfig,account)
   headers<-c(
     Authorization=paste('Bearer',token),
     appkey=account$appkey,
@@ -139,16 +139,16 @@ getOverseasBalancesheet<-function(apiConfig,account, tr_cont='',CTX_AREA_FK200='
     output$msg_cd<-res$msg_cd
     output$msg<-res$msg1
     output$summary<-res$output2
-    revokeToken(apiConfig,account,token)
+    #revokeToken(apiConfig,account,token)
     return(output)
   } else{
     return(getOverseasBalancesheet(apiConfig,account,'N',res$ctx_area_fk200,res$ctx_area_nk200,output))
   }
 }
-getBalancesheet<-function(apiConfig,account, tr_cont='',CTX_AREA_FK100='',CTX_AREA_NK100='',output=NULL){
+getBalancesheet<-function(token,apiConfig,account, tr_cont='',CTX_AREA_FK100='',CTX_AREA_NK100='',output=NULL){
   #/uapi/domestic-stock/v1/trading/inquire-balance-rlz-pl #실현손익 포함한 잔고조회
   balanceUrl<-paste(apiConfig$url,'/uapi/domestic-stock/v1/trading/inquire-balance',sep='')
-  token<-getToken(apiConfig,account)
+  #token<-getToken(apiConfig,account)
   headers<-c(
              Authorization=paste('Bearer',token),
              appkey=account$appkey,
@@ -182,7 +182,7 @@ getBalancesheet<-function(apiConfig,account, tr_cont='',CTX_AREA_FK100='',CTX_AR
     output$msg_cd<-res$msg_cd
     output$msg<-res$msg1
     output$summary<-res$output2
-    revokeToken(apiConfig,account,token)
+    #revokeToken(apiConfig,account,token)
     return(output)
   } else{
     return(getBalancesheet(apiConfig,account,'N',res$ctx_area_fk100,res$ctx_area_nk100,output))
@@ -218,9 +218,9 @@ orderStock<-function(apiConfig,account,token,code,qty,price){
   return(res)
 }
 
-orderStocks<-function(apiConfig, account, stockTable){
+orderStocks<-function(token,apiConfig, account, stockTable){
   if(nrow(stockTable)==0) return(NULL)
-  token<-getToken(apiConfig,account)
+  #token<-getToken(apiConfig,account)
   res<-NULL
   for(i in 1:nrow(stockTable)){
     code<-stockTable[i,]$종목코드
@@ -239,7 +239,7 @@ orderStocks<-function(apiConfig, account, stockTable){
     res<-rbind(res,as.data.table(r))
     Sys.sleep(0.1)
   }
-  revokeToken(apiConfig,account,token)
+  #revokeToken(apiConfig,account,token)
   return(res)
 }
 
@@ -275,9 +275,9 @@ orderOverseasStock<-function(apiConfig,account,token,excdcode,code,qty,price,ord
   return(res)
 }
 
-orderOverseasStocks<-function(apiConfig, account, stockTable){
+orderOverseasStocks<-function(token,apiConfig, account, stockTable){
   if(nrow(stockTable)==0) return(NULL)
-  token<-getToken(apiConfig,account)
+  #token<-getToken(apiConfig,account)
   res<-NULL
   for(i in 1:nrow(stockTable)){
     code<-stockTable[i,]$종목코드
@@ -300,6 +300,6 @@ orderOverseasStocks<-function(apiConfig, account, stockTable){
     res<-rbind(res,as.data.table(r))
     Sys.sleep(0.1)
   }
-  revokeToken(apiConfig,account,token)
+  #revokeToken(apiConfig,account,token)
   return(res)
 }

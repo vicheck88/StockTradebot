@@ -19,6 +19,8 @@ apiConfig<-config$api$config$prod
 #account<-config$api$account$dev
 account<-config$api$account$prod$main
 
+token<-getToken(apiConfig,account)
+
 #재무제표 이상한 기업 우선 거르기
 #최근 1년 간 분기재무제표에서 매출, 매출원가가 음수인 경우가 한 번이라도 있다면 목록에서 제거
 prevDate<-str_replace(substring(Sys.Date()-365,1,7),'-','.')
@@ -59,7 +61,7 @@ orderData<-function(data){
   return(data)
 }
 
-currentBalance<-getBalancesheet(apiConfig,account)
+currentBalance<-getBalancesheet(token,apiConfig,account)
 totalBalanceSum<-currentBalance$summary$tot_evlu_amt
 
 args<-commandArgs(trailingOnly = TRUE)
@@ -123,7 +125,7 @@ for(i in 1:nrow(combinedSheet)){
 print("Sell orders")
 
 sellSheet<-combinedSheet[평가금액>목표금액]
-sellRes<-orderStocks(apiConfig,account,sellSheet) #매도 먼저
+sellRes<-orderStocks(token,apiConfig,account,sellSheet) #매도 먼저
 
 sendMessage("Sell orders")
 for(i in nrow(sellRes)){
@@ -136,7 +138,7 @@ for(i in nrow(sellRes)){
 
 print("Buy orders")
 buySheet<-combinedSheet[평가금액<목표금액]
-buyRes<-orderStocks(apiConfig,account,buySheet) #매수 다음
+buyRes<-orderStocks(token,apiConfig,account,buySheet) #매수 다음
 sendMessage("Buy orders")
 for(i in nrow(buyRes)){
   row<-buyRes[i,]
@@ -157,7 +159,7 @@ rebuyRes<-buyRes
 while(failNum>0 & cnt<=10){
   cnt<-cnt+1
   rebuySheet<-rebuySheet[rebuyRes[rt_cd!='0']$idx]
-  rebuyRes<-orderStocks(apiConfig,account,rebuySheet)
+  rebuyRes<-orderStocks(token,apiConfig,account,rebuySheet)
   for(i in nrow(rebuyRes)){
     sendMessage("Buy orders")
     row<-rebuyRes[i,]
@@ -170,4 +172,5 @@ while(failNum>0 & cnt<=10){
 }
 
 res<-rbind(sellRes,buyRes)
+revokeToken(apiConfig,account,token)
 
