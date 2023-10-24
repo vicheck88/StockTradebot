@@ -30,7 +30,7 @@ for(i in tqqqnaRow:1){
 rets<-rets[-1,]
 
 movingAvg<-NULL
-for(i in c(5,10,20,60,100,200)){
+for(i in c(5,10,20,60,100,200,300)){
   tbl<-as.xts(prices)
   tbl<-do.call(cbind,lapply(tbl,function(y)rollmean(y,i,align='right')))
   names(tbl)<-paste0(names(tbl),".MA.",i)
@@ -40,7 +40,8 @@ for(i in c(5,10,20,60,100,200)){
 priceWithMA<-cbind(as.xts(prices),movingAvg)
 priceWithMA<-as.data.table(priceWithMA)
 
-priceWith200MA<-priceWithMA[,.(index,QQQ.Adjusted,SQQQ.Adjusted,TQQQ.Adjusted,QQQ.Adjusted.MA.200)]
+priceWith200MA<-priceWithMA[,.(index,QQQ.Adjusted,SQQQ.Adjusted,TQQQ.Adjusted,QQQ.Adjusted.MA.200,TQQQ.Adjusted.MA.200)]
+priceWith200MA[,TQQQDisparity:=100*TQQQ.Adjusted/TQQQ.Adjusted.MA.200-100]
 priceWith200MA[,QQQDisparity:=100*QQQ.Adjusted/QQQ.Adjusted.MA.200-100]
 priceWith200MA<-na.omit(as.xts(priceWith200MA))
 
@@ -50,6 +51,7 @@ rets$Cash<-0
 
 getTQQQInvestRatio<-function(table){
   for(i in 1:nrow(table)){
+    #disparity<-table[i,]$TQQQDisparity
     disparity<-table[i,]$QQQDisparity
     #TQQQratio
     addRatio<-floor(disparity)*0.5
