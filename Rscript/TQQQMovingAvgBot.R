@@ -27,18 +27,18 @@ account<-config$api$account$prod$main
 
 
 
-symbols = c('QQQ')
+symbols = c('TQQQ')
 getSymbols(symbols, src = 'yahoo')
 prices = do.call(cbind,lapply(symbols, function(x) Ad(get(x))))
 prices<-as.data.table(prices)
 
 token<-getToken(apiConfig,account)
 
-currentQQQPrice<-getCurrentOverseasPrice(apiConfig,account,token,"QQQ",'NAS')
+currentTQQQPrice<-getCurrentOverseasPrice(apiConfig,account,token,"TQQQ",'NAS')
 tqqqPrice<-getCurrentOverseasPrice(apiConfig,account,token,"TQQQ",'NAS')
 sgovPrice<-getCurrentOverseasPrice(apiConfig,account,token,"SGOV",'AMS')
 
-prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),QQQ.Adjusted=currentQQQPrice)))
+prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),TQQQ.Adjusted=currentTQQQPrice)))
 
 movingAvg<-NULL
 for(i in c(5,10,20,30,60,100,200)){
@@ -52,18 +52,18 @@ priceWithMA<-as.data.table(priceWithMA)
 
 currentPrice<-tail(priceWithMA,1)
 currentPrice<-currentPrice[,-1]
-currentDisparity<-currentPrice[,lapply(.SD,function(y) 100*QQQ.Adjusted/y-100)]
+currentDisparity<-currentPrice[,lapply(.SD,function(y) 100*TQQQ.Adjusted/y-100)]
 
 
 #TQQQratio
-TQQQGoalRatio<-floor(currentDisparity$QQQ.Adjusted.MA.200)*0.5
+TQQQGoalRatio<-floor(currentDisparity$TQQQ.Adjusted.MA.200)*0.5
 TQQQGoalRatio<-min(1,TQQQGoalRatio)
 TQQQGoalRatio<-max(0,TQQQGoalRatio)
 
 #sendMessage
-message<-paste0("QQQ price: ",currentPrice$QQQ.Adjusted)
-message<-paste0(message,"\nQQQ 200 MA: ",round(currentPrice$QQQ.Adjusted.MA.200,2))
-message<-paste0(message,"\nQQQ Disparity: ", round(currentDisparity$QQQ.Adjusted.MA.200,2))
+message<-paste0("QQQ price: ",currentPrice$TQQQ.Adjusted)
+message<-paste0(message,"\nQQQ 200 MA: ",round(currentPrice$TQQQ.Adjusted.MA.200,2))
+message<-paste0(message,"\nQQQ Disparity: ", round(currentDisparity$TQQQ.Adjusted.MA.200,2))
 message<-paste0(message,"\nToday TQQQ Ratio: ",TQQQGoalRatio)
 sendMessage(message)
 
@@ -80,7 +80,7 @@ if(nrow(currentBalance$sheet)>0){
 goalBalanceSum<-totalBalanceSum*TQQQGoalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
 
-goalBalanceSheet<-data.table(종목코드=c('TQQQ'),거래소_현재가='NAS',거래소='NASD',현재가=tqqqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity$QQQ.Adjusted.MA.200),주문구분='34')
+goalBalanceSheet<-data.table(종목코드=c('TQQQ'),거래소_현재가='NAS',거래소='NASD',현재가=tqqqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity$TQQQ.Adjusted.MA.200),주문구분='34')
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=c('SGOV'),거래소_현재가='AMS',거래소='AMEX',현재가=sgovPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
 
 
