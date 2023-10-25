@@ -54,28 +54,34 @@ currentPrice<-tail(priceWithMA,1)
 currentPrice<-currentPrice[,-1]
 currentDisparity<-currentPrice[,lapply(.SD,function(y) 100*TQQQ.Adjusted/y-100)]
 
-
-#TQQQratio
-TQQQGoalRatio<-floor(currentDisparity$TQQQ.Adjusted.MA.200)*0.5
-TQQQGoalRatio<-min(1,TQQQGoalRatio)
-TQQQGoalRatio<-max(0,TQQQGoalRatio)
-
-#sendMessage
-message<-paste0("QQQ price: ",currentPrice$TQQQ.Adjusted)
-message<-paste0(message,"\nQQQ 200 MA: ",round(currentPrice$TQQQ.Adjusted.MA.200,2))
-message<-paste0(message,"\nQQQ Disparity: ", round(currentDisparity$TQQQ.Adjusted.MA.200,2))
-message<-paste0(message,"\nToday TQQQ Ratio: ",TQQQGoalRatio)
-sendMessage(message)
-
 currentBalance<-getPresentOverseasBalancesheet(token,apiConfig,account)
 if(currentBalance$status_code!='200'){
   stop("Fail to get current balance. Stop script")
 }
 
 totalBalanceSum<-as.numeric(currentBalance$summary[crcy_cd=="USD",frcr_drwg_psbl_amt_1])
+curTQQQRatio<-0
 if(nrow(currentBalance$sheet)>0){
   totalBalanceSum<-totalBalanceSum+sum(as.numeric(currentBalance$sheet[buy_crcy_cd=="USD",frcr_evlu_amt2]))
+  curTQQQBalance<-as.numeric(currentBalance$sheet[pdno=="TQQQ",frcr_evlu_amt2])
+  curTQQQRatio<-curTQQQBalance/totalBalanceSum
 }
+
+#TQQQratio
+TQQQGoalRatio<-floor(currentDisparity$TQQQ.Adjusted.MA.200)*0.5
+TQQQGoalRatio<-min(1,TQQQGoalRatio)
+TQQQGoalRatio<-max(0,TQQQGoalRatio)
+
+if(sign(TQQQGoalRatio)>=0) TQQQGoalRatio<-max(TQQQGoalRatio,curTQQQRatio)
+if(sign(TQQQGoalRatio)<0) TQQQGoalRatio<-min(TQQQGoalRatio,curTQQQRatio)
+
+#sendMessage
+message<-paste0("TQQQ price: ",currentPrice$TQQQ.Adjusted)
+message<-paste0(message,"\nTQQQ 200 MA: ",round(currentPrice$TQQQ.Adjusted.MA.200,2))
+message<-paste0(message,"\nTQQQ Disparity: ", round(currentDisparity$TQQQ.Adjusted.MA.200,2))
+message<-paste0(message,"\nToday TQQQ Ratio: ",TQQQGoalRatio)
+sendMessage(message)
+
 
 goalBalanceSum<-totalBalanceSum*TQQQGoalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
@@ -154,6 +160,8 @@ if(nrow(combinedSheet)>0){
       Sys.sleep(0.04)
     }
     failNum<-nrow(rebuyRes[rt_cd!='0'])
+    failNumDuetoNotenoughBalance<-nrow(rebuyRes[rt_cd=='7'])
+    if(failNum==failNumDuetoNotenoughBalance) break
     Sys.sleep(30)
   }
   
