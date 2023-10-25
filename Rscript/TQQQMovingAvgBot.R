@@ -160,6 +160,8 @@ if(nrow(combinedSheet)>0){
       Sys.sleep(0.04)
     }
     failNum<-nrow(rebuyRes[rt_cd!='0'])
+    failNumDuetoNotenoughBalance<-nrow(rebuyRes[rt_cd=='7'])
+    if(failNum==failNumDuetoNotenoughBalance) break
     Sys.sleep(30)
   }
   
