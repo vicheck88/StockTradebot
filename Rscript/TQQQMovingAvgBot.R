@@ -72,8 +72,8 @@ TQQQGoalRatio<-floor(currentDisparity$TQQQ.Adjusted.MA.200)*0.5
 TQQQGoalRatio<-min(1,TQQQGoalRatio)
 TQQQGoalRatio<-max(0,TQQQGoalRatio)
 
-if(sign(TQQQGoalRatio)>=0) TQQQGoalRatio<-max(TQQQGoalRatio,curTQQQRatio)
-if(sign(TQQQGoalRatio)<0) TQQQGoalRatio<-min(TQQQGoalRatio,curTQQQRatio)
+if(sign(currentDisparity$TQQQ.Adjusted.MA.200)>=0) TQQQGoalRatio<-max(TQQQGoalRatio,curTQQQRatio)
+if(sign(currentDisparity$TQQQ.Adjusted.MA.200)<0) TQQQGoalRatio<-min(TQQQGoalRatio,curTQQQRatio)
 
 #sendMessage
 message<-paste0("TQQQ price: ",currentPrice$TQQQ.Adjusted)
@@ -89,6 +89,7 @@ bondBalanceSum<-totalBalanceSum-goalBalanceSum
 goalBalanceSheet<-data.table(종목코드=c('TQQQ'),거래소_현재가='NAS',거래소='NASD',현재가=tqqqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity$TQQQ.Adjusted.MA.200),주문구분='34')
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=c('SGOV'),거래소_현재가='AMS',거래소='AMEX',현재가=sgovPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
 
+if(goalBalanceSheet[종목코드=='TQQQ',signal]<0) goalBalanceSheet[종목코드=='TQQQ']$주문구분='00'
 
 if(nrow(currentBalance$sheet)>0){
   currentBalanceSheet<-currentBalance$sheet[,c('pdno','prdt_name','ovrs_excg_cd','ccld_qty_smtl1','frcr_evlu_amt2','buy_crcy_cd')]  
@@ -148,7 +149,7 @@ if(nrow(combinedSheet)>0){
   failNum<-nrow(buyRes[rt_cd!='0'])
   rebuySheet<-buySheet
   rebuyRes<-buyRes
-  while(failNum>0 & cnt<=10){
+  while(failNum>0 & cnt<=3){
     cnt<-cnt+1
     rebuySheet<-rebuySheet[rebuyRes[rt_cd!='0']$idx]
     rebuyRes<-orderOverseasStocks(token,apiConfig,account,rebuySheet)
@@ -160,8 +161,6 @@ if(nrow(combinedSheet)>0){
       Sys.sleep(0.04)
     }
     failNum<-nrow(rebuyRes[rt_cd!='0'])
-    failNumDuetoNotenoughBalance<-nrow(rebuyRes[rt_cd=='7'])
-    if(failNum==failNumDuetoNotenoughBalance) break
     Sys.sleep(30)
   }
   
