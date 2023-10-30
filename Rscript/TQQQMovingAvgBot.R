@@ -60,6 +60,7 @@ if(currentBalance$status_code!='200'){
 }
 
 totalBalanceSum<-as.numeric(currentBalance$summary[crcy_cd=="USD",frcr_drwg_psbl_amt_1])
+totalBalanceSum<-as.numeric(currentBalance$summary[crcy_cd=="USD",frcr_sll_amt_smtl])
 curTQQQRatio<-0
 if(nrow(currentBalance$sheet)>0){
   totalBalanceSum<-totalBalanceSum+sum(as.numeric(currentBalance$sheet[buy_crcy_cd=="USD",frcr_evlu_amt2]))
@@ -99,6 +100,7 @@ if(nrow(currentBalance$sheet)>0){
   totalBalanceSum<-0
   combinedSheet<-goalBalanceSheet
   combinedSheet[,c('평가금액','보유수량'):=0]
+  combinedSheet[,매수통화코드:='USD']
 }
 
 combinedSheet[,평가금액:=as.numeric(평가금액)]
