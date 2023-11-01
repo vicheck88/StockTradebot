@@ -60,12 +60,13 @@ if(currentBalance$status_code!='200'){
 }
 
 totalBalanceSum<-as.numeric(currentBalance$summary[crcy_cd=="USD",frcr_drwg_psbl_amt_1])
-totalBalanceSum<-as.numeric(currentBalance$summary[crcy_cd=="USD",frcr_sll_amt_smtl])
+totalBalanceSum<-totalBalanceSum+as.numeric(currentBalance$summary[crcy_cd=="USD",frcr_sll_amt_smtl])
 curTQQQRatio<-0
 if(nrow(currentBalance$sheet)>0){
   totalBalanceSum<-totalBalanceSum+sum(as.numeric(currentBalance$sheet[buy_crcy_cd=="USD",frcr_evlu_amt2]))
   curTQQQBalance<-as.numeric(currentBalance$sheet[pdno=="TQQQ",frcr_evlu_amt2])
   curTQQQRatio<-curTQQQBalance/totalBalanceSum
+  if(length(curTQQQRatio)) curTQQQRatio<-0
 }
 
 #TQQQratio
