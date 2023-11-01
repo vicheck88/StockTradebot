@@ -82,6 +82,7 @@ getCurrentPrice<-function(apiConfig,account, token, code){
   if(res$rt_cd!=0) return(-1)
   return(as.numeric(res$output$stck_prpr))
 }
+
 getPresentOverseasBalancesheet<-function(token,apiConfig,account){
   output<-NULL
   balanceUrl<-paste(apiConfig$url,'/uapi/overseas-stock/v1/trading/inquire-present-balance',sep='')
