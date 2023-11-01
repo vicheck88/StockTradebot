@@ -59,8 +59,7 @@ if(currentBalance$status_code!='200'){
   stop("Fail to get current balance. Stop script")
 }
 
-totalBalanceSum<-as.numeric(currentBalance$summary[crcy_cd=="USD",frcr_drwg_psbl_amt_1])
-totalBalanceSum<-totalBalanceSum+as.numeric(currentBalance$summary[crcy_cd=="USD",frcr_sll_amt_smtl])
+totalBalanceSum<-floor(as.numeric(currentBalance$summary2[,"frcr_evlu_tota"])/as.numeric(currentBalance$summary[,"frst_bltn_exrt"]))
 curTQQQRatio<-0
 if(nrow(currentBalance$sheet)>0){
   totalBalanceSum<-totalBalanceSum+sum(as.numeric(currentBalance$sheet[buy_crcy_cd=="USD",frcr_evlu_amt2]))
@@ -88,10 +87,8 @@ sendMessage(message)
 goalBalanceSum<-totalBalanceSum*TQQQGoalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
 
-goalBalanceSheet<-data.table(종목코드=c('TQQQ'),거래소_현재가='NAS',거래소='NASD',현재가=tqqqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity$TQQQ.Adjusted.MA.200),주문구분='34')
+goalBalanceSheet<-data.table(종목코드=c('TQQQ'),거래소_현재가='NAS',거래소='NASD',현재가=tqqqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity$TQQQ.Adjusted.MA.200),주문구분='00')
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=c('SGOV'),거래소_현재가='AMS',거래소='AMEX',현재가=sgovPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
-
-if(goalBalanceSheet[종목코드=='TQQQ',signal]<0) goalBalanceSheet[종목코드=='TQQQ']$주문구분='00'
 
 if(nrow(currentBalance$sheet)>0){
   currentBalanceSheet<-currentBalance$sheet[,c('pdno','prdt_name','ovrs_excg_cd','ccld_qty_smtl1','frcr_evlu_amt2','buy_crcy_cd')]  
