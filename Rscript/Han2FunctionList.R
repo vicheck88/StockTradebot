@@ -82,7 +82,25 @@ getCurrentPrice<-function(apiConfig,account, token, code){
   if(res$rt_cd!=0) return(-1)
   return(as.numeric(res$output$stck_prpr))
 }
-
+getAvailablePurchaseAmount<-function(token,apiConfig,account){
+  url<-paste0(apiConfig$url,'/uapi/overseas-stock/v1/trading/inquire-psamount') 
+  headers<-c(
+    Authorization=paste('Bearer',token),
+    appkey=account$appkey,
+    appsecret=account$appsecret,
+    tr_id='TTTS3007R'
+  )
+  query<-list(CANO=substr(account$accNo,1,8),
+              ACNT_PRDT_CD=substr(account$accNo,9,10),
+              OVRS_EXCG_CD='AMEX',
+              ITEM_CD='SPY',
+              OVRS_ORD_UNPR='100'
+  )
+  response<-GET(url,add_headers(headers),query=query)
+  res<-fromJSON(rawToChar(response$content))
+  if(res$rt_cd!=0) return(-1)
+  return(as.numeric(res$output$ovrs_ord_psbl_amt))
+}
 getPresentOverseasBalancesheet<-function(token,apiConfig,account){
   output<-NULL
   balanceUrl<-paste(apiConfig$url,'/uapi/overseas-stock/v1/trading/inquire-present-balance',sep='')
@@ -289,6 +307,7 @@ orderOverseasStocks<-function(token,apiConfig, account, stockTable){
     price<-getCurrentOverseasPrice(apiConfig,account,token,code,excdcode2)
     curQty<-stockTable[i,]$보유수량
     priceSum<-stockTable[i,]$목표금액-price*curQty
+    priceSum<-min(priceSum,getAvailablePurchaseAmount(token,apiConfig,account))
     if(ordertype=='34') price<-price*(1+sign(priceSum)/100) #LOC 매수/매도는 일부러 가격을 변경
     qty<-floor(priceSum/price)
     print(paste("code:",code," name:",stockTable[i,]$종목명," qty:",qty," price:",price, " ordersum:",qty*price))
