@@ -51,8 +51,8 @@ rets$Cash<-0
 
 getTQQQInvestRatio<-function(table){
   for(i in 1:nrow(table)){
-    #disparity<-table[i,]$TQQQDisparity
-    disparity<-table[i,]$QQQDisparity
+    disparity<-table[i,]$TQQQDisparity
+    #disparity<-table[i,]$QQQDisparity
     #TQQQratio
     addRatio<-floor(disparity)*0.5
     if(i>1){

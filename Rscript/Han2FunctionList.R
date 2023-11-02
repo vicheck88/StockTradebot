@@ -107,6 +107,7 @@ getPresentOverseasBalancesheet<-function(token,apiConfig,account){
   res<-fromJSON(rawToChar(response$content))
   output$sheet<-as.data.table(res$output1)
   output$summary<-as.data.table(res$output2)
+  output$summary2<-as.data.table(res$output3)
   return(output)
 }
 getOverseasBalancesheet<-function(token,apiConfig,account, tr_cont='',CTX_AREA_FK200='',CTX_AREA_NK200='',output=NULL){
