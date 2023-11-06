@@ -59,7 +59,7 @@ if(currentBalance$status_code!='200'){
   stop("Fail to get current balance. Stop script")
 }
 
-totalBalanceSum<-floor(as.numeric(currentBalance$summary2[,"tot_asst_amt"])/as.numeric(currentBalance$summary[,"frst_bltn_exrt"]))
+totalBalanceSum<-floor((as.numeric(currentBalance$summary2[,"tot_asst_amt"])-as.numeric(currentBalance$summary2[,"wdrw_psbl_tot_amt"]))/as.numeric(currentBalance$summary[,"frst_bltn_exrt"]))
 curTQQQRatio<-0
 if(nrow(currentBalance$sheet)>0){
   curTQQQBalance<-as.numeric(currentBalance$sheet[pdno=="TQQQ",frcr_evlu_amt2])
