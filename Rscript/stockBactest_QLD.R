@@ -46,19 +46,21 @@ for(i in c(5,10,20,60,100,200,300)){
 priceWithMA<-cbind(as.xts(prices),movingAvg)
 priceWithMA<-as.data.table(priceWithMA)
 
-priceWith200MA<-priceWithMA[,.(index,QQQ.Adjusted,SQQQ.Adjusted,TQQQ.Adjusted,QQQ.Adjusted.MA.200,TQQQ.Adjusted.MA.200)]
-priceWith200MA[,TQQQDisparity:=100*TQQQ.Adjusted/TQQQ.Adjusted.MA.200-100]
+priceWith200MA<-priceWithMA[,.(index,QQQ.Adjusted,QLD.Adjusted,TQQQ.Adjusted,QQQ.Adjusted.MA.200,QLD.Adjusted.MA.200,TQQQ.Adjusted.MA.200)]
+priceWith200MA[,QLDDisparity:=100*QLD.Adjusted/QLD.Adjusted.MA.200-100]
 priceWith200MA[,QQQDisparity:=100*QQQ.Adjusted/QQQ.Adjusted.MA.200-100]
+priceWith200MA[,TQQQDisparity:=100*TQQQ.Adjusted/TQQQ.Adjusted.MA.200-100]
 priceWith200MA<-na.omit(as.xts(priceWith200MA))
 
 rets<-rets[,-"QQQ.Adjusted"]
 rets<-as.xts(rets)
 rets$Cash<-0
 
-getTQQQInvestRatio<-function(table){
+getQLDInvestRatio<-function(table){
   for(i in 1:nrow(table)){
-    disparity<-table[i,]$TQQQDisparity
+    #disparity<-table[i,]$QLDDisparity
     #disparity<-table[i,]$QQQDisparity
+    disparity<-table[i,]$TQQQDisparity
     #TQQQratio
     addRatio<-floor(disparity)*0.5
     if(i>1){
@@ -68,20 +70,19 @@ getTQQQInvestRatio<-function(table){
     }
     newRatio<-min(1,addRatio)
     newRatio<-max(0,newRatio)
-    table[i,]$TQQQinvestRatio<-newRatio
+    table[i,]$QLDinvestRatio<-newRatio
   }
   return(table)
 }
 
 priceWithRatio<-as.data.table(priceWith200MA)
-priceWithRatio[,TQQQinvestRatio:=0]
-priceWithRatio[,SQQQinvestRatio:=0]
+priceWithRatio[,QLDinvestRatio:=0]
 priceWithRatio[,CashinvestRatio:=0]
-priceWithRatio<-priceWithRatio[,getTQQQInvestRatio(.SD)]
-priceWithRatio[,CashinvestRatio:=1-TQQQinvestRatio]
+priceWithRatio<-priceWithRatio[,getQLDInvestRatio(.SD)]
+priceWithRatio[,CashinvestRatio:=1-QLDinvestRatio]
 priceWithRatio<-as.xts(priceWithRatio)
 
-Tactical = Return.portfolio(rets[,c("TQQQ.Adjusted","Cash")], priceWithRatio[,c("TQQQinvestRatio","CashinvestRatio")], verbose = TRUE)
+Tactical = Return.portfolio(rets[,c("QLD.Adjusted","Cash")], priceWithRatio[,c("QLDinvestRatio","CashinvestRatio")], verbose = TRUE)
 
 portfolios = na.omit(cbind(rets[,1], Tactical$returns)) %>%
   setNames(c('Hold', 'MA strategy'))
