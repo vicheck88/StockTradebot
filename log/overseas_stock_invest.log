@@ -60,15 +60,14 @@ $lubridate
 [11] "stats"      "graphics"   "grDevices"  "utils"      "datasets"  
 [16] "methods"    "base"      
 
-[1] "QQQ"
-[1] TRUE
+[1] "TQQQ"
 [1] "sendMessage: 200"
 [1] "Final stock list"
-   종목코드 거래소 거래소_현재가 현재가 목표금액 signal 주문구분
-1:     TQQQ   NASD           NAS 36.715 8344.101      1       34
+   종목코드 거래소 거래소_현재가  현재가 목표금액 signal 주문구분
+1:     TQQQ   NASD           NAS 44.3297     8348      1       00
                              종목명 보유수량 평가금액 매수통화코드
-1: PROSHARES TRUST ULTRAPRO QQQ USD      227 8331.831          USD
-[1] "code: TQQQ  name: PROSHARES TRUST ULTRAPRO QQQ USD  qty: 0  price: 37.06195  ordersum: 0"
+1: PROSHARES TRUST ULTRAPRO QQQ USD      188 8333.984          USD
+[1] "code: TQQQ  name: PROSHARES TRUST ULTRAPRO QQQ USD  qty: 0  price: 44.3246  ordersum: 0"
 [1] "skip order: qty is 0"
 Error in if (nrow(buyRes) > 0) { : argument is of length zero
 Execution halted

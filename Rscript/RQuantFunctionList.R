@@ -92,6 +92,13 @@ KRXMonitoringStat<-function(){
     read_csv()
 }
 
+KRXDataMergeHan2<-function(){
+  down_sector_KOSPI<-as.data.table(read_csv("./python/kospi_code.csv"))
+  down_sector_KOSDAQ<-as.data.table(read_csv("./python/kosdaq_code.csv"))
+  down_sector_KOSPI$지수업종대분류<-as.character(down_sector_KOSPI$지수업종대분류)
+  sector_code<-as.data.table(read_csv("./python/idx_code.csv"))
+}
+
 KRXDataMerge<-function(businessDay){
   down_sector_KOSPI<-KRXIndStat(businessDay,'STK')
   down_sector_KOSDAQ<-KRXIndStat(businessDay,'KSQ')

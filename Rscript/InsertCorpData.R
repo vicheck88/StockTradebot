@@ -23,8 +23,8 @@ if(month(Sys.Date())==month(availableDate[2])) {
 
 
 latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.월별기업정보"))[,1]
-
-while(TRUE){
+count<-0
+while(count<10){
   tryCatch({
     print(paste0(Sys.time()," : Starting to get current coporation list"))
     day<-str_remove_all(availableDate,"-")
@@ -33,15 +33,16 @@ while(TRUE){
     corpTable<-as.data.table(df)
     break
   }, error = function(e) {
-    print(paste0(Sys.time()," : Fail to get corp Data. Try again after 20mins"))
-    Sys.sleep(60*20)
+    count<-count+1
+    print(paste0(Sys.time()," : Fail to get corp Data. Try again after 5mins"))
+    Sys.sleep(60*5)
   })
 }
 
 
 #지금까지 등록되어있는 기업정보 구하기
 corpList<-dbGetQuery(conn,SQL("select distinct 종목코드 from metainfo.월별기업정보"))$종목코드
-corpList<-unique(c(corpList,corpTable$종목코드))
+if(exists("corpTable")) corpList<-unique(c(corpList,corpTable$종목코드))
 
 dbDisconnect(conn)
 conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
@@ -78,25 +79,29 @@ print(paste0("telegream message send: ",sendMessage(text,0)))
 
 #현재 날짜가 기록된 날짜보다 늦을 경우
 if(latestDate!=availableDate){
-  print(paste0(Sys.time()," : Starting to summarize financial data"))
-  fs<-NULL
-  for(i in 1:nrow(corpTable)){
-    oldN<-NROW(fs)
-    code<-corpTable[i,종목코드]
-    fsY<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.연간재무제표 WHERE 종목코드='%s'",code," order by 등록일자 desc"))))
-    fsQ<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.분기재무제표 WHERE 종목코드='%s'",code," order by 등록일자 desc"))))
-    fsY<-unique(fsY,by=names(fsY)[1:4])
-    fsQ<-unique(fsQ,by=names(fsQ)[1:4])
-    res<-cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,TRUE)
-    if(!is.null(fs) & !is.null(res)) names(res)<-names(fs)
-    fs<-rbind(fs,res)
-    if(oldN<NROW(fs)) print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: Summarizing Data of ",corpTable[i,]$종목코드))
+  if(exists("corpTable")) {
+    print(paste0(Sys.time()," : CorpTable not loaded"))
+    } else{
+    print(paste0(Sys.time()," : Starting to summarize financial data"))
+    fs<-NULL
+    for(i in 1:nrow(corpTable)){
+      oldN<-NROW(fs)
+      code<-corpTable[i,종목코드]
+      fsY<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.연간재무제표 WHERE 종목코드='%s'",code," order by 등록일자 desc"))))
+      fsQ<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.분기재무제표 WHERE 종목코드='%s'",code," order by 등록일자 desc"))))
+      fsY<-unique(fsY,by=names(fsY)[1:4])
+      fsQ<-unique(fsQ,by=names(fsQ)[1:4])
+      res<-cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,TRUE)
+      if(!is.null(fs) & !is.null(res)) names(res)<-names(fs)
+      fs<-rbind(fs,res)
+      if(oldN<NROW(fs)) print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: Summarizing Data of ",corpTable[i,]$종목코드))
+    }
+    
+    dbDisconnect(conn)
+    conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
+    
+    res<-dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,append=TRUE)
+    print(paste0(Sys.time()," : Finished"))
+    sendMessage("Finished to summarize financial data")
   }
-  
-  dbDisconnect(conn)
-  conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
-  
-  res<-dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,append=TRUE)
-  print(paste0(Sys.time()," : Finished"))
-  print(paste0("telegram message send: ",sendMessage("Finished to summarize financial data",0)))
 } else{ print(paste0(Sys.time()," : Already updated. Script finished"))}
