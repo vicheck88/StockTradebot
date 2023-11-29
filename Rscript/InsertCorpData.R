@@ -31,6 +31,7 @@ while(count<10){
     #전달 말 등록된 기업정보
     df<-KRXDataMerge(day)
     corpTable<-as.data.table(df)
+    print(paste0(Sys.time()," : Succeed in getting corp Data."))
     break
   }, error = function(e) {
     count<-count+1

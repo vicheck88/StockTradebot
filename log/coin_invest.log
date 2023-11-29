@@ -42,6 +42,6 @@ The following object is masked from ‘package:httr’:
 2:           KRW
 [1] "CURRENT COIN PRICE"
     market ratio currency  balance  curvolume signal totalBalance symbol
-1: KRW-BTC     1      BTC 653694.2 0.01303894      1     653694.7    BTC
+1: KRW-BTC     1      BTC 660735.2 0.01303894      1     660735.7    BTC
    targetBalance
-1:      653694.7
+1:      660735.7
