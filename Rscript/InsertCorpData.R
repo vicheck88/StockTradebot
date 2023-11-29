@@ -31,6 +31,7 @@ while(count<10){
     #전달 말 등록된 기업정보
     df<-KRXDataMerge(day)
     corpTable<-as.data.table(df)
+    print(paste0(Sys.time()," : Succeed in getting corp Data."))
     break
   }, error = function(e) {
     count<-count+1
@@ -41,8 +42,18 @@ while(count<10){
 
 
 #지금까지 등록되어있는 기업정보 구하기
-corpList<-dbGetQuery(conn,SQL("select distinct 종목코드 from metainfo.월별기업정보"))$종목코드
-if(exists("corpTable")) corpList<-unique(c(corpList,corpTable$종목코드))
+prevCorpTable<-as.data.table(dbGetQuery(conn,
+                                        SQL("select * from metainfo.월별기업정보 
+                                            where 일자=(select max(일자) from metainfo.월별기업정보)")))
+corpList<-unique(prevCorpTable$종목코드)
+if(exists("corpTable")) {
+  corpList<-unique(c(corpList,corpTable$종목코드))
+} else {
+  prevCorpTable<-prevCorpTable[,c('일자','종목코드','종목명','시장구분','산업분류','현재가(종가)','시가총액',
+                                 '주당배당금','배당수익률','관리여부')]
+  prevCorpTable$일자<-as.Date(availableDate)
+  corpTable<-prevCorpTable
+}
 
 dbDisconnect(conn)
 conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
@@ -79,9 +90,6 @@ sendMessage(text)
 
 #현재 날짜가 기록된 날짜보다 늦을 경우
 if(latestDate!=availableDate){
-  if(exists("corpTable")) {
-    print(paste0(Sys.time()," : CorpTable not loaded"))
-    } else{
     print(paste0(Sys.time()," : Starting to summarize financial data"))
     fs<-NULL
     for(i in 1:nrow(corpTable)){
@@ -103,5 +111,4 @@ if(latestDate!=availableDate){
     res<-dbWriteTable(conn,SQL("metainfo.월별기업정보"),fs,append=TRUE)
     print(paste0(Sys.time()," : Finished"))
     sendMessage("Finished to summarize financial data")
-  }
 } else{ print(paste0(Sys.time()," : Already updated. Script finished"))}
