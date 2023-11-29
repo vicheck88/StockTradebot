@@ -39,7 +39,7 @@ while(count<10){
     Sys.sleep(60*5)
   })
 }
-
+if(count==10) sendMessage("Fail to get recent corp Data. Use previous corp info")
 
 #지금까지 등록되어있는 기업정보 구하기
 prevCorpTable<-as.data.table(dbGetQuery(conn,
