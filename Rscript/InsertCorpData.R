@@ -20,7 +20,7 @@ if(month(Sys.Date())==month(availableDate[2])) {
 } else{
   availableDate<-availableDate[2]
 }
-
+print(paste0("Date: ",availableDate))
 
 latestDate<-dbGetQuery(conn,SQL("select max(일자) from metainfo.월별기업정보"))[,1]
 count<-0
@@ -34,7 +34,8 @@ while(count<10){
     print(paste0(Sys.time()," : Succeed in getting corp Data."))
     break
   }, error = function(e) {
-    count<-count+1
+    count<<-count+1
+    print(count)
     print(paste0(Sys.time()," : Fail to get corp Data. Try again after 5mins"))
     Sys.sleep(60*5)
   })
@@ -49,10 +50,10 @@ corpList<-unique(prevCorpTable$종목코드)
 if(exists("corpTable")) {
   corpList<-unique(c(corpList,corpTable$종목코드))
 } else {
-  prevCorpTable<-prevCorpTable[,c('일자','종목코드','종목명','시장구분','산업분류','현재가(종가)','시가총액',
-                                 '주당배당금','배당수익률','관리여부')]
-  prevCorpTable$일자<-as.Date(availableDate)
-  corpTable<-prevCorpTable
+#  prevCorpTable<-prevCorpTable[,c('일자','종목코드','종목명','시장구분','산업분류','현재가(종가)','시가총액',
+#                                 '주당배당금','배당수익률','관리여부')]
+#  prevCorpTable$일자<-as.Date(availableDate)
+#  corpTable<-prevCorpTable
 }
 
 dbDisconnect(conn)
@@ -89,7 +90,7 @@ print(text)
 print(paste0("telegream message send: ",sendMessage(text,0)))
 
 #현재 날짜가 기록된 날짜보다 늦을 경우
-if(latestDate!=availableDate){
+if(latestDate!=availableDate && exists("corpTable")){
     print(paste0(Sys.time()," : Starting to summarize financial data"))
     fs<-NULL
     for(i in 1:nrow(corpTable)){

@@ -34,8 +34,10 @@ union all
 select * from metainfo.연간재무제표 y
 ) m
 where 일자>'%s' 
-and (계정='매출액' or 계정='매출원가')
-and 값<0 and a.종목코드=m.종목코드)",prevDate) 
+and a.종목코드=m.종목코드
+and (((계정='매출액' or 계정='매출원가')and 값<0 )
+or (계정='영업활동으로인한현금흐름' and 값<0))
+)",prevDate) 
 
 corpTable<-dbGetQuery(conn,SQL(sql))
 setDT(corpTable)

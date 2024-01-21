@@ -219,7 +219,8 @@ createOrderTable<-function(balanceCombinedTable){
   balanceCombinedTable$ord_type<-'limit'
   balanceCombinedTable$side<-'bid'
   balanceCombinedTable[buyamount<0]$side<-'ask'
-  balanceCombinedTable[,buyamount:=floor(abs(buyamount)*(1-fee))]
+  balanceCombinedTable[side=='bid',buyamount:=floor(abs(buyamount)/(1+fee))]
+  balanceCombinedTable[side=='ask',buyamount:=floor(abs(buyamount))]
   balanceCombinedTable[,price:=getCurrentUpbitPrice(balanceCombinedTable$market)$trade_price]
   balanceCombinedTable[,volume:=buyamount/price]
   balanceCombinedTable[sellall==T]$volume<-balanceCombinedTable[sellall==T]$currentvolume
