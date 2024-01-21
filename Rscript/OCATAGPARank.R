@@ -23,8 +23,7 @@ token<-getToken(apiConfig,account)
 
 #재무제표 이상한 기업 우선 거르기
 #최근 1년 간 분기재무제표에서 매출, 매출원가가 음수인 경우가 한 번이라도 있다면 목록에서 제거
-prevDate<-str_replace(substring(Sys.Date()-365,1,7),'-','.')
-
+prevDate<-str_replace(substring(lastYearDate,1,7),'-','.')
 sql<-sprintf("select * from metainfo.월별기업정보 a
 where 일자=(select max(일자) from metainfo.월별기업정보)
 and not exists (
@@ -35,8 +34,7 @@ select * from metainfo.연간재무제표 y
 ) m
 where 일자>'%s' 
 and a.종목코드=m.종목코드
-and (((계정='매출액' or 계정='매출원가')and 값<0 )
-or (계정='영업활동으로인한현금흐름' and 값<0))
+and (((계정='매출액' or 계정='매출원가')and 값<0 ))
 )",prevDate) 
 
 corpTable<-dbGetQuery(conn,SQL(sql))
@@ -80,6 +78,16 @@ print(paste0("Number of Stocks: ",stocknum))
 print(paste0("Total stock balance: ",goalBalanceSum))
 
 output<-filter(corpTable)
+sql2<-sprintf("select * from metainfo.월별기업정보 where 일자>'%s' and 종목코드 in (%s)",
+              paste(substring(as.Date(corpTable$일자[1])-365,1,7),"01",sep="-"),
+              paste0("'",output$종목코드,"'",collapse=","))
+corpTable2<-as.data.table(dbGetQuery(conn,SQL(sql2)))
+corpTable2<-corpTable2[일자==min(일자)]
+corpTable2[is.na(잉여현금흐름)==TRUE,잉여현금흐름:=영업활동으로인한현금흐름]
+corpTable2<-corpTable2[,.(종목코드,(매출총이익+잉여현금흐름)/자산)]
+output<-output[corpTable2,nomatch=0,on="종목코드"]
+output<-output[(매출총이익+잉여현금흐름)/자산>V2]
+
 output<-orderData(output)
 output<-output[1:stocknum]
 output$일자<-as.character(output$일자)

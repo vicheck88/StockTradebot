@@ -50,10 +50,10 @@ corpList<-unique(prevCorpTable$종목코드)
 if(exists("corpTable")) {
   corpList<-unique(c(corpList,corpTable$종목코드))
 } else {
-#  prevCorpTable<-prevCorpTable[,c('일자','종목코드','종목명','시장구분','산업분류','현재가(종가)','시가총액',
-#                                 '주당배당금','배당수익률','관리여부')]
-#  prevCorpTable$일자<-as.Date(availableDate)
-#  corpTable<-prevCorpTable
+  #prevCorpTable<-prevCorpTable[,c('일자','종목코드','종목명','시장구분','산업분류','현재가(종가)','시가총액',
+  #                               '주당배당금','배당수익률','관리여부')]
+  #prevCorpTable$일자<-as.Date(availableDate)
+  #corpTable<-prevCorpTable
 }
 
 dbDisconnect(conn)

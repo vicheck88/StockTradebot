@@ -16,7 +16,7 @@ config<-fromJSON("~/config.json")
 apiConfig<-config$api$config$prod
 
 #account<-config$api$account$dev
-account<-config$api$account$prod$main
+account<-config$api$account$prod$isa
 
 today<-str_replace_all(Sys.Date(),"-","")
 token<-getToken(apiConfig,account)
@@ -40,7 +40,7 @@ goalRatio<-floor(currentDisparity)*0.5
 goalRatio<-min(1,goalRatio)
 goalRatio<-max(0,goalRatio)
 
-currentBalance<-getBalancesheet(apiConfig,account)
+currentBalance<-getBalancesheet(token,apiConfig,account)
 if(currentBalance$status_code!='200'){
   stop("Fail to get current balance. Stop script")
 }
@@ -50,7 +50,6 @@ totalBalanceSum<-as.numeric(currentBalance$summary$tot_evlu_amt)
 goalBalanceSum<-totalBalanceSum*goalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
 
-goalBalanceSheet<-output[,c('종목코드','종목명')]
 goalBalanceSheet<-data.table(종목코드=nasdaqCode,종목명='tiger 나스닥 레버리지',현재가=currentNasdaqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity),주문구분='00')
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='tiger sofr',현재가=currentSofrPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
 
