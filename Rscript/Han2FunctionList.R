@@ -308,6 +308,9 @@ orderOverseasStocks<-function(token,apiConfig, account, stockTable){
     curQty<-stockTable[i,]$보유수량
     priceSum<-stockTable[i,]$목표금액-price*curQty
     priceSum<-min(priceSum,getAvailablePurchaseAmount(token,apiConfig,account))
+    if(sign(stockTable[i]$signal)!=sign(priceSum)){
+      next
+    }
     if(ordertype=='34') price<-price*(1+sign(priceSum)/100) #LOC 매수/매도는 일부러 가격을 변경
     qty<-floor(priceSum/price)
     print(paste("code:",code," name:",stockTable[i,]$종목명," qty:",qty," price:",price, " ordersum:",qty*price))

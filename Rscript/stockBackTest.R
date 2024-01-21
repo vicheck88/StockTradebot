@@ -72,6 +72,23 @@ getTQQQInvestRatio<-function(table){
   }
   return(table)
 }
+getQLDInvestRatio<-function(table){
+  for(i in 1:nrow(table)){
+    disparity<-table[i,]$QLDDisparity
+    #disparity<-table[i,]$QQQDisparity
+    #TQQQratio
+    addRatio<-floor(disparity)*0.5
+    if(i>1){
+      prevRatio<-table[i-1,]$investRatio
+      if(addRatio>=0) addRatio<-max(prevRatio,addRatio)
+      if(addRatio<0) addRatio<-min(1+addRatio,prevRatio)
+    }
+    newRatio<-min(1,addRatio)
+    newRatio<-max(0,newRatio)
+    table[i,]$QLDinvestRatio<-newRatio
+  }
+  return(table)
+}
 
 priceWithRatio<-as.data.table(priceWith200MA)
 priceWithRatio[,TQQQinvestRatio:=0]
