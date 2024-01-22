@@ -5,6 +5,7 @@ library(data.table)
 library(xts)
 library(PerformanceAnalytics)
 library(quantmod)
+library(dplyr)
 
 symbols = c('QQQ','TQQQ','SQQQ','QLD')
 getSymbols(symbols, src = 'yahoo',from='1990-01-01')
@@ -98,7 +99,8 @@ priceWithRatio<-priceWithRatio[,getTQQQInvestRatio(.SD)]
 priceWithRatio[,CashinvestRatio:=1-TQQQinvestRatio]
 priceWithRatio<-as.xts(priceWithRatio)
 
-Tactical = Return.portfolio(rets[,c("TQQQ.Adjusted","Cash")], priceWithRatio[,c("TQQQinvestRatio","CashinvestRatio")], verbose = TRUE)
+#Tactical = Return.portfolio(rets[,c("TQQQ.Adjusted","Cash")], priceWithRatio[,c("TQQQinvestRatio","CashinvestRatio")], verbose = TRUE)
+Tactical = Return.portfolio(rets[,c("QLD.Adjusted","Cash")], priceWithRatio[,c("QLDinvestRatio","CashinvestRatio")], verbose = TRUE)
 
 portfolios = na.omit(cbind(rets[,1], Tactical$returns)) %>%
   setNames(c('Hold', 'MA strategy'))

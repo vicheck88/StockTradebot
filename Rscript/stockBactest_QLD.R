@@ -58,9 +58,9 @@ rets$Cash<-0
 
 getQLDInvestRatio<-function(table){
   for(i in 1:nrow(table)){
-    #disparity<-table[i,]$QLDDisparity
+    disparity<-table[i,]$QLDDisparity
     #disparity<-table[i,]$QQQDisparity
-    disparity<-table[i,]$TQQQDisparity
+    #disparity<-table[i,]$TQQQDisparity
     #TQQQratio
     addRatio<-floor(disparity)*0.5
     if(i>1){
