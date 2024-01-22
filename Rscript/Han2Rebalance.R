@@ -4,7 +4,7 @@ source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
 #source("~/stockInfoCrawler/StockTradebot/Rscript/Han2FunctionList.R") #라즈베리에서 읽는 경우
 #source("~/stockInfoCrawler/StockTradebot/Rscript/telegramAPI.R") #라즈베리에서 읽는 경우
 
-pkg = c('stringr')
+pkg = c('data.table','xts','quantmod','stringr','timeDate','lubridate')
 
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
 if (length(new.pkg)) {
@@ -22,19 +22,32 @@ today<-str_replace_all(Sys.Date(),"-","")
 token<-getToken(apiConfig,account)
 if(isKoreanHoliday(token,apiConfig,account,today)=="N") stop("Market closed")
 
+symbols = c('QQQ')
+getSymbols(symbols, src = 'yahoo')
+prices = do.call(cbind,lapply(symbols, function(x) Ad(get(x))))
+prices<-as.data.table(prices)
+qqqPrice<-getCurrentOverseasPrice(apiConfig,account,token,"QQQ",'NAS')
+prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),QQQ.Adjusted=qqqPrice)))
+
+movingAvg<-NULL
+for(i in c(5,10,20,30,60,100,200)){
+  tbl<-as.xts(prices)
+  tbl<-do.call(cbind,lapply(tbl,function(y)rollmean(y,i,align='right')))
+  names(tbl)<-paste0(names(tbl),".MA.",i)
+  movingAvg<-cbind(movingAvg,tbl)
+}
+priceWithMA<-cbind(prices,movingAvg)
+priceWithMA<-as.data.table(priceWithMA)
+
+currentPrice<-tail(priceWithMA,1)
+currentPrice<-currentPrice[,-1]
+currentDisparity<-currentPrice[,100*QQQ.Adjusted/QQQ.Adjusted.MA.200-100]
+
 nasdaqCode<-'418660' #tiger 나스닥 레버리지
 sofrCode<-'456610' #tiger sofr
 
-nasdaqList<-adjustedPriceFromNaver('day',200,nasdaqCode)
-sofrList<-adjustedPriceFromNaver('day',200,sofrCode)
-
 currentNasdaqPrice<-getCurrentPrice(apiConfig,account,token,nasdaqCode)
 currentSofrPrice<-getCurrentPrice(apiConfig,account,token,sofrCode)
-
-nasdaqList[nrow(nasdaqList),]<-currentNasdaqPrice
-
-movingAvg<-mean(nasdaqList[,1])
-currentDisparity<-100*(currentNasdaqPrice/movingAvg)-100
 
 goalRatio<-floor(currentDisparity)*0.5
 goalRatio<-min(1,goalRatio)

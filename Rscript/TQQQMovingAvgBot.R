@@ -27,18 +27,18 @@ account<-config$api$account$prod$main
 
 
 
-symbols = c('TQQQ')
+symbols = c('TQQQ','QQQ')
 getSymbols(symbols, src = 'yahoo')
 prices = do.call(cbind,lapply(symbols, function(x) Ad(get(x))))
 prices<-as.data.table(prices)
 
 token<-getToken(apiConfig,account)
 
-currentTQQQPrice<-getCurrentOverseasPrice(apiConfig,account,token,"TQQQ",'NAS')
+qqqPrice<-getCurrentOverseasPrice(apiConfig,account,token,"QQQ",'NAS')
 tqqqPrice<-getCurrentOverseasPrice(apiConfig,account,token,"TQQQ",'NAS')
 sgovPrice<-getCurrentOverseasPrice(apiConfig,account,token,"SGOV",'AMS')
 
-prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),TQQQ.Adjusted=currentTQQQPrice)))
+prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),TQQQ.Adjusted=tqqqPrice,QQQ.Adjusted=qqqPrice)))
 
 movingAvg<-NULL
 for(i in c(5,10,20,30,60,100,200)){
@@ -52,7 +52,8 @@ priceWithMA<-as.data.table(priceWithMA)
 
 currentPrice<-tail(priceWithMA,1)
 currentPrice<-currentPrice[,-1]
-currentDisparity<-currentPrice[,lapply(.SD,function(y) 100*TQQQ.Adjusted/y-100)]
+#currentDisparity<-currentPrice[,lapply(.SD,function(y) 100*TQQQ.Adjusted/y-100)]
+currentDisparity<-currentPrice[,100*QQQ.Adjusted/QQQ.Adjusted.MA.200-100]
 
 currentBalance<-getPresentOverseasBalancesheet(token,apiConfig,account)
 if(currentBalance$status_code!='200'){
@@ -68,17 +69,21 @@ if(nrow(currentBalance$sheet)>0){
 }
 
 #TQQQratio
-TQQQGoalRatio<-floor(currentDisparity$TQQQ.Adjusted.MA.200)*0.5
+#TQQQGoalRatio<-floor(currentDisparity$TQQQ.Adjusted.MA.200)*0.5
+TQQQGoalRatio<-floor(currentDisparity)*0.5
 TQQQGoalRatio<-min(1,TQQQGoalRatio)
 TQQQGoalRatio<-max(0,TQQQGoalRatio)
 
-if(sign(currentDisparity$TQQQ.Adjusted.MA.200)>=0) TQQQGoalRatio<-max(TQQQGoalRatio,curTQQQRatio)
-if(sign(currentDisparity$TQQQ.Adjusted.MA.200)<0) TQQQGoalRatio<-min(TQQQGoalRatio,curTQQQRatio)
+if(sign(currentDisparity)>=0) TQQQGoalRatio<-max(TQQQGoalRatio,curTQQQRatio)
+if(sign(currentDisparity)<0) TQQQGoalRatio<-min(TQQQGoalRatio,curTQQQRatio)
 
 #sendMessage
-message<-paste0("TQQQ price: ",currentPrice$TQQQ.Adjusted)
+message<-paste0("QQQ price: ",currentPrice$QQQ.Adjusted)
+message<-paste0(message,"TQQQ price: ",currentPrice$TQQQ.Adjusted)
+message<-paste0(message,"\nQQQ 200 MA: ",round(currentPrice$QQQ.Adjusted.MA.200,2))
 message<-paste0(message,"\nTQQQ 200 MA: ",round(currentPrice$TQQQ.Adjusted.MA.200,2))
-message<-paste0(message,"\nTQQQ Disparity: ", round(currentDisparity$TQQQ.Adjusted.MA.200,2))
+message<-paste0(message,"\nTQQQ Disparity: ", round(currentPrice[,100*QQQ.Adjusted/QQQ.Adjusted.MA.200-100],2))
+message<-paste0(message,"\nTQQQ Disparity: ", round(currentPrice[,100*TQQQ.Adjusted/TQQQ.Adjusted.MA.200-100],2))
 message<-paste0(message,"\nToday TQQQ Ratio: ",TQQQGoalRatio)
 sendMessage(message)
 
