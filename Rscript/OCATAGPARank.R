@@ -88,6 +88,7 @@ corpTable2[is.na(잉여현금흐름)==TRUE,잉여현금흐름:=영업활동으�
 corpTable2<-corpTable2[,.(종목코드,(매출총이익+잉여현금흐름)/자산)]
 output<-output[corpTable2,nomatch=0,on="종목코드"]
 output<-output[(매출총이익+잉여현금흐름)/자산>V2]
+output[,V3:=(매출총이익+잉여현금흐름)/자산]
 
 output<-orderData(output)
 output<-output[1:stocknum]
