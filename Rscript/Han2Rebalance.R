@@ -26,8 +26,6 @@ symbols = c('QQQ')
 getSymbols(symbols, src = 'yahoo')
 prices = do.call(cbind,lapply(symbols, function(x) Ad(get(x))))
 prices<-as.data.table(prices)
-qqqPrice<-getCurrentOverseasPrice(apiConfig,account,token,"QQQ",'NAS')
-prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),QQQ.Adjusted=qqqPrice)))
 
 movingAvg<-NULL
 for(i in c(5,10,20,30,60,100,200)){

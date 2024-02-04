@@ -81,15 +81,13 @@ orderTable<-createOrderTable(balanceCombinedTable)
 
 if(nrow(orderTable)>0){
   print(orderTable)
+  #sendMessage
+  message<-paste0("Bitcoin price: ",latestCoinPriceHistory$trade_price)
+  message<-paste0(message,"\nBitcoin 30 MA: ",round(latestCoinPriceHistory$movingAvg,2))
+  message<-paste0(message,"\nBitcoin Disparity: ", round(latestCoinPriceHistory$disparity,2))
+  message<-paste0(message,"\nBitcoin Ratio: ",latestCoinPriceHistory$ratio)
+  sendMessage(message)
   for(i in 1:nrow(orderTable)){
-    
-    #sendMessage
-    message<-paste0("Bitcoin price: ",latestCoinPriceHistory$trade_price)
-    message<-paste0(message,"\nBitcoin 30 MA: ",round(latestCoinPriceHistory$movingAvg,2))
-    message<-paste0(message,"\nBitcoin Disparity: ", round(latestCoinPriceHistory$disparity,2))
-    message<-paste0(message,"\nBitcoin Ratio: ",latestCoinPriceHistory$ratio)
-    sendMessage(message)
-    
     row<-orderTable[i,]
     sendMessage(paste0("market: ",row$market," side: ",row$side," curPrice: ",row$price," targetVolume: ",row$volume))
   }
