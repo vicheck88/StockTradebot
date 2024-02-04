@@ -23,6 +23,7 @@ token<-getToken(apiConfig,account)
 
 #재무제표 이상한 기업 우선 거르기
 #최근 1년 간 분기재무제표에서 매출, 매출원가가 음수인 경우가 한 번이라도 있다면 목록에서 제거
+lastYearDate<-Sys.Date()-365
 prevDate<-str_replace(substring(lastYearDate,1,7),'-','.')
 sql<-sprintf("select * from metainfo.월별기업정보 a
 where 일자=(select max(일자) from metainfo.월별기업정보)

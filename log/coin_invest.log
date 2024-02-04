@@ -34,10 +34,22 @@ The following object is masked from ‘package:httr’:
     handle_reset
 
 [1] "CURRENT BALANCE"
-   currency balance locked avg_buy_price avg_buy_price_modified unit_currency
-1:      KRW 6649535      0             0                   TRUE           KRW
+   currency      balance locked avg_buy_price avg_buy_price_modified
+1:      KRW 3.268238e+06      0             0                   TRUE
+2:      BTC 5.507306e-02      0      59314000                  FALSE
+   unit_currency
+1:           KRW
+2:           KRW
 [1] "CURRENT COIN PRICE"
-Empty data.table (0 rows and 9 cols): market,ratio,currency,balance,curvolume,signal...
-Error in parse_url(url) : length(url) == 1 is not TRUE
-Calls: createOrderTable ... build_url -> stopifnot -> is.url -> parse_url -> stopifnot
-Execution halted
+    market ratio currency balance  curvolume signal totalBalance symbol
+1: KRW-BTC   0.5      BTC 3255258 0.05507306      1      6523496    BTC
+   targetBalance
+1:       3261748
+    market side         V3    price ord_type
+1: KRW-BTC  bid 0.00010973 59108000    limit
+[1] "sendMessage: 200"
+[1] "sendMessage: 200"
+[1] "market=KRW-BTC&side=bid&volume=&price=59108000&ord_type=limit"
+[1] 401
+[1] "{\"error\":{\"message\":\"Failed to verify the query of Jwt.\",\"name\":\"invalid_query_payload\"}}"
+[1] "sendMessage: 200"
