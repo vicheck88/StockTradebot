@@ -79,10 +79,10 @@ if(sign(currentDisparity)<0) TQQQGoalRatio<-min(TQQQGoalRatio,curTQQQRatio)
 
 #sendMessage
 message<-paste0("QQQ price: ",currentPrice$QQQ.Adjusted)
-message<-paste0(message,"TQQQ price: ",currentPrice$TQQQ.Adjusted)
+message<-paste0(message,"\nTQQQ price: ",currentPrice$TQQQ.Adjusted)
 message<-paste0(message,"\nQQQ 200 MA: ",round(currentPrice$QQQ.Adjusted.MA.200,2))
 message<-paste0(message,"\nTQQQ 200 MA: ",round(currentPrice$TQQQ.Adjusted.MA.200,2))
-message<-paste0(message,"\nTQQQ Disparity: ", round(currentPrice[,100*QQQ.Adjusted/QQQ.Adjusted.MA.200-100],2))
+message<-paste0(message,"\nQQQ Disparity: ", round(currentPrice[,100*QQQ.Adjusted/QQQ.Adjusted.MA.200-100],2))
 message<-paste0(message,"\nTQQQ Disparity: ", round(currentPrice[,100*TQQQ.Adjusted/TQQQ.Adjusted.MA.200-100],2))
 message<-paste0(message,"\nToday TQQQ Ratio: ",TQQQGoalRatio)
 sendMessage(message)
