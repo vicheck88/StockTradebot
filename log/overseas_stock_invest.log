@@ -60,5 +60,9 @@ $lubridate
 [11] "stats"      "graphics"   "grDevices"  "utils"      "datasets"  
 [16] "methods"    "base"      
 
-Error: Today is weekend, or holiday
+[1] "TQQQ" "QQQ" 
+[1] "sendMessage: 200"
+Error in currentDisparity$TQQQ.Adjusted.MA.200 : 
+  $ operator is invalid for atomic vectors
+Calls: data.table
 Execution halted

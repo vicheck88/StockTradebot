@@ -35,21 +35,17 @@ The following object is masked from ‘package:httr’:
 
 [1] "CURRENT BALANCE"
    currency      balance locked avg_buy_price avg_buy_price_modified
-1:      KRW 3.268238e+06      0             0                   TRUE
-2:      BTC 5.507306e-02      0      59314000                  FALSE
+1:      KRW 7.472931e+06      0           0.0                   TRUE
+2:      BTC 2.593216e-02      0    97704051.6                  FALSE
+3:      TRX 3.400000e-07      0         175.2                  FALSE
    unit_currency
 1:           KRW
 2:           KRW
+3:           KRW
 [1] "CURRENT COIN PRICE"
-    market ratio currency balance  curvolume signal totalBalance symbol
-1: KRW-BTC   0.5      BTC 3255258 0.05507306      1      6523496    BTC
+    market ratio currency      balance  curvolume signal totalBalance symbol
+1: KRW-BTC     0      BTC 2.365324e+06 0.02593216     -1      9838255    BTC
+2: KRW-TRX     0      TRX 5.596400e-05 0.00000034     NA      9838255    TRX
    targetBalance
-1:       3261748
-    market side         V3    price ord_type
-1: KRW-BTC  bid 0.00010973 59108000    limit
-[1] "sendMessage: 200"
-[1] "sendMessage: 200"
-[1] "market=KRW-BTC&side=bid&volume=&price=59108000&ord_type=limit"
-[1] 401
-[1] "{\"error\":{\"message\":\"Failed to verify the query of Jwt.\",\"name\":\"invalid_query_payload\"}}"
-[1] "sendMessage: 200"
+1:             0
+2:             0
