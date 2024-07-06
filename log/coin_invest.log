@@ -1,0 +1,47 @@
+Loading required package: xts
+Loading required package: zoo
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+
+Attaching package: ‘xts’
+
+The following objects are masked from ‘package:data.table’:
+
+    first, last
+
+Loading required package: TTR
+Registered S3 method overwritten by 'quantmod':
+  method            from
+  as.zoo.data.frame zoo 
+Loading required package: openssl
+
+Attaching package: ‘PerformanceAnalytics’
+
+The following object is masked from ‘package:graphics’:
+
+    legend
+
+
+Attaching package: ‘curl’
+
+The following object is masked from ‘package:httr’:
+
+    handle_reset
+
+[1] "CURRENT BALANCE"
+   currency     balance           locked avg_buy_price avg_buy_price_modified
+1:      KRW    13.96944 2178112.72878885           0.0                   TRUE
+2:      TRX 41497.98119                0         181.6                  FALSE
+   unit_currency
+1:           KRW
+2:           KRW
+[1] "CURRENT COIN PRICE"
+Empty data.table (0 rows and 9 cols): market,ratio,currency,balance,curvolume,signal...
+Error in parse_url(url) : length(url) == 1 is not TRUE
+Calls: createOrderTable ... build_url -> stopifnot -> is.url -> parse_url -> stopifnot
+Execution halted

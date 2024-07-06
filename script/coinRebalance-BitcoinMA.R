@@ -1,7 +1,7 @@
-setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
+setwd("/home/pi/stockInfoCrawler/StockTradebot/script")
 #setwd("/Users/chhan/StockTradebot/Rscript")
 #source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
-source("~/stockInfoCrawler/StockTradebot/Rscript/telegramAPI.R") #라즈베리에서 읽는 경우
+source("~/stockInfoCrawler/StockTradebot/script/telegramAPI.R") #라즈베리에서 읽는 경우
 source("./coinFunctionList.R",encoding="utf-8")
 
 num<-1
@@ -41,9 +41,7 @@ getInvestRatio<-function(table){
   for(i in 1:nrow(table)){
     disparity<-table[i,]$disparity
     table$signal[i]<-sign(disparity)
-    if(disparity>0) {
-      addRatio<-floor(disparity)*0.5
-    }  else addRatio<-floor(disparity)*0.25
+    addRatio<-floor(disparity)*0.5
     if(i>1){
       prevRatio<-table[i-1,]$ratio
       if(addRatio>=0) addRatio<-max(prevRatio,addRatio)
@@ -71,6 +69,7 @@ balanceCombinedTable[is.na(balance)]$balance<-0
 balanceCombinedTable[is.na(curvolume)]$curvolume<-0
 balanceCombinedTable[,symbol:=sapply(strsplit(market,"-"),function(x)x[2])]
 balanceCombinedTable[,targetBalance:=totalBalance*ratio]
+balanceCombinedTable<-balanceCombinedTable[!is.na(signal)]
 balanceCombinedTable<-balanceCombinedTable[(signal>0 && targetBalance>balance) || (signal<0 && targetBalance<balance)]
 print(balanceCombinedTable)
 
