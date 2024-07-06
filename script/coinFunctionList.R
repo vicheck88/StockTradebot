@@ -51,7 +51,7 @@ getTopNUpbitCoinList<-function(coinLimit, num){
   return(getUpbitCoinListDetail(coinLimit)[1:num,])
 }
 createJwtToken<-function(query,random){
-  upbitConfig<-fromJSON("./config.json")$upbit_key
+  upbitConfig<-fromJSON("~/config.json")$upbit_key
   uuid<-as.character(as.numeric(Sys.time())*random)
   query_hash_alg<-"SHA512"
   if(is.null(query)){

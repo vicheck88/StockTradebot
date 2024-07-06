@@ -1,9 +1,9 @@
-#setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
-setwd("/Users/chhan/StockTradebot/Rscript")
-source("~/StockTradebot/Rscript/Han2FunctionList.R") #macOS에서 읽는 경우
-source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
-#source("~/stockInfoCrawler/StockTradebot/Rscript/Han2FunctionList.R") #라즈베리에서 읽는 경우
-#source("~/stockInfoCrawler/StockTradebot/Rscript/telegramAPI.R") #라즈베리에서 읽는 경우
+#setwd("/home/pi/stockInfoCrawler/StockTradebot/script")
+setwd("/Users/chhan/StockTradebot/script")
+source("~/StockTradebot/script/Han2FunctionList.R") #macOS에서 읽는 경우
+source("~/StockTradebot/script/telegramAPI.R") #macOS에서 읽는 경우
+#source("~/stockInfoCrawler/StockTradebot/script/Han2FunctionList.R") #라즈베리에서 읽는 경우
+#source("~/stockInfoCrawler/StockTradebot/script/telegramAPI.R") #라즈베리에서 읽는 경우
 
 pkg = c('data.table','xts','quantmod','stringr','timeDate','lubridate')
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -36,7 +36,7 @@ token<-getToken(apiConfig,account)
 
 qqqPrice<-getCurrentOverseasPrice(apiConfig,account,token,"QQQ",'NAS')
 tqqqPrice<-getCurrentOverseasPrice(apiConfig,account,token,"TQQQ",'NAS')
-sgovPrice<-getCurrentOverseasPrice(apiConfig,account,token,"SGOV",'AMS')
+boxxPrice<-getCurrentOverseasPrice(apiConfig,account,token,"BOXX",'AMS')
 
 prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),TQQQ.Adjusted=tqqqPrice,QQQ.Adjusted=qqqPrice)))
 
@@ -91,8 +91,8 @@ sendMessage(message)
 goalBalanceSum<-totalBalanceSum*TQQQGoalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
 
-goalBalanceSheet<-data.table(종목코드=c('TQQQ'),거래소_현재가='NAS',거래소='NASD',현재가=tqqqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity$TQQQ.Adjusted.MA.200),주문구분='00')
-goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=c('SGOV'),거래소_현재가='AMS',거래소='AMEX',현재가=sgovPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
+goalBalanceSheet<-data.table(종목코드=c('TQQQ'),거래소_현재가='NAS',거래소='NASD',현재가=tqqqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity),주문구분='00')
+goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=c('BOXX'),거래소_현재가='AMS',거래소='AMEX',현재가=boxxPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
 
 if(nrow(currentBalance$sheet)>0){
   currentBalanceSheet<-currentBalance$sheet[,c('pdno','prdt_name','ovrs_excg_cd','ccld_qty_smtl1','frcr_evlu_amt2','buy_crcy_cd')]  
