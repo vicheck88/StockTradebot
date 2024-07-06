@@ -1,7 +1,14 @@
+<<<<<<< HEAD
 setwd("/home/pi/stockInfoCrawler/StockTradebot/script")
 #setwd("/Users/chhan/StockTradebot/Rscript")
 #source("~/StockTradebot/Rscript/telegramAPI.R") #macOS에서 읽는 경우
 source("~/stockInfoCrawler/StockTradebot/script/telegramAPI.R") #라즈베리에서 읽는 경우
+=======
+#setwd("/home/pi/stockInfoCrawler/StockTradebot/script")
+setwd("/Users/chhan/StockTradebot/script")
+source("~/StockTradebot/script/telegramAPI.R") #macOS에서 읽는 경우
+#source("~/stockInfoCrawler/StockTradebot/script/telegramAPI.R") #라즈베리에서 읽는 경우
+>>>>>>> e1cefe84c3018720f1160326793d363c6af4de77
 source("./coinFunctionList.R",encoding="utf-8")
 
 num<-1
@@ -70,7 +77,11 @@ balanceCombinedTable[is.na(curvolume)]$curvolume<-0
 balanceCombinedTable[,symbol:=sapply(strsplit(market,"-"),function(x)x[2])]
 balanceCombinedTable[,targetBalance:=totalBalance*ratio]
 balanceCombinedTable<-balanceCombinedTable[!is.na(signal)]
+<<<<<<< HEAD
 balanceCombinedTable<-balanceCombinedTable[(signal>0 && targetBalance>balance) || (signal<0 && targetBalance<balance)]
+=======
+balanceCombinedTable<-balanceCombinedTable[!is.na(signal) && ((signal>0 && targetBalance>balance) || (signal<0 && targetBalance<balance))]
+>>>>>>> e1cefe84c3018720f1160326793d363c6af4de77
 print(balanceCombinedTable)
 
 orderTable<-createOrderTable(balanceCombinedTable)

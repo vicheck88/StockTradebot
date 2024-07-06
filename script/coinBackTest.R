@@ -1,5 +1,5 @@
 #setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
-setwd("/Users/chhan/StockTradebot/Rscript")
+setwd("/Users/chhan/StockTradebot/script")
 source("./coinFunctionList.R",encoding="utf-8")
 
 library(data.table)
@@ -19,8 +19,8 @@ bandLimit<-0.3
 coinList<-getUpbitCoinListDetail(coinNumLimit)
 indexCoin<-getIndexBalance(coinList[1:num,],1,"MARKET")
 #이평선
-#type<-"days"
-type<-"minutes"
+type<-"days"
+#type<-"minutes"
 movingAvgDay<-30
 unit<-60
 #unit<-240
@@ -89,6 +89,7 @@ getInvestRatio<-function(table){
     if(disparity>0) {
       addRatio<-floor(disparity)*0.5
     }  else addRatio<-floor(disparity)*0.25
+  #}  else addRatio<-floor(disparity)*0.5
     if(i>1){
       prevRatio<-table[i-1,]$investRatio
       if(addRatio>=0) addRatio<-max(prevRatio,addRatio)
@@ -113,6 +114,7 @@ coinAdjusted<-coinPriceHistory[market=="KRW-BTC",.(candle_date_time_kst,trade_pr
 coinAdjusted<-coinAdjusted[,candle_date_time_kst:=as_datetime(candle_date_time_kst,tz=Sys.timezone())]
 coinAdjusted[,prevValue:=shift(trade_price,1)]
 coinAdjusted[,adjustedPrice:=(trade_price/prevValue)-1]
+#coinAdjusted[,adjustedPrice:=((trade_price/prevValue)-1)*3]
 coinAdjusted<-coinAdjusted[,.(candle_date_time_kst,adjustedPrice)]
 coinAdjusted$adjustedCache<-0
 
