@@ -62,22 +62,22 @@ $lubridate
 
 [1] "TQQQ" "QQQ" 
    TQQQ.Adjusted QQQ.Adjusted TQQQ.Adjusted.MA.5 QQQ.Adjusted.MA.5
-1:         81.52       495.94             78.948           490.408
+1:         82.44     497.9007             81.564          496.0421
    TQQQ.Adjusted.MA.10 QQQ.Adjusted.MA.10 TQQQ.Adjusted.MA.20
-1:            76.36231            484.647            74.37623
+1:              78.346           489.0201            75.92644
    QQQ.Adjusted.MA.20 TQQQ.Adjusted.MA.30 QQQ.Adjusted.MA.30
-1:           479.8355             71.0474           471.7952
+1:           483.3731             72.2811           474.6921
    TQQQ.Adjusted.MA.60 QQQ.Adjusted.MA.60 TQQQ.Adjusted.MA.100
-1:            64.09642           453.7608             62.32827
+1:             64.8544           455.6747             62.83839
    QQQ.Adjusted.MA.100 TQQQ.Adjusted.MA.200 QQQ.Adjusted.MA.200
-1:            447.4505              53.1674            417.3619
+1:            448.8285             53.63215            418.7548
 [1] "sendMessage: 200"
 [1] "Final stock list"
    종목코드 거래소 거래소_현재가 현재가 목표금액 signal 주문구분
-1:     TQQQ   NASD           NAS  81.52    15669      1       00
+1:     TQQQ   NASD           NAS  82.44    15807      1       00
                 종목명 보유수량 평가금액 매수통화코드
-1: PROETF ULTRAPRO QQQ      191 15591.33          USD
-[1] "code: TQQQ  name: PROETF ULTRAPRO QQQ  qty: 0  price: 81.5102  ordersum: 0"
+1: PROETF ULTRAPRO QQQ      191 15728.85          USD
+[1] "code: TQQQ  name: PROETF ULTRAPRO QQQ  qty: 0  price: 82.44  ordersum: 0"
 [1] "skip order: qty is 0"
 Error in if (nrow(buyRes) > 0) { : argument is of length zero
 Execution halted

@@ -1,0 +1,4 @@
+start program
+free balances: [{'asset': 'LDUSDC', 'free': '6612.12483377', 'locked': '0.00000000'}]
+balance change: {'investRatio': 0, 'total': 7002.056611267562, 'future': 0.0, 'earn': 0.0, 'spot': 0.0}
+Finish the program

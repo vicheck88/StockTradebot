@@ -267,7 +267,6 @@ try:
   disparity=getCurrentFutureMarkDisparity('BTCUSDC','1d',30)
   accountChangeInfo=getAccountChange(coinsymbols,cashsymbols,disparity,leverage)
   minOrderLimit=float(getCurrentPrice('BTCUSDC')['price'])*0.002
-  minEarnLimit=0.1
   curPrice=floorToDecimal(float(getCurrentPrice(symbol)['price']),1)
 
   transferrableList=[v for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset']!='BNB']
@@ -319,11 +318,17 @@ try:
   earnList=dict([(v['asset'],v['productId']) for v in getFlexibleSimpleEarnList()['rows']])
   for asset in freeBalances:
     if asset['asset'] in earnList: 
-      if float(asset['free'])>=minEarnLimit:
-        sendMessage(f"Subscribe simple earn: {asset['asset']}, amount: {asset['free']}")
-        sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset['asset']],float(asset['free'])))
+      sendMessage(f"Subscribe simple earn: {asset['asset']}, amount: {asset['free']}")
+      sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset['asset']],float(asset['free'])))
   print('Finish the program')
 except Exception as e:
   msg=f'Failed to finish the program: {e}'
   sendMessage(msg)
   print(msg)
+
+
+# In[48]:
+
+
+[v for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols]
+
