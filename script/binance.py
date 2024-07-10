@@ -325,10 +325,3 @@ except Exception as e:
   msg=f'Failed to finish the program: {e}'
   sendMessage(msg)
   print(msg)
-
-
-# In[48]:
-
-
-[v for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols]
-
