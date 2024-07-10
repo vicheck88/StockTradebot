@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[35]:
+# In[1]:
 
 
 import requests as rq
@@ -13,11 +13,10 @@ import time
 import math
 
 
-# In[36]:
+# In[2]:
 
 
-with open('/home/pi/config.json','r') as f:
-  config=json.load(f)
+with open('/Users/chhan/config.json','r') as f: config=json.load(f)
 telegramApi=config['telegram']
 config=config['binance_key']
 accessKey=config['access_key']
@@ -29,7 +28,7 @@ headers = {
 }
 
 
-# In[37]:
+# In[3]:
 
 
 def sendMessage(message,count=0):
@@ -44,7 +43,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[38]:
+# In[4]:
 
 
 def request(url,method):
@@ -59,7 +58,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[39]:
+# In[10]:
 
 
 def getCurrentTime():
@@ -95,6 +94,8 @@ def getFlexibleSimpleEarnList():
   return requestData(spotURL,'/sapi/v1/simple-earn/flexible/list','get',f'timestamp={getCurrentTime()}')
 def getSimpleEarnAccount():
   return requestData(spotURL,'/sapi/v1/simple-earn/account','get',f'timestamp={getCurrentTime()}')
+def getSimpleEarnPosition():
+  return requestData(spotURL,'/sapi/v1/simple-earn/flexible/position','get',f'timestamp={getCurrentTime()}')
 def subscribeFlexibleSimpleEarnProduct(prodId,amount):
   return requestData(spotURL,'/sapi/v1/simple-earn/flexible/subscribe','post',f'productId={prodId}&amount={amount}&timestamp={getCurrentTime()}')
 def redeemFlexibleSimpleEarnProduct(prodId,destAccount,amount=0):
@@ -125,7 +126,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[40]:
+# In[6]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -156,6 +157,7 @@ def getTotalBalance(*symbols):
     price=float(getCurrentPrice(f'{asset["asset"]}USDT')['price']) if asset['asset']!='USDT' else 1
     totalSpotBalance+=price*float(asset['free'])
   for asset in futureBalance:
+    The line `for asset in investInfo: investInfo[asset]*=ratio` is iterating over each key (asset) in the `investInfo` dictionary and multiplying the corresponding value by the `ratio`. This operation effectively scales each value in the dictionary by the same factor `ratio`.
     price=float(getCurrentPrice(f'{asset["asset"]}USDT')['price']) if asset['asset']!='USDT' else 1
     totalFutureBalance+=price*float(asset['walletBalance'])
   balanceDict['spot']=totalSpotBalance
@@ -209,7 +211,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[41]:
+# In[7]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -259,14 +261,14 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
 
 coinsymbols=['BTC']
 cashsymbols=['USDC']
-symbol='BTCUSDC'
+symbol=coinsymbols[0]+cashsymbols[0]
 leverage=5
 try:
   #현재 이동평균선 확인 후 투자 비율 계산
   print('start program')
-  disparity=getCurrentFutureMarkDisparity('BTCUSDC','1d',30)
+  disparity=getCurrentFutureMarkDisparity(symbol,'1d',30)
   accountChangeInfo=getAccountChange(coinsymbols,cashsymbols,disparity,leverage)
-  minOrderLimit=float(getCurrentPrice('BTCUSDC')['price'])*0.002
+  minOrderLimit=float(getCurrentPrice(symbol)['price'])*0.002
   minEarnLimit=0.1
   curPrice=floorToDecimal(float(getCurrentPrice(symbol)['price']),1)
 
@@ -313,15 +315,23 @@ try:
   maximumPositionAmount=floorToDecimal(float(updatedChangeInfo['total'])*leverage/curPrice,3)
   if len(positionAmountList)>0:
     closeAllOpenOrders()
-    print('set stopmarket price, amount')
+    print('set stopmarket order')
     setCurrentStopmarketPrice(symbol,curPrice,leverage,maximumPositionAmount,averagePrice)
     sendMessage(f'stopmarket setting finished')
+    
   earnList=dict([(v['asset'],v['productId']) for v in getFlexibleSimpleEarnList()['rows']])
+  freeBalances=[v for v in getAccount()['balances'] if v['free']!='0']
+  currentEarnAmount=getSimpleEarnPosition()
   for asset in freeBalances:
     if asset['asset'] in earnList: 
-      if float(asset['free'])>=minEarnLimit:
-        sendMessage(f"Subscribe simple earn: {asset['asset']}, amount: {asset['free']}")
-        sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset['asset']],float(asset['free'])))
+      hasEnoughMoney=False
+      curAmount=[v['totalAmount'] for v in currentEarnAmount['rows'] if v['asset']==asset['asset']]
+      if float(asset['free'])>=minEarnLimit: hasEnoughMoney=True
+      elif curAmount>=1: 
+        redeemFlexibleSimpleEarnProduct(earnList[asset['asset']],1)
+        hasEnoughMoney=True      
+      sendMessage(f"Subscribe simple earn: {asset['asset']}, amount: {asset['free']}")
+      sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset['asset']],float(asset['free'])))
   print('Finish the program')
 except Exception as e:
   msg=f'Failed to finish the program: {e}'
