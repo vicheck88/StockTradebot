@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[12]:
+# In[51]:
 
 
 import requests as rq
@@ -13,7 +13,7 @@ import time
 import math
 
 
-# In[13]:
+# In[52]:
 
 
 with open('/Users/chhan/config.json','r') as f: config=json.load(f)
@@ -28,7 +28,7 @@ headers = {
 }
 
 
-# In[14]:
+# In[53]:
 
 
 def sendMessage(message,count=0):
@@ -43,7 +43,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[15]:
+# In[54]:
 
 
 def request(url,method):
@@ -58,7 +58,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[34]:
+# In[55]:
 
 
 def getCurrentTime():
@@ -126,7 +126,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[17]:
+# In[56]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -210,7 +210,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[19]:
+# In[57]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -221,7 +221,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
   return requestData(spotURL,subUrl,'post',f'fromAsset={fromAsset}&toAsset={toAsset}&fromAmount={fromAmount}&timestamp={getCurrentTime()}')
 
 
-# In[20]:
+# In[58]:
 
 
 '''
@@ -241,7 +241,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[49]:
+# In[59]:
 
 
 def floorToDecimal(num,ndigits):
@@ -259,19 +259,22 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
   sendMessage(setPositionClosePrice(symbol,'SELL',math.floor(averagePrice*0.99),'MARK_PRICE'))
 
 
-# In[37]:
+# In[109]:
 
 
 coinsymbols=['BTC']
 cashsymbols=['USDC']
 symbol=coinsymbols[0]+cashsymbols[0]
 leverage=5
+avoidInsufficientErrorRatio=0.98
+minOrderQuantityLimit=0.005
+
 try:
   #현재 이동평균선 확인 후 투자 비율 계산
   print('start program')
   disparity=getCurrentFutureMarkDisparity(symbol,'1d',30)
   accountChangeInfo=getAccountChange(coinsymbols,cashsymbols,disparity,leverage)
-  minOrderLimit=float(getCurrentPrice(symbol)['price'])*0.002
+  minOrderLimit=float(getCurrentPrice(symbol)['price'])*minOrderQuantityLimit
   minEarnLimit=0.1
   curPrice=floorToDecimal(float(getCurrentPrice(symbol)['price']),1)
 
@@ -302,7 +305,7 @@ try:
     assetList=[v for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols]
     if assetList:
       asset=assetList[0]
-      newPositionAmount=floorToDecimal(float(asset['availableBalance'])*leverage/curPrice,3)
+      newPositionAmount=floorToDecimal(float(asset['availableBalance'])*leverage/curPrice*avoidInsufficientErrorRatio,3)
       averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
       
       sendMessage(f'averagePrice: {averagePrice}')
@@ -323,10 +326,11 @@ try:
     print('set stopmarket order')
     setCurrentStopmarketPrice(symbol,curPrice,leverage,maximumPositionAmount,averagePrice)
     sendMessage(f'stopmarket setting finished')
-    
+  
   earnList=dict([(v['asset'],v['productId']) for v in getFlexibleSimpleEarnList()['rows']])
-  freeBalances=[v for v in getAccount()['balances'] if v['free']!='0']
+  freeBalances=[v for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols]
   currentEarnAmount=getSimpleEarnPosition()
+  if len(freeBalances)>0: sendMessage('transfer remaining money to simple earn')
   for asset in freeBalances:
     if asset['asset'] in earnList: 
       hasEnoughMoney=False
@@ -335,8 +339,10 @@ try:
       elif curAmount>=1: 
         redeemFlexibleSimpleEarnProduct(earnList[asset['asset']],1)
         hasEnoughMoney=True      
-      sendMessage(f"Subscribe simple earn: {asset['asset']}, amount: {asset['free']}")
-      sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset['asset']],float(asset['free'])))
+      sendMessage('transfer: future -> spot')
+      sendMessage(transfer('umfuture','main',asset['asset'],float(asset['availableBalance'])))
+      sendMessage(f"Subscribe simple earn: {asset['asset']}, amount: {asset['availableBalance']}")
+      sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset['asset']],float(asset['availableBalance'])))
   print('Finish the program')
 except Exception as e:
   msg=f'Failed to finish the program: {e}'
