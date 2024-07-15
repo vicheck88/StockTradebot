@@ -259,7 +259,7 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
   sendMessage(setPositionClosePrice(symbol,'SELL',math.floor(averagePrice*0.99),'MARK_PRICE'))
 
 
-# In[109]:
+# In[110]:
 
 
 coinsymbols=['BTC']
@@ -302,11 +302,12 @@ try:
       print(f"transfer asset: {b['asset']}")
       sendMessage(transfer('main','umfuture',b['asset'],float(b['free'])))
     
+    averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
     assetList=[v for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols]
     if assetList:
       asset=assetList[0]
       newPositionAmount=floorToDecimal(float(asset['availableBalance'])*leverage/curPrice*avoidInsufficientErrorRatio,3)
-      averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
+      # averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
       
       sendMessage(f'averagePrice: {averagePrice}')
       sendMessage(f'price: {curPrice} newPositionAmount: {newPositionAmount}')
@@ -335,7 +336,7 @@ try:
     if asset['asset'] in earnList: 
       hasEnoughMoney=False
       curAmount=[v['totalAmount'] for v in currentEarnAmount['rows'] if v['asset']==asset['asset']]
-      if float(asset['free'])>=minEarnLimit: hasEnoughMoney=True
+      if float(asset['availableBalance'])>=minEarnLimit: hasEnoughMoney=True
       elif curAmount>=1: 
         redeemFlexibleSimpleEarnProduct(earnList[asset['asset']],1)
         hasEnoughMoney=True      
