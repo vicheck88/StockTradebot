@@ -301,13 +301,11 @@ try:
     for b in freeBalances: 
       print(f"transfer asset: {b['asset']}")
       sendMessage(transfer('main','umfuture',b['asset'],float(b['free'])))
-    
-    averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
     assetList=[v for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols]
     if assetList:
       asset=assetList[0]
       newPositionAmount=floorToDecimal(float(asset['availableBalance'])*leverage/curPrice*avoidInsufficientErrorRatio,3)
-      # averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
+      averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
       
       sendMessage(f'averagePrice: {averagePrice}')
       sendMessage(f'price: {curPrice} newPositionAmount: {newPositionAmount}')
@@ -319,7 +317,8 @@ try:
       #transfer remaining amount to spot
       print('transfer remaining future assets into spot account')
       transfer('umfuture','main',asset['asset'],float(asset['availableBalance']))
-    
+      
+  averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
   positionAmountList=[v for v in getCurrentPosition() if v['symbol']==symbol and float(v['positionAmt'])>0]
   maximumPositionAmount=floorToDecimal(float(updatedChangeInfo['total'])*leverage/curPrice,3)
   if len(positionAmountList)>0:
