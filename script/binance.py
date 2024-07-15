@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[12]:
 
 
 import requests as rq
@@ -13,7 +13,7 @@ import time
 import math
 
 
-# In[2]:
+# In[13]:
 
 
 with open('/Users/chhan/config.json','r') as f: config=json.load(f)
@@ -28,7 +28,7 @@ headers = {
 }
 
 
-# In[3]:
+# In[14]:
 
 
 def sendMessage(message,count=0):
@@ -43,7 +43,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[4]:
+# In[15]:
 
 
 def request(url,method):
@@ -58,7 +58,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[10]:
+# In[34]:
 
 
 def getCurrentTime():
@@ -126,7 +126,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[6]:
+# In[17]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -157,7 +157,6 @@ def getTotalBalance(*symbols):
     price=float(getCurrentPrice(f'{asset["asset"]}USDT')['price']) if asset['asset']!='USDT' else 1
     totalSpotBalance+=price*float(asset['free'])
   for asset in futureBalance:
-    The line `for asset in investInfo: investInfo[asset]*=ratio` is iterating over each key (asset) in the `investInfo` dictionary and multiplying the corresponding value by the `ratio`. This operation effectively scales each value in the dictionary by the same factor `ratio`.
     price=float(getCurrentPrice(f'{asset["asset"]}USDT')['price']) if asset['asset']!='USDT' else 1
     totalFutureBalance+=price*float(asset['walletBalance'])
   balanceDict['spot']=totalSpotBalance
@@ -211,7 +210,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[7]:
+# In[19]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -222,7 +221,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
   return requestData(spotURL,subUrl,'post',f'fromAsset={fromAsset}&toAsset={toAsset}&fromAmount={fromAmount}&timestamp={getCurrentTime()}')
 
 
-# In[42]:
+# In[20]:
 
 
 '''
@@ -242,21 +241,25 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[43]:
+# In[49]:
 
 
 def floorToDecimal(num,ndigits):
   return math.floor(num*(10**ndigits))/(10**ndigits)
 def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,averagePrice):
   amountPerStop=floorToDecimal(totalPositionAmount/maxLeverage,3)
-  stopPriceList=[round(averagePrice*(1+r/100),1) for r in [maxLeverage*2-1,1,-2]]
+  stopPriceList=[round(averagePrice*(1+r/100),1) for r in range(maxLeverage*2-1,1,-2)]
   for price in stopPriceList:
-    if(curPrice>price): sendMessage(setStopMarketPrice(symbol,'SELL',price,amountPerStop,'MARK_PRICE'))
+    if(curPrice>price): 
+      sendMessage(f'set stopPrice at {price}')
+      sendMessage(setStopMarketPrice(symbol,'SELL',price,amountPerStop,'MARK_PRICE'))
+  sendMessage(f'set stopPrice at {averagePrice}')
   sendMessage(setStopMarketPrice(symbol,'SELL',averagePrice,floorToDecimal(amountPerStop/2,3),'MARK_PRICE'))
+  sendMessage(f'set stopPrice at {math.floor(averagePrice*0.99)}: close price')
   sendMessage(setPositionClosePrice(symbol,'SELL',math.floor(averagePrice*0.99),'MARK_PRICE'))
 
 
-# In[53]:
+# In[37]:
 
 
 coinsymbols=['BTC']
@@ -279,7 +282,7 @@ try:
     print('redeem simple earn assets and transfer it into spot account')
     prodId=[v for v in getFlexibleSimpleEarnList()['rows'] if v['asset'] in cashsymbols][0]['productId']
     amount= 0 if accountChangeInfo['investRatio']==1 else -accountChangeInfo['earn']
-    redeemFlexibleSimpleEarnProduct(prodId,'SPOT',amount)
+    sendMessage(redeemFlexibleSimpleEarnProduct(prodId,'SPOT',floorToDecimal(amount,8)))
 
   freeBalances=[v for v in getAccount()['balances'] if v['free']!='0']
   print(f'free balances: {freeBalances}')
@@ -292,7 +295,9 @@ try:
     sendMessage(updatedChangeInfo)
     
     print('transfer spot into future')
-    for b in freeBalances: transfer('main','umfuture',b['asset'],float(b['free']))
+    for b in freeBalances: 
+      print(f"transfer asset: {b['asset']}")
+      sendMessage(transfer('main','umfuture',b['asset'],float(b['free'])))
     
     assetList=[v for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols]
     if assetList:
@@ -337,3 +342,4 @@ except Exception as e:
   msg=f'Failed to finish the program: {e}'
   sendMessage(msg)
   print(msg)
+
