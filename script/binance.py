@@ -284,7 +284,7 @@ try:
   transferrableList=[v for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset']!='BNB']
   for asset in transferrableList: transfer('umfuture','main',asset['asset'],float(asset['availableBalance']))
 
-  if accountChangeInfo['earn']<0 and accountChangeInfo['earn']>minOrderLimit:
+  if accountChangeInfo['earn']<0 and abs(accountChangeInfo['earn'])>minOrderLimit:
     print('redeem simple earn assets and transfer it into spot account')
     prodId=[v for v in getFlexibleSimpleEarnList()['rows'] if v['asset'] in cashsymbols][0]['productId']
     amount= 0 if accountChangeInfo['investRatio']==1 else -accountChangeInfo['earn']
