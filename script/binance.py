@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[51]:
+# In[166]:
 
 
 import requests as rq
@@ -13,7 +13,7 @@ import time
 import math
 
 
-# In[52]:
+# In[167]:
 
 
 with open('/Users/chhan/config.json','r') as f: config=json.load(f)
@@ -28,7 +28,7 @@ headers = {
 }
 
 
-# In[53]:
+# In[176]:
 
 
 def sendMessage(message,count=0):
@@ -43,7 +43,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[54]:
+# In[177]:
 
 
 def request(url,method):
@@ -58,7 +58,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[55]:
+# In[178]:
 
 
 def getCurrentTime():
@@ -126,7 +126,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[56]:
+# In[179]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -210,7 +210,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[57]:
+# In[180]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -221,7 +221,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
   return requestData(spotURL,subUrl,'post',f'fromAsset={fromAsset}&toAsset={toAsset}&fromAmount={fromAmount}&timestamp={getCurrentTime()}')
 
 
-# In[58]:
+# In[181]:
 
 
 '''
@@ -241,7 +241,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[59]:
+# In[185]:
 
 
 def floorToDecimal(num,ndigits):
@@ -249,17 +249,20 @@ def floorToDecimal(num,ndigits):
 def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,averagePrice):
   amountPerStop=floorToDecimal(totalPositionAmount/maxLeverage,3)
   stopPriceList=[round(averagePrice*(1+r/100),1) for r in range(maxLeverage*2-1,1,-2)]
+  realStopPriceList=[]
   for price in stopPriceList:
     if(curPrice>price): 
-      sendMessage(f'set stopPrice at {price}')
-      sendMessage(setStopMarketPrice(symbol,'SELL',price,amountPerStop,'MARK_PRICE'))
-  sendMessage(f'set stopPrice at {averagePrice}')
-  sendMessage(setStopMarketPrice(symbol,'SELL',averagePrice,floorToDecimal(amountPerStop/2,3),'MARK_PRICE'))
-  sendMessage(f'set stopPrice at {math.floor(averagePrice*0.99)}: close price')
-  sendMessage(setPositionClosePrice(symbol,'SELL',math.floor(averagePrice*0.99),'MARK_PRICE'))
+      print(f'set stopPrice at {price}')
+      print(setStopMarketPrice(symbol,'SELL',price,amountPerStop,'MARK_PRICE'))
+      realStopPriceList.append(price)
+  print(f'set stopPrice at {averagePrice}')
+  print(setStopMarketPrice(symbol,'SELL',averagePrice,floorToDecimal(amountPerStop/2,3),'MARK_PRICE'))
+  print(f'set stopPrice at {math.floor(averagePrice*0.99)}: close price')
+  print(setPositionClosePrice(symbol,'SELL',math.floor(averagePrice*0.99),'MARK_PRICE'))
+  sendMessage(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
 
 
-# In[110]:
+# In[186]:
 
 
 coinsymbols=['BTC']
@@ -281,7 +284,7 @@ try:
   transferrableList=[v for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset']!='BNB']
   for asset in transferrableList: transfer('umfuture','main',asset['asset'],float(asset['availableBalance']))
 
-  if accountChangeInfo['earn']<0:
+  if accountChangeInfo['earn']<0 and accountChangeInfo['earn']>minOrderLimit:
     print('redeem simple earn assets and transfer it into spot account')
     prodId=[v for v in getFlexibleSimpleEarnList()['rows'] if v['asset'] in cashsymbols][0]['productId']
     amount= 0 if accountChangeInfo['investRatio']==1 else -accountChangeInfo['earn']
@@ -325,24 +328,27 @@ try:
     closeAllOpenOrders()
     print('set stopmarket order')
     setCurrentStopmarketPrice(symbol,curPrice,leverage,maximumPositionAmount,averagePrice)
-    sendMessage(f'stopmarket setting finished')
   
   earnList=dict([(v['asset'],v['productId']) for v in getFlexibleSimpleEarnList()['rows']])
-  freeBalances=[v for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols]
+  futureBalances=dict([(v['asset'],float(v['availableBalance'])) for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols])
   currentEarnAmount=getSimpleEarnPosition()
-  if len(freeBalances)>0: sendMessage('transfer remaining money to simple earn')
-  for asset in freeBalances:
-    if asset['asset'] in earnList: 
+  
+  for asset,amt in futureBalances.items():
+    if asset in earnList: 
       hasEnoughMoney=False
-      curAmount=[v['totalAmount'] for v in currentEarnAmount['rows'] if v['asset']==asset['asset']]
-      if float(asset['availableBalance'])>=minEarnLimit: hasEnoughMoney=True
+      curAmount=[v['totalAmount'] for v in currentEarnAmount['rows'] if v['asset']==asset]
+      if amt>=minEarnLimit: hasEnoughMoney=True
       elif curAmount>=1: 
-        redeemFlexibleSimpleEarnProduct(earnList[asset['asset']],1)
+        redeemFlexibleSimpleEarnProduct(earnList[asset],1)
         hasEnoughMoney=True      
       sendMessage('transfer: future -> spot')
-      sendMessage(transfer('umfuture','main',asset['asset'],float(asset['availableBalance'])))
-      sendMessage(f"Subscribe simple earn: {asset['asset']}, amount: {asset['availableBalance']}")
-      sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset['asset']],float(asset['availableBalance'])))
+      sendMessage(transfer('umfuture','main',asset,amt))
+      
+  spotBalances=dict([(v['asset'],float(v['free'])) for v in getAccount()['balances'] if float(v['free'])>0])
+  for asset,amt in spotBalances.items():
+    if asset not in earnList: continue
+    sendMessage(f"Subscribe simple earn: {asset}, amount: {amt}")
+    sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset],amt))
   print('Finish the program')
 except Exception as e:
   msg=f'Failed to finish the program: {e}'
