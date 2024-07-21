@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[166]:
+# In[1]:
 
 
 import requests as rq
@@ -13,7 +13,7 @@ import time
 import math
 
 
-# In[167]:
+# In[2]:
 
 
 with open('/Users/chhan/config.json','r') as f: config=json.load(f)
@@ -28,7 +28,7 @@ headers = {
 }
 
 
-# In[176]:
+# In[3]:
 
 
 def sendMessage(message,count=0):
@@ -43,7 +43,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[177]:
+# In[4]:
 
 
 def request(url,method):
@@ -58,7 +58,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[178]:
+# In[5]:
 
 
 def getCurrentTime():
@@ -126,7 +126,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[179]:
+# In[6]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -210,7 +210,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[180]:
+# In[7]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -221,7 +221,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
   return requestData(spotURL,subUrl,'post',f'fromAsset={fromAsset}&toAsset={toAsset}&fromAmount={fromAmount}&timestamp={getCurrentTime()}')
 
 
-# In[181]:
+# In[8]:
 
 
 '''
@@ -241,7 +241,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[185]:
+# In[9]:
 
 
 def floorToDecimal(num,ndigits):
@@ -259,10 +259,10 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
   print(setStopMarketPrice(symbol,'SELL',averagePrice,floorToDecimal(amountPerStop/2,3),'MARK_PRICE'))
   print(f'set stopPrice at {math.floor(averagePrice*0.99)}: close price')
   print(setPositionClosePrice(symbol,'SELL',math.floor(averagePrice*0.99),'MARK_PRICE'))
-  sendMessage(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
+  print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
 
 
-# In[186]:
+# In[12]:
 
 
 coinsymbols=['BTC']
@@ -334,19 +334,19 @@ try:
   currentEarnAmount=getSimpleEarnPosition()
   
   for asset,amt in futureBalances.items():
-    if asset in earnList: 
-      hasEnoughMoney=False
-      curAmount=[v['totalAmount'] for v in currentEarnAmount['rows'] if v['asset']==asset]
-      if amt>=minEarnLimit: hasEnoughMoney=True
-      elif curAmount>=1: 
-        redeemFlexibleSimpleEarnProduct(earnList[asset],1)
-        hasEnoughMoney=True      
+    if asset in earnList:      
       sendMessage('transfer: future -> spot')
       sendMessage(transfer('umfuture','main',asset,amt))
       
   spotBalances=dict([(v['asset'],float(v['free'])) for v in getAccount()['balances'] if float(v['free'])>0])
   for asset,amt in spotBalances.items():
     if asset not in earnList: continue
+    hasEnoughMoney=False
+    curAmount=[v['totalAmount'] for v in currentEarnAmount['rows'] if v['asset']==asset]
+    if amt>=minEarnLimit: hasEnoughMoney=True
+    elif curAmount>=1: 
+      redeemFlexibleSimpleEarnProduct(earnList[asset],1)
+      hasEnoughMoney=True 
     sendMessage(f"Subscribe simple earn: {asset}, amount: {amt}")
     sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset],amt))
   print('Finish the program')
