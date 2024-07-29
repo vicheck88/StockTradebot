@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[69]:
 
 
 import requests as rq
@@ -13,7 +13,7 @@ import time
 import math
 
 
-# In[2]:
+# In[70]:
 
 
 with open('/Users/chhan/config.json','r') as f: config=json.load(f)
@@ -28,7 +28,7 @@ headers = {
 }
 
 
-# In[3]:
+# In[71]:
 
 
 def sendMessage(message,count=0):
@@ -43,7 +43,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[4]:
+# In[72]:
 
 
 def request(url,method):
@@ -58,7 +58,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[5]:
+# In[73]:
 
 
 def getCurrentTime():
@@ -116,6 +116,8 @@ def setStopMarketPrice(symbol,side,stopPrice,quantity,workingType):
   return requestData(futureURL,'/fapi/v1/order','post',f'symbol={symbol}&side={side}&type=STOP_MARKET&stopPrice={stopPrice}&quantity={quantity}&reduceOnly=false&workingType={workingType}&timestamp={getCurrentTime()}')
 def setPositionClosePrice(symbol,side,stopPrice,workingType):
   return requestData(futureURL,'/fapi/v1/order','post',f'symbol={symbol}&side={side}&type=STOP_MARKET&stopPrice={stopPrice}&closePosition=true&workingType={workingType}&timestamp={getCurrentTime()}')
+def setStopLimitPrice(symbol,side,stopPrice,quantity,workingType,priceMatch):
+  return requestData(futureURL,'/fapi/v1/order','post',f'symbol={symbol}&side={side}&type=STOP&stopPrice={stopPrice}&quantity={quantity}&reduceOnly=false&workingType={workingType}&priceMatch={priceMatch}&timestamp={getCurrentTime()}')
 def getCurrentPosition():
   return requestData(futureURL,'/fapi/v2/positionRisk','get',f'timestamp={getCurrentTime()}')
 def getAllOpenOrders():
@@ -126,7 +128,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[6]:
+# In[74]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -210,7 +212,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[7]:
+# In[75]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -221,7 +223,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
   return requestData(spotURL,subUrl,'post',f'fromAsset={fromAsset}&toAsset={toAsset}&fromAmount={fromAmount}&timestamp={getCurrentTime()}')
 
 
-# In[8]:
+# In[76]:
 
 
 '''
@@ -241,11 +243,28 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[9]:
+# In[77]:
 
 
 def floorToDecimal(num,ndigits):
   return math.floor(num*(10**ndigits))/(10**ndigits)
+
+
+def setCurrentStopLimitPrice(symbol,curPrice,levelNum,totalPositionAmount,averagePrice,priceMatch):
+  amountPerStop=floorToDecimal(totalPositionAmount/levelNum,3)
+  stopPriceList=[round(averagePrice*(1+r/100),1) for r in range(levelNum*2,1,-3)]
+  realStopPriceList=[]
+  for price in stopPriceList:
+    if(curPrice>price): 
+      print(f'set stopPrice at {price}')
+      print(setStopLimitPrice(symbol,'SELL',price,amountPerStop,'MARK_PRICE',priceMatch))
+      realStopPriceList.append(price)
+  print(f'set stopPrice at {averagePrice}')
+  print(setStopLimitPrice(symbol,'SELL',price,floorToDecimal(amountPerStop/2,3),'MARK_PRICE',priceMatch))
+  print(f'set stopPrice at {math.floor(averagePrice*0.99)}: close price')
+  print(setPositionClosePrice(symbol,'SELL',math.floor(averagePrice*0.99),'MARK_PRICE'))
+  print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
+  
 def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,averagePrice):
   amountPerStop=floorToDecimal(totalPositionAmount/maxLeverage,3)
   stopPriceList=[round(averagePrice*(1+r/100),1) for r in range(maxLeverage*2-1,1,-2)]
@@ -262,13 +281,14 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
   print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
 
 
-# In[12]:
+# In[78]:
 
 
 coinsymbols=['BTC']
 cashsymbols=['USDC']
 symbol=coinsymbols[0]+cashsymbols[0]
 leverage=5
+stopLimitLevelNum=2
 avoidInsufficientErrorRatio=0.98
 minOrderQuantityLimit=0.005
 
@@ -327,7 +347,8 @@ try:
   if len(positionAmountList)>0:
     closeAllOpenOrders()
     print('set stopmarket order')
-    setCurrentStopmarketPrice(symbol,curPrice,leverage,maximumPositionAmount,averagePrice)
+    setCurrentStopLimitPrice(symbol,curPrice,stopLimitLevelNum,maximumPositionAmount,averagePrice,'OPPONENT')
+    # setCurrentStopmarketPrice(symbol,curPrice,leverage,maximumPositionAmount,averagePrice)
   
   earnList=dict([(v['asset'],v['productId']) for v in getFlexibleSimpleEarnList()['rows']])
   futureBalances=dict([(v['asset'],float(v['availableBalance'])) for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols])
