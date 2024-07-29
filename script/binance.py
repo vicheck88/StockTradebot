@@ -243,7 +243,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[77]:
+# In[80]:
 
 
 def floorToDecimal(num,ndigits):
@@ -260,7 +260,7 @@ def setCurrentStopLimitPrice(symbol,curPrice,levelNum,totalPositionAmount,averag
       print(setStopLimitPrice(symbol,'SELL',price,amountPerStop,'MARK_PRICE',priceMatch))
       realStopPriceList.append(price)
   print(f'set stopPrice at {averagePrice}')
-  print(setStopLimitPrice(symbol,'SELL',price,floorToDecimal(amountPerStop/2,3),'MARK_PRICE',priceMatch))
+  print(setStopLimitPrice(symbol,'SELL',averagePrice,floorToDecimal(amountPerStop/2,3),'MARK_PRICE',priceMatch))
   print(f'set stopPrice at {math.floor(averagePrice*0.99)}: close price')
   print(setPositionClosePrice(symbol,'SELL',math.floor(averagePrice*0.99),'MARK_PRICE'))
   print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
