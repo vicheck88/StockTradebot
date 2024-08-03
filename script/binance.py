@@ -287,7 +287,7 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
 coinsymbols=['BTC']
 cashsymbols=['USDC']
 symbol=coinsymbols[0]+cashsymbols[0]
-leverage=5
+leverage=3
 stopLimitLevelNum=2
 avoidInsufficientErrorRatio=0.98
 minOrderQuantityLimit=0.005
@@ -347,7 +347,9 @@ try:
   if len(positionAmountList)>0:
     closeAllOpenOrders()
     print('set stopmarket order')
-    setCurrentStopLimitPrice(symbol,curPrice,stopLimitLevelNum,maximumPositionAmount,averagePrice,'OPPONENT')
+    currentLeverage=updatedChangeInfo['investRatio']*leverage
+    currentPositionAmount=floorToDecimal(float(updatedChangeInfo['total'])*currentLeverage/curPrice,3)
+    setCurrentStopLimitPrice(symbol,curPrice,stopLimitLevelNum,currentPositionAmount,averagePrice,'OPPONENT')
     # setCurrentStopmarketPrice(symbol,curPrice,leverage,maximumPositionAmount,averagePrice)
   
   earnList=dict([(v['asset'],v['productId']) for v in getFlexibleSimpleEarnList()['rows']])
