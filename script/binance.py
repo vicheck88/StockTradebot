@@ -182,18 +182,9 @@ def convertAccountUnit(asset,investInfo):
   return investInfo
   
 def determineInvestInfo(disparity,currentInvestInfo,maxLeverage):
-  """
-  leverage: 최대 5까지
-  disparity 기준으로 하며, disparity 범위에 따른 leverage
-  leverage: 1+floor(disparity/2)/(leverage)
-  1-3: lev 1
-  3-5: lev 2
-  5-7: lev 3
-  7-9: lev 4
-  9- : lev 5
-  """
   d=disparity-100
-  ratio=math.floor((d+1)/2)/maxLeverage
+  ratio=math.floor(d)/2
+  #ratio=math.floor((d+1)/2)/maxLeverage
   newRatio=min(ratio,1) if d>0 else 0
   ret={}
   ret['investRatio']=newRatio
@@ -252,13 +243,13 @@ def floorToDecimal(num,ndigits):
 
 def setCurrentStopLimitPrice(symbol,curPrice,levelNum,totalPositionAmount,averagePrice,priceMatch):
   amountPerStop=floorToDecimal(totalPositionAmount/levelNum,3)
-  stopPriceList=[round(averagePrice*(1+r/100),1) for r in range(levelNum*2,1,-3)]
   realStopPriceList=[]
-  for price in stopPriceList:
-    if(curPrice>price): 
-      print(f'set stopPrice at {price}')
-      print(setStopLimitPrice(symbol,'SELL',price,amountPerStop,'MARK_PRICE',priceMatch))
-      realStopPriceList.append(price)
+  # stopPriceList=[round(averagePrice*(1+r/100),1) for r in range(levelNum*2,1,-3)]
+  # for price in stopPriceList:
+  #   if(curPrice>price): 
+  #     print(f'set stopPrice at {price}')
+  #     print(setStopLimitPrice(symbol,'SELL',price,amountPerStop,'MARK_PRICE',priceMatch))
+  #     realStopPriceList.append(price)
   print(f'set stopPrice at {averagePrice}')
   print(setStopLimitPrice(symbol,'SELL',averagePrice,floorToDecimal(amountPerStop/2,3),'MARK_PRICE',priceMatch))
   print(f'set stopPrice at {math.floor(averagePrice*0.99)}: close price')

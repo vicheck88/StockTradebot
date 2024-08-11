@@ -41,15 +41,21 @@ currentPrice<-tail(priceWithMA,1)
 currentPrice<-currentPrice[,-1]
 currentDisparity<-currentPrice[,100*QQQ.Adjusted/QQQ.Adjusted.MA.200-100]
 
-nasdaqCode<-'418660' #tiger 나스닥 레버리지
-sofrCode<-'456610' #tiger sofr
+nasdaqLevCode<-'418660' #tiger 나스닥 레버리지
+sofrCode<-'456880' #ace sofr
 
-currentNasdaqPrice<-getCurrentPrice(apiConfig,account,token,nasdaqCode)
+currentNasdaqPrice<-getCurrentPrice(apiConfig,account,token,nasdaqLevCode)
 currentSofrPrice<-getCurrentPrice(apiConfig,account,token,sofrCode)
+
+#disp 1 ~ 2: 0.5
+#disp 2 ~ 20: 1
+#disp 20 ~ : 0
 
 goalRatio<-floor(currentDisparity)*0.5
 goalRatio<-min(1,goalRatio)
 goalRatio<-max(0,goalRatio)
+if(currentDisparity>20) goalRatio<-0
+
 
 currentBalance<-getBalancesheet(token,apiConfig,account)
 if(currentBalance$status_code!='200'){
@@ -61,8 +67,8 @@ totalBalanceSum<-as.numeric(currentBalance$summary$tot_evlu_amt)
 goalBalanceSum<-totalBalanceSum*goalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
 
-goalBalanceSheet<-data.table(종목코드=nasdaqCode,종목명='tiger 나스닥 레버리지',현재가=currentNasdaqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity),주문구분='00')
-goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='tiger sofr',현재가=currentSofrPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
+goalBalanceSheet<-data.table(종목코드=nasdaqLevCode,종목명='tiger 나스닥 레버리지',현재가=currentNasdaqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity),주문구분='00')
+goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='ace sofr',현재가=currentSofrPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
 
 
 if(!is.null(currentBalance$sheet)){
