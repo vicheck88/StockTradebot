@@ -1,8 +1,10 @@
 #Sys.setlocale('LC_ALL','en_US.UTF-8')
 source("~/StockTradebot/script/Han2FunctionList.R") #macOS에서 읽는 경우
 source("~/StockTradebot/script/telegramAPI.R") #macOS에서 읽는 경우
+source("~/StockTradebot/script/RQuantFunctionList.R") #macOS에서 읽는 경우
 #source("~/stockInfoCrawler/StockTradebot/script/Han2FunctionList.R") #라즈베리에서 읽는 경우
 #source("~/stockInfoCrawler/StockTradebot/script/telegramAPI.R") #라즈베리에서 읽는 경우
+#source("~/stockInfoCrawler/StockTradebot/script/RQuantFunctionList.R") #macOS에서 읽는 경우
 
 pkg = c('data.table','xts','quantmod','stringr','timeDate','lubridate')
 
@@ -22,24 +24,11 @@ today<-str_replace_all(Sys.Date(),"-","")
 token<-getToken(apiConfig,account)
 if(isKoreanHoliday(token,apiConfig,account,today)=="N") stop("Market closed")
 
-symbols = c('QQQ')
-getSymbols(symbols, src = 'yahoo')
-prices = do.call(cbind,lapply(symbols, function(x) Ad(get(x))))
-prices<-as.data.table(prices)
-
-movingAvg<-NULL
-for(i in c(5,10,20,30,60,100,200)){
-  tbl<-as.xts(prices)
-  tbl<-do.call(cbind,lapply(tbl,function(y)rollmean(y,i,align='right')))
-  names(tbl)<-paste0(names(tbl),".MA.",i)
-  movingAvg<-cbind(movingAvg,tbl)
-}
-priceWithMA<-cbind(prices,movingAvg)
-priceWithMA<-as.data.table(priceWithMA)
-
-currentPrice<-tail(priceWithMA,1)
-currentPrice<-currentPrice[,-1]
-currentDisparity<-currentPrice[,100*QQQ.Adjusted/QQQ.Adjusted.MA.200-100]
+trackCode<-'379810'
+prices<-adjustedPriceFromNaver('day',200,trackCode)
+averagePrice<-mean(prices[,1])
+currentPrice<-tail(prices,1)[,1]
+currentDisparity<-100*currentPrice/averagePrice-100
 
 nasdaqLevCode<-'418660' #tiger 나스닥 레버리지
 sofrCode<-'456880' #ace sofr
@@ -110,6 +99,7 @@ for(i in nrow(sellRes)){
   Sys.sleep(0.04)
 }
 
+Sys.sleep(3600)
 
 print("Buy orders")
 buySheet<-combinedSheet[평가금액<목표금액]
@@ -121,30 +111,4 @@ for(i in nrow(buyRes)){
   sendMessage(text,0)
   Sys.sleep(0.04)
 }
-
-
-print("failed stocks")
-print(sellRes[rt_cd!='0'])
-print(buyRes[rt_cd!='0'])
-
-cnt<-0
-failNum<-nrow(buyRes[rt_cd!='0'])
-rebuySheet<-buySheet
-rebuyRes<-buyRes
-while(failNum>0 & cnt<=10){
-  cnt<-cnt+1
-  rebuySheet<-rebuySheet[rebuyRes[rt_cd!='0']$idx]
-  rebuyRes<-orderStocks(token,apiConfig,account,rebuySheet)
-  for(i in nrow(rebuyRes)){
-    sendMessage("Buy orders")
-    row<-rebuyRes[i,]
-    text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
-    sendMessage(text,0)
-    Sys.sleep(0.04)
-  }
-  failNum<-nrow(rebuyRes[rt_cd!='0'])
-  Sys.sleep(30)
-}
-
-res<-rbind(sellRes,buyRes)
 revokeToken(apiConfig,account,token)
