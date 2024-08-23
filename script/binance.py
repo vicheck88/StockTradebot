@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[69]:
+# In[1]:
 
 
 import requests as rq
@@ -11,9 +11,10 @@ import json
 from datetime import datetime,timezone,timedelta
 import time
 import math
+import traceback
 
 
-# In[70]:
+# In[2]:
 
 
 with open('/Users/chhan/config.json','r') as f: config=json.load(f)
@@ -28,7 +29,7 @@ headers = {
 }
 
 
-# In[71]:
+# In[3]:
 
 
 def sendMessage(message,count=0):
@@ -43,7 +44,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[72]:
+# In[4]:
 
 
 def request(url,method):
@@ -58,7 +59,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[73]:
+# In[5]:
 
 
 def getCurrentTime():
@@ -128,7 +129,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[74]:
+# In[6]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -203,7 +204,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[75]:
+# In[7]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -214,7 +215,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
   return requestData(spotURL,subUrl,'post',f'fromAsset={fromAsset}&toAsset={toAsset}&fromAmount={fromAmount}&timestamp={getCurrentTime()}')
 
 
-# In[76]:
+# In[8]:
 
 
 '''
@@ -234,7 +235,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[80]:
+# In[9]:
 
 
 def floorToDecimal(num,ndigits):
@@ -272,7 +273,7 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
   print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
 
 
-# In[78]:
+# In[10]:
 
 
 coinsymbols=['BTC']
@@ -365,7 +366,7 @@ try:
     sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset],amt))
   print('Finish the program')
 except Exception as e:
-  msg=f'Failed to finish the program: {e}'
+  msg=f'Failed to finish the program: {traceback.format_exc()}'
   sendMessage(msg)
   print(msg)
 
