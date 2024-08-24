@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[30]:
 
 
 import requests as rq
@@ -14,7 +14,7 @@ import math
 import traceback
 
 
-# In[2]:
+# In[31]:
 
 
 with open('/Users/chhan/config.json','r') as f: config=json.load(f)
@@ -29,7 +29,7 @@ headers = {
 }
 
 
-# In[3]:
+# In[32]:
 
 
 def sendMessage(message,count=0):
@@ -44,7 +44,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[4]:
+# In[33]:
 
 
 def request(url,method):
@@ -59,7 +59,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[5]:
+# In[34]:
 
 
 def getCurrentTime():
@@ -99,7 +99,7 @@ def getSimpleEarnPosition():
   return requestData(spotURL,'/sapi/v1/simple-earn/flexible/position','get',f'timestamp={getCurrentTime()}')
 def subscribeFlexibleSimpleEarnProduct(prodId,amount):
   return requestData(spotURL,'/sapi/v1/simple-earn/flexible/subscribe','post',f'productId={prodId}&amount={amount}&timestamp={getCurrentTime()}')
-def redeemFlexibleSimpleEarnProduct(prodId,destAccount,amount=0):
+def redeemFlexibleSimpleEarnProduct(prodId,amount=0,destAccount='SPOT'):
   msg=f'productId={prodId}&destAccount={destAccount}&timestamp={getCurrentTime()}'
   if amount>0: msg+=f'&amount={amount}'
   else: msg+='&redeemAll=true'
@@ -129,7 +129,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[6]:
+# In[35]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -204,7 +204,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[7]:
+# In[36]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -235,7 +235,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[9]:
+# In[37]:
 
 
 def floorToDecimal(num,ndigits):
@@ -300,7 +300,7 @@ try:
     print('redeem simple earn assets and transfer it into spot account')
     prodId=[v for v in getFlexibleSimpleEarnList()['rows'] if v['asset'] in cashsymbols][0]['productId']
     amount= 0 if accountChangeInfo['investRatio']==1 else -accountChangeInfo['earn']
-    sendMessage(redeemFlexibleSimpleEarnProduct(prodId,'SPOT',floorToDecimal(amount,8)))
+    sendMessage(redeemFlexibleSimpleEarnProduct(prodId,floorToDecimal(amount,8)))
 
   freeBalances=[v for v in getAccount()['balances'] if v['free']!='0']
   print(f'free balances: {freeBalances}')
@@ -347,21 +347,23 @@ try:
   earnList=dict([(v['asset'],v['productId']) for v in getFlexibleSimpleEarnList()['rows']])
   futureBalances=dict([(v['asset'],float(v['availableBalance'])) for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols])
   currentEarnAmount=getSimpleEarnPosition()
-  
+
   for asset,amt in futureBalances.items():
     if asset in earnList:      
-      sendMessage('transfer: future -> spot')
-      sendMessage(transfer('umfuture','main',asset,amt))
+      amount=amt
+      if amt<1:
+        earnAsset=[v for v in currentEarnAmount['rows'] if v['asset']==asset]
+        if earnAsset and float(earnAsset[0]['totalAmount'])>1:
+          redeemFlexibleSimpleEarnProduct(earnAsset[0]['productId'],1)
+          transfer('main','umfuture',asset,1)
+          amount+=1
+      if amount>1:
+        sendMessage('transfer: future -> spot')
+        sendMessage(transfer('umfuture','main',asset,amount))
       
   spotBalances=dict([(v['asset'],float(v['free'])) for v in getAccount()['balances'] if float(v['free'])>0])
   for asset,amt in spotBalances.items():
     if asset not in earnList: continue
-    hasEnoughMoney=False
-    curAmount=[v['totalAmount'] for v in currentEarnAmount['rows'] if v['asset']==asset]
-    if amt>=minEarnLimit: hasEnoughMoney=True
-    elif curAmount>=1: 
-      redeemFlexibleSimpleEarnProduct(earnList[asset],1)
-      hasEnoughMoney=True 
     sendMessage(f"Subscribe simple earn: {asset}, amount: {amt}")
     sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset],amt))
   print('Finish the program')
