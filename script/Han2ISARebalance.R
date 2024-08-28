@@ -1,10 +1,12 @@
 #Sys.setlocale('LC_ALL','en_US.UTF-8')
+source("~/StockTradebot/script/RQuantFunctionList.R") #macOS에서 읽는 경우
 source("~/StockTradebot/script/Han2FunctionList.R") #macOS에서 읽는 경우
 source("~/StockTradebot/script/telegramAPI.R") #macOS에서 읽는 경우
-source("~/StockTradebot/script/RQuantFunctionList.R") #macOS에서 읽는 경우
+
+#source("~/stockInfoCrawler/StockTradebot/script/RQuantFunctionList.R") #macOS에서 읽는 경우
 #source("~/stockInfoCrawler/StockTradebot/script/Han2FunctionList.R") #라즈베리에서 읽는 경우
 #source("~/stockInfoCrawler/StockTradebot/script/telegramAPI.R") #라즈베리에서 읽는 경우
-#source("~/stockInfoCrawler/StockTradebot/script/RQuantFunctionList.R") #macOS에서 읽는 경우
+
 
 pkg = c('data.table','xts','quantmod','stringr','timeDate','lubridate')
 
@@ -23,6 +25,9 @@ account<-config$api$account$prod$isa
 today<-str_replace_all(Sys.Date(),"-","")
 token<-getToken(apiConfig,account)
 if(isKoreanHoliday(token,apiConfig,account,today)=="N") stop("Market closed")
+
+cancelResult<-cancelAllOrders(apiConfig,account,token)
+for(res in cancelResult) sendMessage(res)
 
 trackCode<-'379810'
 prices<-adjustedPriceFromNaver('day',200,trackCode)

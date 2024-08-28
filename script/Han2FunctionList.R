@@ -208,7 +208,66 @@ getBalancesheet<-function(token,apiConfig,account, tr_cont='',CTX_AREA_FK100='',
     return(getBalancesheet(apiConfig,account,'N',res$ctx_area_fk100,res$ctx_area_nk100,output))
   }
 }
-
+cancelAllOrders<-function(apiConfig,account,token){
+  orderList<-viewAllOrders(apiConfig,account,token)$output
+  #odno: 주문번호, psbl_qty: 취소가능수량
+  orderNoList<-orderList$odno
+  cancelUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/order-rvsecncl') #취소주문
+  headers<-c(
+    Authorization=paste('Bearer',token),
+    appkey=account$appkey,
+    appsecret=account$appsecret,
+    tr_id=apiConfig$cancelModifyOrderTrid
+  )
+  result<-NULL
+  for(orderNo in orderNoList){
+    body<-list(CANO=substr(account$accNo,1,8),
+               ACNT_PRDT_CD=substr(account$accNo,9,10),
+               KRX_FWDG_ORD_ORGNO="",
+               ORGN_ODNO=orderNo,
+               ORD_DVSN='00',
+               RVSE_CNCL_DVSN_CD='02',
+               ORD_QTY='0',
+               ORD_UNPR='0',
+               QTY_ALL_ORD_YN='Y'
+    )
+    response<-POST(cancelUrl,add_headers(headers),body=toJSON(body,auto_unbox=T))
+    res<-fromJSON(rawToChar(response$content))
+    result<-c(result,res)
+  }
+  return(result)
+}
+viewAllOrders<-function(apiConfig,account,token,CTX_AREA_FK100='',CTX_AREA_NK100='',output=NULL){
+  viewUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/inquire-psbl-rvsecncl') #취소가능한 주문목록
+  headers<-c(
+    Authorization=paste('Bearer',token),
+    appkey=account$appkey,
+    appsecret=account$appsecret,
+    tr_id=apiConfig$viewAllOrdersTrid
+  )
+  query<-list(CANO=substr(account$accNo,1,8),
+              ACNT_PRDT_CD=substr(account$accNo,9,10),
+              CTX_AREA_FK100=CTX_AREA_FK100,
+              CTX_AREA_NK100=CTX_AREA_NK100,
+              INQR_DVSN_1=0,
+              INQR_DVSN_2=0
+  )
+  response<-GET(viewUrl,add_headers(headers),query=query)
+  output$status_code<-response$status_code
+  if(response$status_code!=200) return(output)
+  
+  res<-fromJSON(rawToChar(response$content))
+  output$sheet<-as.data.table(rbind(output$sheet,res$output))
+  tr_cont<-response$headers$tr_cont
+  if(tr_cont=='D' | tr_cont=='E'){
+    output$rt_cd<-res$rt_cd
+    output$msg_cd<-res$msg_cd
+    output$msg<-res$msg1
+    return(output)
+  } else{
+    return(getBalancesheet(apiConfig,account,'N',res$ctx_area_fk100,res$ctx_area_nk100,output))
+  }
+}
 orderStock<-function(apiConfig,account,token,code,qty,price){
   if(qty==0) return(NULL)
   if(qty>0) tr_id=apiConfig$buyTrid
