@@ -24,7 +24,7 @@ account<-config$api$account$prod$isa
 
 today<-str_replace_all(Sys.Date(),"-","")
 token<-getToken(apiConfig,account)
-if(isKoreanHoliday(token,apiConfig,account,today)=="N") stop("Market closed")
+if(isKoreanTradeOpen(token,apiConfig,account,today)=="N") stop("Market closed")
 
 cancelResult<-cancelAllOrders(apiConfig,account,token)
 for(res in cancelResult) sendMessage(res)

@@ -35,7 +35,7 @@ getHashkey<-function(body){
   return(content(response)$HASH)
 }
 
-isKoreanHoliday<-function(token,apiConfig,account,date){
+isKoreanTradeOpen<-function(token,apiConfig,account,date){
   #token<-getToken(apiConfig,account)
   holidayUrl<-paste0(apiConfig$url,'/uapi/overseas-price/v1/quotations/price') 
   headers<-c(

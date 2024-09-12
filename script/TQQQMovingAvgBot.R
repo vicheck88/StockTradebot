@@ -1,9 +1,9 @@
-setwd("/home/pi/stockInfoCrawler/StockTradebot/script")
-#setwd("/Users/chhan/StockTradebot/script")
-#source("~/StockTradebot/script/Han2FunctionList.R") #macOS에서 읽는 경우
-#source("~/StockTradebot/script/telegramAPI.R") #macOS에서 읽는 경우
-source("~/stockInfoCrawler/StockTradebot/script/Han2FunctionList.R") #라즈베리에서 읽는 경우
-source("~/stockInfoCrawler/StockTradebot/script/telegramAPI.R") #라즈베리에서 읽는 경우
+#setwd("/home/pi/stockInfoCrawler/StockTradebot/script")
+setwd("/Users/chhan/StockTradebot/script")
+source("~/StockTradebot/script/Han2FunctionList.R") #macOS에서 읽는 경우
+source("~/StockTradebot/script/telegramAPI.R") #macOS에서 읽는 경우
+#source("~/stockInfoCrawler/StockTradebot/script/Han2FunctionList.R") #라즈베리에서 읽는 경우
+#source("~/stockInfoCrawler/StockTradebot/script/telegramAPI.R") #라즈베리에서 읽는 경우
 
 pkg = c('data.table','xts','quantmod','stringr','timeDate','lubridate')
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -70,7 +70,6 @@ curTQQQRatio<-0
 if(nrow(currentBalance$sheet)>0){
   curTQQQBalance<-as.numeric(currentBalance$sheet[pdno=="TQQQ",frcr_evlu_amt2])
   curTQQQRatio<-curTQQQBalance/totalBalanceSum
-  if(length(curTQQQRatio)) curTQQQRatio<-0
 }
 
 #TQQQratio
