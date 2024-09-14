@@ -9,11 +9,15 @@ source("~/StockTradebot/script/telegramAPI.R") #macOS에서 읽는 경우
 
 
 pkg = c('data.table','xts','quantmod','stringr','timeDate','lubridate')
-
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
 if (length(new.pkg)) {
   install.packages(new.pkg, dependencies = TRUE)}
 sapply(pkg,library,character.only=T)
+
+today<-str_replace_all(Sys.Date(),"-","")
+
+if(wday(Sys.Date()) %in% c(1,7)) stop("Not businessday")
+if(isHoliday(today)) stop("Holiday")
 
 config<-fromJSON("~/config.json")
 #apiConfig<-config$api$config$dev
@@ -22,7 +26,6 @@ apiConfig<-config$api$config$prod
 #account<-config$api$account$dev
 account<-config$api$account$prod$isa
 
-today<-str_replace_all(Sys.Date(),"-","")
 token<-getToken(apiConfig,account)
 if(isKoreanTradeOpen(token,apiConfig,account,today)=="N") stop("Market closed")
 

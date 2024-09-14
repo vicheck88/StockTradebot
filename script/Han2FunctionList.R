@@ -35,8 +35,21 @@ getHashkey<-function(body){
   return(content(response)$HASH)
 }
 
+isHoliday<-function(today){
+  base="http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo"
+  year = year(Sys.Date())
+  month = month(Sys.Date())
+  key="PEWQgyukEMto9hnKQ1YpebLFfE%2F3VGib2d2TZ1XvjKICjFbNfZ8BeQNspNF9avuO%2B%2F4zqnDj2P4rgk2KjjkDgQ%3D%3D"
+  url<-paste(base,'?serviceKey=',key,'&pageNo=1&numOfRows=10&solYear=',year,'&solMonth=',sprintf("%02d",month),sep="")
+  data<-content(GET(url))$response$body
+  holidayList<-c()
+  if(data$totalCount>0){
+    holidayList<-rbindlist(data$items$item)$locdate
+  }
+  return(today %in% holidayList)
+}
+
 isKoreanTradeOpen<-function(token,apiConfig,account,date){
-  #token<-getToken(apiConfig,account)
   holidayUrl<-paste0(apiConfig$url,'/uapi/overseas-price/v1/quotations/price') 
   headers<-c(
     Authorization=paste('Bearer',token),
