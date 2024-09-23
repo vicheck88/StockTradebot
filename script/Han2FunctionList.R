@@ -281,12 +281,36 @@ viewAllOrders<-function(apiConfig,account,token,CTX_AREA_FK100='',CTX_AREA_NK100
     return(getBalancesheet(apiConfig,account,'N',res$ctx_area_fk100,res$ctx_area_nk100,output))
   }
 }
+
+getOrderableAmount<-function(apiConfig,account,token,code){
+  url<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/inquire-psbl-order') #현금주문
+  headers<-c(
+    Authorization=paste('Bearer',token),
+    appkey=account$appkey,
+    appsecret=account$appsecret,
+    tr_id=apiConfig$getOrderableAmountTrid
+  )
+  query<-list(CANO=substr(account$accNo,1,8),
+              ACNT_PRDT_CD=substr(account$accNo,9,10),
+              PDNO=code,
+              ORD_UNPR="",
+              ORD_DVSN="00",
+              CMA_EVLU_AMT_ICLD_YN="N",
+              OVRS_ICLD_YN="Y"
+  )
+  response<-GET(url,add_headers(headers),query=query)
+  response$status_code
+  if(response$status_code!=200) return(NULL)
+  
+  res<-fromJSON(rawToChar(response$content))
+  return(res$output$nrcvb_buy_amt)
+}
+
 orderStock<-function(apiConfig,account,token,code,qty,price){
   if(qty==0) return(NULL)
   if(qty>0) tr_id=apiConfig$buyTrid
   if(qty<0) tr_id=apiConfig$sellTrid
   
-  #print(tr_id)
   orderUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/order-cash') #현금주문
   headers<-c(
     Authorization=paste('Bearer',token),
@@ -318,7 +342,7 @@ orderStocks<-function(token,apiConfig, account, stockTable){
     code<-stockTable[i,]$종목코드
     price<-getCurrentPrice(apiConfig,account,token,code)
     curQty<-stockTable[i,]$보유수량
-    priceSum<-stockTable[i,]$목표금액-price*curQty
+    priceSum<-min(getOrderableAmount(apiConfig,account,token,code), stockTable[i,]$목표금액-price*curQty)
     qty<-floor(priceSum/price)
     print(paste("code:",code," name:",stockTable[i,]$종목명," qty:",qty," price:",price, " ordersum:",qty*price))
     if(qty==0){

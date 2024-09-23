@@ -16,7 +16,7 @@ sapply(pkg,library,character.only=T)
 
 today<-str_replace_all(Sys.Date(),"-","")
 
-if(wday(Sys.Date()) %in% c(1,7)) stop("Not businessday")
+if(wday(Sys.Date()) %in% c(1,7)) stop("Weekend")
 if(isHoliday(today)) stop("Holiday")
 
 config<-fromJSON("~/config.json")
@@ -68,7 +68,7 @@ goalBalanceSheet<-data.table(종목코드=nasdaqLevCode,종목명='tiger 나스�
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='ace sofr',현재가=currentSofrPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
 
 
-if(!is.null(currentBalance$sheet)){
+if(length(currentBalance$sheet)>0){
   currentBalanceSheet<-currentBalance$sheet[,c('pdno','prdt_name','hldg_qty','evlu_amt')]  
   names(currentBalanceSheet)<-c('종목코드','종목명','보유수량','평가금액')
   combinedSheet<-merge(goalBalanceSheet,currentBalanceSheet,by=c('종목코드','종목명'),all=T)
@@ -93,30 +93,30 @@ for(i in 1:nrow(combinedSheet)){
   Sys.sleep(0.04)
 }
 
-
-print("Sell orders")
-
 sellSheet<-combinedSheet[평가금액>목표금액]
 sellRes<-orderStocks(token,apiConfig,account,sellSheet) #매도 먼저
 
-sendMessage("Sell orders")
-for(i in nrow(sellRes)){
-  row<-sellRes[i,]
-  text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
-  sendMessage(text,0)
-  Sys.sleep(0.04)
+if(nrow(sellRes)>0){
+  sendMessage("Sell orders")
+  for(i in nrow(sellRes)){
+    row<-sellRes[i,]
+    text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
+    sendMessage(text,0)
+    Sys.sleep(0.04)
+  }
+  Sys.sleep(30)
 }
-
-Sys.sleep(3600)
-
-print("Buy orders")
 buySheet<-combinedSheet[평가금액<목표금액]
 buyRes<-orderStocks(token,apiConfig,account,buySheet) #매수 다음
-sendMessage("Buy orders")
-for(i in nrow(buyRes)){
-  row<-buyRes[i,]
-  text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
-  sendMessage(text,0)
-  Sys.sleep(0.04)
+if(nrow(buyRes)>0){
+  print("Buy orders")
+  sendMessage("Buy orders")
+  for(i in nrow(buyRes)){
+    row<-buyRes[i,]
+    text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
+    sendMessage(text,0)
+    Sys.sleep(0.04)
+  }
 }
+
 revokeToken(apiConfig,account,token)

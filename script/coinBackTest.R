@@ -21,7 +21,7 @@ indexCoin<-getIndexBalance(coinList[1:num,],1,"MARKET")
 #이평선
 type<-"days"
 #type<-"minutes"
-movingAvgDay<-30
+movingAvgDay<-15
 unit<-60
 #unit<-240
 count<-200
@@ -117,6 +117,10 @@ coinAdjusted[,adjustedPrice:=(trade_price/prevValue)-1]
 #coinAdjusted[,adjustedPrice:=((trade_price/prevValue)-1)*3]
 coinAdjusted<-coinAdjusted[,.(candle_date_time_kst,adjustedPrice)]
 coinAdjusted$adjustedCache<-0
+
+
+coinAdjusted<-coinAdjusted[candle_date_time_kst>='2018-01-01 09:00:00']
+coinRatioTable<-coinRatioTable[candle_date_time_kst>='2018-01-01 09:00:00']
 
 rets<-as.xts(coinAdjusted)
 rets<-na.omit(rets)
