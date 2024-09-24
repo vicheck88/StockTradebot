@@ -38,8 +38,8 @@ averagePrice<-mean(prices[,1])
 currentPrice<-tail(prices,1)[,1]
 currentDisparity<-100*currentPrice/averagePrice-100
 
-nasdaqLevCode<-'418660' #tiger 나스닥 레버리지
-sofrCode<-'456880' #ace sofr
+nasdaqLevCode<-'418660' #TIGER 미국나스닥100레버리지(합성)
+sofrCode<-'456880' #ACE 미국달러SOFR금리(합성)
 
 currentNasdaqPrice<-getCurrentPrice(apiConfig,account,token,nasdaqLevCode)
 currentSofrPrice<-getCurrentPrice(apiConfig,account,token,sofrCode)
@@ -60,12 +60,13 @@ if(currentBalance$status_code!='200'){
 }
 
 totalBalanceSum<-as.numeric(currentBalance$summary$tot_evlu_amt)
+orderableAmount<-getOrderableAmount(apiConfig,account,token,nasdaqLevCode)
 
 goalBalanceSum<-totalBalanceSum*goalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
 
-goalBalanceSheet<-data.table(종목코드=nasdaqLevCode,종목명='tiger 나스닥 레버리지',현재가=currentNasdaqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity),주문구분='00')
-goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='ace sofr',현재가=currentSofrPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
+goalBalanceSheet<-data.table(종목코드=nasdaqLevCode,종목명='TIGER 미국나스닥100레버리지(합성)',현재가=currentNasdaqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity),주문구분='00')
+goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='ACE 미국달러SOFR금리(합성)',현재가=currentSofrPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
 
 
 if(length(currentBalance$sheet)>0){
@@ -106,7 +107,7 @@ if(nrow(sellRes)>0){
   }
   Sys.sleep(30)
 }
-buySheet<-combinedSheet[평가금액<목표금액]
+buySheet<-combinedSheet[평가금액<=목표금액]
 buyRes<-orderStocks(token,apiConfig,account,buySheet) #매수 다음
 if(nrow(buyRes)>0){
   print("Buy orders")

@@ -343,12 +343,13 @@ orderStocks<-function(token,apiConfig, account, stockTable){
     price<-getCurrentPrice(apiConfig,account,token,code)
     curQty<-stockTable[i,]$보유수량
     priceSum<-min(getOrderableAmount(apiConfig,account,token,code), stockTable[i,]$목표금액-price*curQty)
+    if(stockTable[i,]$평가금액==0) priceSum<-getOrderableAmount(apiConfig,account,token,code)
     qty<-floor(priceSum/price)
-    print(paste("code:",code," name:",stockTable[i,]$종목명," qty:",qty," price:",price, " ordersum:",qty*price))
     if(qty==0){
-      print("skip order: qty is 0")
+      print(paste0(code,": qty 0"))
       next;
     }
+    print(paste("code:",code," name:",stockTable[i,]$종목명," qty:",qty," price:",price, " ordersum:",qty*price))
     r<-orderStock(apiConfig,account,token,code,qty,price)
     r$idx<-i
     print(paste("rc_cd:",r$rt_cd," msg_cd:",r$msg_cd," msg:",r$msg1))
