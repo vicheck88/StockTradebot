@@ -97,7 +97,7 @@ for(i in 1:nrow(combinedSheet)){
 sellSheet<-combinedSheet[평가금액>목표금액]
 sellRes<-orderStocks(token,apiConfig,account,sellSheet) #매도 먼저
 
-if(nrow(sellRes)>0){
+if(length(sellRes)>0){
   sendMessage("Sell orders")
   for(i in nrow(sellRes)){
     row<-sellRes[i,]
@@ -109,7 +109,7 @@ if(nrow(sellRes)>0){
 }
 buySheet<-combinedSheet[평가금액<=목표금액]
 buyRes<-orderStocks(token,apiConfig,account,buySheet) #매수 다음
-if(nrow(buyRes)>0){
+if(length(buyRes)>0){
   print("Buy orders")
   sendMessage("Buy orders")
   for(i in nrow(buyRes)){
