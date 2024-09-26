@@ -84,6 +84,23 @@ combinedSheet[is.na(목표금액)]$목표금액<-0
 combinedSheet[is.na(평가금액)]$평가금액<-0
 combinedSheet[is.na(보유수량)]$보유수량<-0
 
+remainingPortion<-totalBalanceSum
+for(i in 1:nrow(combinedSheet)){
+  row<-combinedSheet[i,]
+  remTable<-combinedSheet[-(1:i),]
+  availableAmount<-getOrderableAmount(apiConfig,account,token,row$종목코드)+row$평가금액
+  if(length(remTable)>0) availableAmount <- availableAmount+remTable[,sum(평가금액)]
+  availableAmount<-min(availableAmount,remainingPortion)
+  qty<-row[,min(0,floor((availableAmount-평가금액)/현재가))]
+  if(qty==0){
+    amt<-combinedSheet[i,평가금액]
+  } else{
+    amt<-availableAmount
+  }
+  combinedSheet[i,]$목표금액<-amt
+  remainingPortion<-remainingPortion-amt
+}
+
 combinedSheet<-combinedSheet[,c('종목코드','종목명','보유수량','목표금액','평가금액')]
 
 sendMessage("Stocks to buy")

@@ -99,7 +99,7 @@ bondBalanceSum<-totalBalanceSum-goalBalanceSum
 goalBalanceSheet<-data.table(종목코드=c('TQQQ'),거래소_현재가='NAS',거래소='NASD',현재가=tqqqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity),주문구분='00')
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=c('BOXX'),거래소_현재가='AMS',거래소='AMEX',현재가=boxxPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
 
-if(nrow(currentBalance$sheet)>0){
+if(length(currentBalance$sheet)>0){
   currentBalanceSheet<-currentBalance$sheet[,c('pdno','prdt_name','ovrs_excg_cd','ccld_qty_smtl1','frcr_evlu_amt2','buy_crcy_cd')]  
   names(currentBalanceSheet)<-c('종목코드','종목명','거래소','보유수량','평가금액','매수통화코드')
   combinedSheet<-merge(goalBalanceSheet,currentBalanceSheet,by=c('종목코드','거래소'),all=T)
@@ -122,59 +122,33 @@ combinedSheet<-combinedSheet[(signal>0 & 목표금액>평가금액) | (signal<0 
 print("Final stock list")
 print(combinedSheet)
 
-if(nrow(combinedSheet)>0){
-  sellSheet<-combinedSheet[평가금액>목표금액]
-  if(nrow(sellSheet)>0){
-    print("Sell orders")
-    sellRes<-orderOverseasStocks(token,apiConfig,account,sellSheet) #매도 먼저
-    sendMessage("Sell orders")
-    for(i in nrow(sellRes)){
-      row<-sellRes[i,]
-      text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
-      sendMessage(text,0)
-      Sys.sleep(0.04)
-    }
+
+sellSheet<-combinedSheet[평가금액>목표금액]
+sellRes<-orderOverseasStocks(token,apiConfig,account,sellSheet) #매도 먼저
+
+if(length(sellRes)>0){
+  sendMessage("Sell orders")
+  for(i in nrow(sellRes)){
+    row<-sellRes[i,]
+    text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
+    sendMessage(text,0)
+    Sys.sleep(0.04)
   }
-  buySheet<-combinedSheet[평가금액<목표금액]
-  if(nrow(buySheet)>0){
-    buyRes<-orderOverseasStocks(token,apiConfig,account,buySheet) #매수 다음
-    
-    if(nrow(buyRes)>0) {
-      print("Buy orders")
-      sendMessage("Buy orders")
-    }
-    for(i in nrow(buyRes)){
-      row<-buyRes[i,]
-      text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
-      sendMessage(text,0)
-      Sys.sleep(0.04)
-    }
-  }
-  print("failed stocks")
-  if(exists("sellRes")) print(sellRes[rt_cd!='0'])
-  if(exists("buyRes")) print(buyRes[rt_cd!='0'])
-  
-  cnt<-0
-  failNum<-nrow(buyRes[rt_cd!='0'])
-  rebuySheet<-buySheet
-  rebuyRes<-buyRes
-  while(failNum>0 & cnt<=3){
-    cnt<-cnt+1
-    rebuySheet<-rebuySheet[rebuyRes[rt_cd!='0']$idx]
-    rebuyRes<-orderOverseasStocks(token,apiConfig,account,rebuySheet)
-    for(i in nrow(rebuyRes)){
-      sendMessage("Buy orders")
-      row<-rebuyRes[i,]
-      text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
-      sendMessage(text,0)
-      Sys.sleep(0.04)
-    }
-    failNum<-nrow(rebuyRes[rt_cd!='0'])
-    Sys.sleep(30)
-  }
-  
-  res<-NULL
-  if(exists("sellRes")) res<-rbind(res,sellRes)
-  if(exists("buyRes")) res<-rbind(res,buyRes)
+  Sys.sleep(30)
 }
+
+buySheet<-combinedSheet[평가금액<=목표금액]
+buyRes<-orderOverseasStocks(token,apiConfig,account,buySheet) #매수 다음
+
+if(length(buyRes)>0){
+  print("Buy orders")
+  sendMessage("Buy orders")
+  for(i in nrow(buyRes)){
+    row<-buyRes[i,]
+    text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
+    sendMessage(text,0)
+    Sys.sleep(0.04)
+  }
+}
+
 revokeToken(apiConfig,account,token)

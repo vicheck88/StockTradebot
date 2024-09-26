@@ -303,7 +303,7 @@ getOrderableAmount<-function(apiConfig,account,token,code){
   if(response$status_code!=200) return(NULL)
   
   res<-fromJSON(rawToChar(response$content))
-  return(res$output$nrcvb_buy_amt)
+  return(as.numeric(res$output$nrcvb_buy_amt))
 }
 
 orderStock<-function(apiConfig,account,token,code,qty,price){
@@ -343,7 +343,7 @@ orderStocks<-function(token,apiConfig, account, stockTable){
     price<-getCurrentPrice(apiConfig,account,token,code)
     curQty<-stockTable[i,]$보유수량
     priceSum<-min(getOrderableAmount(apiConfig,account,token,code), stockTable[i,]$목표금액-price*curQty)
-    if(stockTable[i,]$평가금액==0) priceSum<-getOrderableAmount(apiConfig,account,token,code)
+    if(stockTable[i,]$목표금액==0) priceSum<-getOrderableAmount(apiConfig,account,token,code)
     qty<-floor(priceSum/price)
     if(qty==0){
       print(paste0(code,": qty 0"))
