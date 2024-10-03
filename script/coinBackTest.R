@@ -21,7 +21,8 @@ indexCoin<-getIndexBalance(coinList[1:num,],1,"MARKET")
 #이평선
 type<-"days"
 #type<-"minutes"
-movingAvgDay<-15
+movingAvgDay<-30
+movingAvgDay2<-10
 unit<-60
 #unit<-240
 count<-200
@@ -49,7 +50,7 @@ setkeyv(coinPriceHistory,c("market","candle_date_time_kst"))
 coinPriceHistory[candle_date_time_kst %like% "T09:00:00",isDayStart:=T]
 
 #이동평균선 구하기(Day 기준)
-movingAvg<-coinPriceHistory[isDayStart==T,.(movingAvg=frollmean(trade_price,movingAvgDay,align='right')),by=market]
+movingAvg<-coinPriceHistory[isDayStart==T,.(movingAvg=frollmean(trade_price,movingAvgDay,align='right'),movingAvg2=frollmean(trade_price,movingAvgDay2,align='right')),by=market]
 movingAvg$candle_date_time_kst<-coinPriceHistory[isDayStart==T,candle_date_time_kst]
 coinPriceHistory<-movingAvg[coinPriceHistory,on=c("market","candle_date_time_kst")]
 
@@ -73,7 +74,7 @@ coinPriceHistory<-coinPriceHistory[candle_date_time_kst>=minDay]
 #  if(is.na(coinPriceHistory[i,]$movingAvg)) 
 #    coinPriceHistory[i,]$movingAvg=coinPriceHistory[i-1]$movingAvg
 #}
-coinPriceHistory[,disparity:=trade_price/movingAvg*100-100]
+coinPriceHistory[,':='(disparity=trade_price/movingAvg*100-100,disparity2=trade_price/movingAvg2*100-100)]
 
 #이평선과 비교해 높을 경우 매수, 낮을 경우 매도
 #구입: 1%부터 1%당 현금 10%씩
@@ -85,15 +86,35 @@ coinPriceHistory$investRatio<-0
 getInvestRatio<-function(table){
   for(i in 1:nrow(table)){
     disparity<-table[i,]$disparity
-    
-    if(disparity>0) {
-      addRatio<-floor(disparity)*0.5
-    }  else addRatio<-floor(disparity)*0.25
-  #}  else addRatio<-floor(disparity)*0.5
-    if(i>1){
-      prevRatio<-table[i-1,]$investRatio
-      if(addRatio>=0) addRatio<-max(prevRatio,addRatio)
-      if(addRatio<0) addRatio<-min(1+addRatio,prevRatio)
+      if(disparity>0) {
+        addRatio<-floor(disparity)*0.5
+      }  else addRatio<-floor(disparity)*0.5
+      #}  else addRatio<-floor(disparity)*0.5
+      if(i>1){
+        prevRatio<-table[i-1,]$investRatio
+        if(addRatio>=0) addRatio<-max(prevRatio,addRatio)
+        if(addRatio<0) addRatio<-min(1+addRatio,prevRatio)
+      }
+    newRatio<-min(1,addRatio)
+    newRatio<-max(0,newRatio)
+    table[i,]$investRatio<-newRatio
+  }
+  return(table)
+}
+getInvestRatio2<-function(table){
+  for(i in 1:nrow(table)){
+    disparity<-table[i,]$disparity
+    if(disparity<0) addRatio<-0
+    else{
+      disparity2<-table[i,]$disparity2
+      if(disparity2>0) {
+        addRatio<-floor(disparity2)*0.5
+      }  else addRatio<-floor(disparity2)*0.5
+      if(i>1){
+        prevRatio<-table[i-1,]$investRatio
+        if(addRatio>=0) addRatio<-max(prevRatio,addRatio)
+        if(addRatio<0) addRatio<-min(1+addRatio,prevRatio)
+      }
     }
     newRatio<-min(1,addRatio)
     newRatio<-max(0,newRatio)

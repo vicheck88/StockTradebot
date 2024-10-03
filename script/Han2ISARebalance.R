@@ -48,19 +48,22 @@ currentSofrPrice<-getCurrentPrice(apiConfig,account,token,sofrCode)
 #disp 2 ~ 20: 1
 #disp 20 ~ : 0
 
-goalRatio<-floor(currentDisparity)*0.5
+goalRatio<-abs(floor(currentDisparity)*0.5)
 goalRatio<-min(1,goalRatio)
 goalRatio<-max(0,goalRatio)
 if(currentDisparity>20) goalRatio<-0
 
 
 currentBalance<-getBalancesheet(token,apiConfig,account)
+
 if(currentBalance$status_code!='200'){
   stop("Fail to get current balance. Stop script")
 }
 
-totalBalanceSum<-as.numeric(currentBalance$summary$tot_evlu_amt)
-orderableAmount<-getOrderableAmount(apiConfig,account,token,nasdaqLevCode)
+totalBalanceSum<-currentBalance$sheet[,sum(as.numeric(evlu_amt))]+getOrderableAmount(apiConfig,account,token,nasdaqLevCode)
+
+#totalBalanceSum<-as.numeric(currentBalance$summary$tot_evlu_amt)
+#orderableAmount<-getOrderableAmount(apiConfig,account,token,nasdaqLevCode)
 
 goalBalanceSum<-totalBalanceSum*goalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
@@ -84,22 +87,7 @@ combinedSheet[is.na(목표금액)]$목표금액<-0
 combinedSheet[is.na(평가금액)]$평가금액<-0
 combinedSheet[is.na(보유수량)]$보유수량<-0
 
-remainingPortion<-totalBalanceSum
-for(i in 1:nrow(combinedSheet)){
-  row<-combinedSheet[i,]
-  remTable<-combinedSheet[-(1:i),]
-  availableAmount<-getOrderableAmount(apiConfig,account,token,row$종목코드)+row$평가금액
-  if(length(remTable)>0) availableAmount <- availableAmount+remTable[,sum(평가금액)]
-  availableAmount<-min(availableAmount,remainingPortion)
-  qty<-row[,min(0,floor((availableAmount-평가금액)/현재가))]
-  if(qty==0){
-    amt<-combinedSheet[i,평가금액]
-  } else{
-    amt<-availableAmount
-  }
-  combinedSheet[i,]$목표금액<-amt
-  remainingPortion<-remainingPortion-amt
-}
+combinedSheet<-combinedSheet[(signal>0 & 목표금액>평가금액) | (signal<0 & 목표금액<평가금액) | (signal==0 & 평가금액!=목표금액)]
 
 combinedSheet<-combinedSheet[,c('종목코드','종목명','보유수량','목표금액','평가금액')]
 
