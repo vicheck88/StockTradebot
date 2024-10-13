@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[30]:
+# In[11]:
 
 
 import requests as rq
@@ -14,7 +14,7 @@ import math
 import traceback
 
 
-# In[31]:
+# In[12]:
 
 
 with open('/Users/chhan/config.json','r') as f: config=json.load(f)
@@ -29,7 +29,7 @@ headers = {
 }
 
 
-# In[32]:
+# In[13]:
 
 
 def sendMessage(message,count=0):
@@ -44,7 +44,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[33]:
+# In[14]:
 
 
 def request(url,method):
@@ -59,7 +59,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[34]:
+# In[15]:
 
 
 def getCurrentTime():
@@ -120,7 +120,7 @@ def setPositionClosePrice(symbol,side,stopPrice,workingType):
 def setStopLimitPrice(symbol,side,stopPrice,quantity,workingType,priceMatch):
   return requestData(futureURL,'/fapi/v1/order','post',f'symbol={symbol}&side={side}&type=STOP&stopPrice={stopPrice}&quantity={quantity}&reduceOnly=false&workingType={workingType}&priceMatch={priceMatch}&timestamp={getCurrentTime()}')
 def getCurrentPosition():
-  return requestData(futureURL,'/fapi/v2/positionRisk','get',f'timestamp={getCurrentTime()}')
+  return requestData(futureURL,'/fapi/v3/positionRisk','get',f'timestamp={getCurrentTime()}')
 def getAllOpenOrders():
   return requestData(futureURL,'/fapi/v1/openOrders','get',f'timestamp={getCurrentTime()}')
 def closeAllOpenOrders():
@@ -129,7 +129,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[35]:
+# In[16]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -204,7 +204,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[36]:
+# In[17]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -215,7 +215,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
   return requestData(spotURL,subUrl,'post',f'fromAsset={fromAsset}&toAsset={toAsset}&fromAmount={fromAmount}&timestamp={getCurrentTime()}')
 
 
-# In[8]:
+# In[18]:
 
 
 '''
@@ -235,27 +235,36 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[37]:
+# In[19]:
 
 
 def floorToDecimal(num,ndigits):
   return math.floor(num*(10**ndigits))/(10**ndigits)
 
 
-def setCurrentStopLimitPrice(symbol,curPrice,levelNum,totalPositionAmount,averagePrice,priceMatch):
-  amountPerStop=floorToDecimal(totalPositionAmount/levelNum,3)
-  realStopPriceList=[]
-  # stopPriceList=[round(averagePrice*(1+r/100),1) for r in range(levelNum*2,1,-3)]
-  # for price in stopPriceList:
-  #   if(curPrice>price): 
-  #     print(f'set stopPrice at {price}')
-  #     print(setStopLimitPrice(symbol,'SELL',price,amountPerStop,'MARK_PRICE',priceMatch))
-  #     realStopPriceList.append(price)
-  print(f'set stopPrice at {averagePrice}')
-  print(setStopLimitPrice(symbol,'SELL',averagePrice,floorToDecimal(amountPerStop/2,3),'MARK_PRICE',priceMatch))
+def setCurrentTakeProfitLimitPrice(symbol,curPrice,currentPosition,averagePrice,timeLimit):
+  midPrice=floorToDecimal(averagePrice*1.01,1)
+  fullPrice=floorToDecimal(averagePrice*1.02,1)
+  availablePosition=currentPosition
+  priceList=[]
+  if midPrice>curPrice:
+    print(f'set takeProfit price at {midPrice}')
+    print(orderFutureWithTimeLimit(symbol,'BUY',floorToDecimal(currentPosition/2,3),midPrice,timeLimit))
+    availablePosition-=floorToDecimal(currentPosition/2,3)
+    priceList.append(midPrice)
+  if fullPrice>curPrice:
+    print(f'set takeProfit price at {fullPrice}')
+    print(orderFutureWithTimeLimit(symbol,'BUY',availablePosition,fullPrice,timeLimit)) 
+    priceList.append(fullPrice)
+  print(f"buy setting finished: price at {','.join(str(v) for v in [midPrice,fullPrice])}")
+
+def setCurrentStopLimitPrice(symbol,curPrice,levelNum,currentPosition,averagePrice,priceMatch):
+  if curPrice>averagePrice:
+    print(f'set stopPrice at {averagePrice}')
+    print(setStopLimitPrice(symbol,'SELL',averagePrice,floorToDecimal(currentPosition/2,3),'MARK_PRICE',priceMatch))
   print(f'set stopPrice at {math.floor(averagePrice*0.99)}: close price')
   print(setPositionClosePrice(symbol,'SELL',math.floor(averagePrice*0.99),'MARK_PRICE'))
-  print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
+  print(f"stopmarket setting finished: price at {','.join(str(v) for v in [averagePrice,math.floor(averagePrice*0.99)])}")
   
 def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,averagePrice):
   amountPerStop=floorToDecimal(totalPositionAmount/maxLeverage,3)
@@ -273,7 +282,25 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
   print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
 
 
-# In[10]:
+# In[27]:
+
+
+float(updatedChangeInfo['total'])*currentLeverage/curPrice
+
+
+# In[33]:
+
+
+maximumPositionAmount
+
+
+# In[32]:
+
+
+positionAmountList
+
+
+# In[34]:
 
 
 coinsymbols=['BTC']
@@ -339,10 +366,11 @@ try:
   if len(positionAmountList)>0:
     closeAllOpenOrders()
     print('set stopmarket order')
-    currentLeverage=updatedChangeInfo['investRatio']*leverage
-    currentPositionAmount=floorToDecimal(float(updatedChangeInfo['total'])*currentLeverage/curPrice,3)
-    setCurrentStopLimitPrice(symbol,curPrice,stopLimitLevelNum,currentPositionAmount,averagePrice,'OPPONENT')
-    # setCurrentStopmarketPrice(symbol,curPrice,leverage,maximumPositionAmount,averagePrice)
+    for position in positionAmountList:
+      # currentLeverage=updatedChangeInfo['investRatio']*leverage
+      # currentPositionAmount=floorToDecimal(float(updatedChangeInfo['total'])*currentLeverage/curPrice,3)
+      setCurrentStopLimitPrice(position['symbol'],curPrice,stopLimitLevelNum,float(position['positionAmt']),averagePrice,'OPPONENT')
+      # setCurrentStopmarketPrice(symbol,curPrice,leverage,maximumPositionAmount,averagePrice)
   
   earnList=dict([(v['asset'],v['productId']) for v in getFlexibleSimpleEarnList()['rows']])
   futureBalances=dict([(v['asset'],float(v['availableBalance'])) for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols])
