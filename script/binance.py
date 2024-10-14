@@ -282,24 +282,6 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
   print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
 
 
-# In[27]:
-
-
-float(updatedChangeInfo['total'])*currentLeverage/curPrice
-
-
-# In[33]:
-
-
-maximumPositionAmount
-
-
-# In[32]:
-
-
-positionAmountList
-
-
 # In[34]:
 
 
