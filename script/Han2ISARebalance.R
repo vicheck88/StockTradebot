@@ -89,19 +89,34 @@ combinedSheet[is.na(보유수량)]$보유수량<-0
 
 combinedSheet<-combinedSheet[(signal>0 & 목표금액>평가금액) | (signal<0 & 목표금액<평가금액) | (signal==0 & 평가금액!=목표금액)]
 
-combinedSheet<-combinedSheet[,c('종목코드','종목명','보유수량','목표금액','평가금액')]
 
-sendMessage("Stocks to buy")
+buySheet<-combinedSheet[평가금액<=목표금액]
+remainingPortion<-totalBalanceSum
 for(i in 1:nrow(combinedSheet)){
   row<-combinedSheet[i,]
-  text<-paste0("code: ",row$종목코드," name: ",row$종목명," qty: ",row$보유수량," goalPrice: ",row$목표금액," curPrice: ",row$평가금액)
-  sendMessage(text,0)
-  Sys.sleep(0.04)
+  remTable<-combinedSheet[-(1:i),]
+  availableAmount<-getOrderableAmount(apiConfig,account,token,row$종목코드)+row$평가금액
+  if(length(remTable)>0) availableAmount <- availableAmount+remTable[,sum(평가금액)]
+  availableAmount<-min(availableAmount,remainingPortion)
+  if(row$목표금액>row$평가금액){
+    qty<-row[,min(0,floor((availableAmount-평가금액)/현재가))]
+    if(qty==0){
+      amt<-buySheet[i,평가금액]
+    } else{
+      amt<-availableAmount
+    }
+    combinedSheet[i,]$목표금액<-amt
+    remainingPortion<-remainingPortion-amt
+  } else{
+    combinedSheet[i,]$목표금액<-remainingPortion
+  }
 }
+combinedSheet<-combinedSheet[,c('종목코드','종목명','보유수량','목표금액','평가금액')]
 
+buySheet<-combinedSheet[평가금액<목표금액]
 sellSheet<-combinedSheet[평가금액>목표금액]
-sellRes<-orderStocks(token,apiConfig,account,sellSheet) #매도 먼저
 
+sellRes<-orderStocks(token,apiConfig,account,sellSheet) #매도 먼저
 if(length(sellRes)>0){
   sendMessage("Sell orders")
   for(i in nrow(sellRes)){
@@ -112,7 +127,7 @@ if(length(sellRes)>0){
   }
   Sys.sleep(30)
 }
-buySheet<-combinedSheet[평가금액<=목표금액]
+
 buyRes<-orderStocks(token,apiConfig,account,buySheet) #매수 다음
 if(length(buyRes)>0){
   print("Buy orders")
@@ -124,5 +139,4 @@ if(length(buyRes)>0){
     Sys.sleep(0.04)
   }
 }
-
 revokeToken(apiConfig,account,token)
