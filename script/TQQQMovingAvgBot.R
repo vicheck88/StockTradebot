@@ -27,7 +27,7 @@ account<-config$api$account$prod$main
 
 
 
-symbols = c('TQQQ','QQQ')
+symbols = c('TQQQ','QQQ','SPY')
 getSymbols(symbols, src = 'yahoo')
 prices = do.call(cbind,lapply(symbols, function(x) Ad(get(x))))
 prices<-as.data.table(prices)
@@ -36,9 +36,10 @@ token<-getToken(apiConfig,account)
 
 qqqPrice<-getCurrentOverseasPrice(apiConfig,account,token,"QQQ",'NAS')
 tqqqPrice<-getCurrentOverseasPrice(apiConfig,account,token,"TQQQ",'NAS')
+spyPrice<-getCurrentOverseasPrice(apiConfig,account,token,'SPY','AMS')
 boxxPrice<-getCurrentOverseasPrice(apiConfig,account,token,"BOXX",'AMS')
 
-prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),TQQQ.Adjusted=tqqqPrice,QQQ.Adjusted=qqqPrice)))
+prices<-as.xts(rbind(prices,data.table(index=Sys.Date(),TQQQ.Adjusted=tqqqPrice,QQQ.Adjusted=qqqPrice,SPY.Adjusted=spyPrice)))
 
 
 movingAvg<-NULL
@@ -83,13 +84,19 @@ if(sign(currentDisparity)<0) TQQQGoalRatio<-min(TQQQGoalRatio,curTQQQRatio)
 
 
 #sendMessage
-message<-paste0("QQQ price: ",currentPrice$QQQ.Adjusted)
+message<-paste0("SPY price: ",currentPrice$SPY.Adjusted)
+message<-paste0(message,"\nQQQ price: ",currentPrice$QQQ.Adjusted)
 message<-paste0(message,"\nTQQQ price: ",currentPrice$TQQQ.Adjusted)
+sendMessage(message)
+message<-paste0("\nSPY 200 MA: ",round(currentPrice$SPY.Adjusted.MA.200,2))
 message<-paste0(message,"\nQQQ 200 MA: ",round(currentPrice$QQQ.Adjusted.MA.200,2))
 message<-paste0(message,"\nTQQQ 200 MA: ",round(currentPrice$TQQQ.Adjusted.MA.200,2))
+sendMessage(message)
+message<-paste0("\nSPY Disparity: ", round(currentPrice[,100*SPY.Adjusted/SPY.Adjusted.MA.200-100],2))
 message<-paste0(message,"\nQQQ Disparity: ", round(currentPrice[,100*QQQ.Adjusted/QQQ.Adjusted.MA.200-100],2))
 message<-paste0(message,"\nTQQQ Disparity: ", round(currentPrice[,100*TQQQ.Adjusted/TQQQ.Adjusted.MA.200-100],2))
-message<-paste0(message,"\nToday TQQQ Ratio: ",TQQQGoalRatio)
+sendMessage(message)
+message<-paste0("\nToday TQQQ Ratio: ",TQQQGoalRatio)
 sendMessage(message)
 
 
