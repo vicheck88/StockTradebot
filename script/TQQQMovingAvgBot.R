@@ -82,23 +82,21 @@ TQQQGoalRatio<-max(0,TQQQGoalRatio)
 if(sign(currentDisparity)>=0) TQQQGoalRatio<-max(TQQQGoalRatio,curTQQQRatio)
 if(sign(currentDisparity)<0) TQQQGoalRatio<-min(TQQQGoalRatio,curTQQQRatio)
 
-
 #sendMessage
 message<-paste0("SPY price: ",currentPrice$SPY.Adjusted)
 message<-paste0(message,"\nQQQ price: ",currentPrice$QQQ.Adjusted)
 message<-paste0(message,"\nTQQQ price: ",currentPrice$TQQQ.Adjusted)
 sendMessage(message)
-message<-paste0("\nSPY 200 MA: ",round(currentPrice$SPY.Adjusted.MA.200,2))
+message<-paste0("SPY 200 MA: ",round(currentPrice$SPY.Adjusted.MA.200,2))
 message<-paste0(message,"\nQQQ 200 MA: ",round(currentPrice$QQQ.Adjusted.MA.200,2))
 message<-paste0(message,"\nTQQQ 200 MA: ",round(currentPrice$TQQQ.Adjusted.MA.200,2))
 sendMessage(message)
-message<-paste0("\nSPY Disparity: ", round(currentPrice[,100*SPY.Adjusted/SPY.Adjusted.MA.200-100],2))
+message<-paste0("SPY Disparity: ", round(currentPrice[,100*SPY.Adjusted/SPY.Adjusted.MA.200-100],2))
 message<-paste0(message,"\nQQQ Disparity: ", round(currentPrice[,100*QQQ.Adjusted/QQQ.Adjusted.MA.200-100],2))
 message<-paste0(message,"\nTQQQ Disparity: ", round(currentPrice[,100*TQQQ.Adjusted/TQQQ.Adjusted.MA.200-100],2))
 sendMessage(message)
-message<-paste0("\nToday TQQQ Ratio: ",TQQQGoalRatio)
+message<-paste0("Today TQQQ Ratio: ",TQQQGoalRatio)
 sendMessage(message)
-
 
 goalBalanceSum<-totalBalanceSum*TQQQGoalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
@@ -128,7 +126,6 @@ combinedSheet<-combinedSheet[(signal>0 & 목표금액>평가금액) | (signal<0 
 
 print("Final stock list")
 print(combinedSheet)
-
 
 sellSheet<-combinedSheet[평가금액>목표금액]
 sellRes<-orderOverseasStocks(token,apiConfig,account,sellSheet) #매도 먼저

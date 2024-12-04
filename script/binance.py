@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[11]:
+# In[1]:
 
 
 import requests as rq
@@ -14,7 +14,7 @@ import math
 import traceback
 
 
-# In[12]:
+# In[2]:
 
 
 with open('/Users/chhan/config.json','r') as f: config=json.load(f)
@@ -29,7 +29,7 @@ headers = {
 }
 
 
-# In[13]:
+# In[3]:
 
 
 def sendMessage(message,count=0):
@@ -44,7 +44,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[14]:
+# In[4]:
 
 
 def request(url,method):
@@ -59,7 +59,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[15]:
+# In[6]:
 
 
 def getCurrentTime():
@@ -282,7 +282,7 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
   print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
 
 
-# In[34]:
+# In[42]:
 
 
 coinsymbols=['BTC']
@@ -341,6 +341,7 @@ try:
       #transfer remaining amount to spot
       print('transfer remaining future assets into spot account')
       transfer('umfuture','main',asset['asset'],float(asset['availableBalance']))
+      time.sleep(100)
       
   averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
   positionAmountList=[v for v in getCurrentPosition() if v['symbol']==symbol and float(v['positionAmt'])>0]
@@ -361,11 +362,11 @@ try:
   for asset,amt in futureBalances.items():
     if asset in earnList:      
       amount=amt
-      if amt<1:
+      if amt<0.1:
         earnAsset=[v for v in currentEarnAmount['rows'] if v['asset']==asset]
-        if earnAsset and float(earnAsset[0]['totalAmount'])>1:
-          redeemFlexibleSimpleEarnProduct(earnAsset[0]['productId'],1)
-          transfer('main','umfuture',asset,1)
+        if earnAsset and float(earnAsset[0]['totalAmount'])>0.1:
+          redeemFlexibleSimpleEarnProduct(earnAsset[0]['productId'],0.1)
+          transfer('main','umfuture',asset,0.1)
           amount+=1
       if amount>1:
         sendMessage('transfer: future -> spot')
