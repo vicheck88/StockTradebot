@@ -43,7 +43,8 @@ isHoliday<-function(today){
   url<-paste(base,'?serviceKey=',key,'&pageNo=1&numOfRows=10&solYear=',year,'&solMonth=',sprintf("%02d",month),sep="")
   data<-content(GET(url))$response$body
   holidayList<-c()
-  if(data$totalCount>0){
+  if(data$totalCount==1) holidayList=c(data$items$item$locdate)
+  else if(data$totalCount>1){
     holidayList<-rbindlist(data$items$item)$locdate
   }
   return(today %in% holidayList)
