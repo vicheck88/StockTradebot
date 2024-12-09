@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[24]:
 
 
 import requests as rq
@@ -14,7 +14,7 @@ import math
 import traceback
 
 
-# In[2]:
+# In[25]:
 
 
 with open('/Users/chhan/config.json','r') as f: config=json.load(f)
@@ -29,7 +29,7 @@ headers = {
 }
 
 
-# In[3]:
+# In[26]:
 
 
 def sendMessage(message,count=0):
@@ -44,7 +44,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[4]:
+# In[27]:
 
 
 def request(url,method):
@@ -59,7 +59,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[5]:
+# In[28]:
 
 
 def getCurrentTime():
@@ -129,7 +129,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[6]:
+# In[29]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -204,7 +204,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[7]:
+# In[30]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -215,7 +215,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
   return requestData(spotURL,subUrl,'post',f'fromAsset={fromAsset}&toAsset={toAsset}&fromAmount={fromAmount}&timestamp={getCurrentTime()}')
 
 
-# In[8]:
+# In[31]:
 
 
 '''
@@ -235,7 +235,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[9]:
+# In[32]:
 
 
 def floorToDecimal(num,ndigits):
@@ -282,7 +282,7 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
   print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
 
 
-# In[23]:
+# In[34]:
 
 
 coinsymbols=['BTC']
@@ -374,14 +374,14 @@ try:
   spotBalances=dict([(v['asset'],float(v['free'])) for v in getAccount()['balances'] if float(v['free'])>0])
   for asset,amt in spotBalances.items():
     if asset not in earnList: continue
+    amount=amt
     if amt<0.1:
-      amount=amt
       earnAsset=[v for v in currentEarnAmount['rows'] if v['asset']==asset]
       if earnAsset and float(earnAsset[0]['totalAmount'])>0.1:
           redeemFlexibleSimpleEarnProduct(earnAsset[0]['productId'],0.1)
           amount+=0.1
-      sendMessage(f"Subscribe simple earn: {asset}, amount: {amount}")
-      sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset],amount))
+    sendMessage(f"Subscribe simple earn: {asset}, amount: {amount}")
+    sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset],amount))
   print('Finish the program')
 except Exception as e:
   msg=f'Failed to finish the program: {traceback.format_exc()}'
