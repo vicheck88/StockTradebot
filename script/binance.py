@@ -59,7 +59,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[6]:
+# In[5]:
 
 
 def getCurrentTime():
@@ -129,7 +129,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[16]:
+# In[6]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -204,7 +204,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[17]:
+# In[7]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -215,7 +215,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
   return requestData(spotURL,subUrl,'post',f'fromAsset={fromAsset}&toAsset={toAsset}&fromAmount={fromAmount}&timestamp={getCurrentTime()}')
 
 
-# In[18]:
+# In[8]:
 
 
 '''
@@ -235,7 +235,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[19]:
+# In[9]:
 
 
 def floorToDecimal(num,ndigits):
@@ -282,7 +282,7 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
   print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
 
 
-# In[42]:
+# In[23]:
 
 
 coinsymbols=['BTC']
@@ -360,23 +360,28 @@ try:
   currentEarnAmount=getSimpleEarnPosition()
 
   for asset,amt in futureBalances.items():
-    if asset in earnList:      
-      amount=amt
+    if asset in earnList:    
       if amt<0.1:
-        earnAsset=[v for v in currentEarnAmount['rows'] if v['asset']==asset]
+        amount=amt
+        earnAsset=[v for v in currentEarnAmount['rows'] if v['asset']==asset]  
         if earnAsset and float(earnAsset[0]['totalAmount'])>0.1:
           redeemFlexibleSimpleEarnProduct(earnAsset[0]['productId'],0.1)
           transfer('main','umfuture',asset,0.1)
-          amount+=1
-      if amount>1:
-        sendMessage('transfer: future -> spot')
-        sendMessage(transfer('umfuture','main',asset,amount))
+          amount+=0.1
+      sendMessage(transfer('umfuture','main',asset,amount))
       
+  currentEarnAmount=getSimpleEarnPosition()
   spotBalances=dict([(v['asset'],float(v['free'])) for v in getAccount()['balances'] if float(v['free'])>0])
   for asset,amt in spotBalances.items():
     if asset not in earnList: continue
-    sendMessage(f"Subscribe simple earn: {asset}, amount: {amt}")
-    sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset],amt))
+    if amt<0.1:
+      amount=amt
+      earnAsset=[v for v in currentEarnAmount['rows'] if v['asset']==asset]
+      if earnAsset and float(earnAsset[0]['totalAmount'])>0.1:
+          redeemFlexibleSimpleEarnProduct(earnAsset[0]['productId'],0.1)
+          amount+=0.1
+      sendMessage(f"Subscribe simple earn: {asset}, amount: {amount}")
+      sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset],amount))
   print('Finish the program')
 except Exception as e:
   msg=f'Failed to finish the program: {traceback.format_exc()}'
