@@ -360,9 +360,9 @@ try:
   currentEarnAmount=getSimpleEarnPosition()
 
   for asset,amt in futureBalances.items():
-    if asset in earnList:    
+    if asset in earnList: 
+      amount=amt   
       if amt<0.1:
-        amount=amt
         earnAsset=[v for v in currentEarnAmount['rows'] if v['asset']==asset]  
         if earnAsset and float(earnAsset[0]['totalAmount'])>0.1:
           redeemFlexibleSimpleEarnProduct(earnAsset[0]['productId'],0.1)
