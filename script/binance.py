@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[24]:
+# In[35]:
 
 
 import requests as rq
@@ -14,7 +14,7 @@ import math
 import traceback
 
 
-# In[25]:
+# In[36]:
 
 
 with open('/Users/chhan/config.json','r') as f: config=json.load(f)
@@ -29,7 +29,7 @@ headers = {
 }
 
 
-# In[26]:
+# In[37]:
 
 
 def sendMessage(message,count=0):
@@ -44,7 +44,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[27]:
+# In[38]:
 
 
 def request(url,method):
@@ -59,7 +59,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[28]:
+# In[39]:
 
 
 def getCurrentTime():
@@ -129,7 +129,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[29]:
+# In[50]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -178,7 +178,7 @@ def getCurrentInvestInfo(coinSymbols,cashSymbols):
   return {'spot':totalSpot,'future':totalFuture,'earn':earnBalance,'total':totalBalance,'investRatio':investRatio}
 
 def convertAccountUnit(asset,investInfo):
-  ratio=float(getCurrentPrice(f'{asset}USDT')['price'])
+  ratio=1 if asset=='USDT' else float(getCurrentPrice(f'{asset}USDT')['price'])
   for asset in investInfo: investInfo[asset]*=ratio
   return investInfo
   
@@ -204,7 +204,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[30]:
+# In[41]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -215,7 +215,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
   return requestData(spotURL,subUrl,'post',f'fromAsset={fromAsset}&toAsset={toAsset}&fromAmount={fromAmount}&timestamp={getCurrentTime()}')
 
 
-# In[31]:
+# In[42]:
 
 
 '''
@@ -235,7 +235,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[32]:
+# In[43]:
 
 
 def floorToDecimal(num,ndigits):
@@ -282,11 +282,11 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
   print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
 
 
-# In[34]:
+# In[51]:
 
 
 coinsymbols=['BTC']
-cashsymbols=['USDC']
+cashsymbols=['USDT']
 symbol=coinsymbols[0]+cashsymbols[0]
 leverage=3
 stopLimitLevelNum=2
