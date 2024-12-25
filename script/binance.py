@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[35]:
+# In[3]:
 
 
 import requests as rq
@@ -14,7 +14,7 @@ import math
 import traceback
 
 
-# In[36]:
+# In[2]:
 
 
 with open('/Users/chhan/config.json','r') as f: config=json.load(f)
@@ -29,7 +29,7 @@ headers = {
 }
 
 
-# In[37]:
+# In[3]:
 
 
 def sendMessage(message,count=0):
@@ -44,7 +44,7 @@ def sendMessage(message,count=0):
     if count<10: sendMessage(message,count+1)
 
 
-# In[38]:
+# In[4]:
 
 
 def request(url,method):
@@ -59,7 +59,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
   return request(url,method).json()
 
 
-# In[39]:
+# In[5]:
 
 
 def getCurrentTime():
@@ -129,7 +129,7 @@ def closeAllOpenOrders():
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 
 
-# In[50]:
+# In[6]:
 
 
 def getCoinMovingAvg(symbol,unit,count):
@@ -204,7 +204,7 @@ def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
   return accountChangeInfo
 
 
-# In[41]:
+# In[7]:
 
 
 def getConvertPairInfo(fromAsset,toAsset):
@@ -215,7 +215,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
   return requestData(spotURL,subUrl,'post',f'fromAsset={fromAsset}&toAsset={toAsset}&fromAmount={fromAmount}&timestamp={getCurrentTime()}')
 
 
-# In[42]:
+# In[8]:
 
 
 '''
@@ -235,7 +235,7 @@ def applyConversion(fromAsset,toAsset,fromAmount):
 '''
 
 
-# In[43]:
+# In[9]:
 
 
 def floorToDecimal(num,ndigits):
@@ -282,7 +282,7 @@ def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,av
   print(f"stopmarket setting finished: price at {','.join(str(v) for v in realStopPriceList+[averagePrice,math.floor(averagePrice*0.99)])}")
 
 
-# In[51]:
+# In[ ]:
 
 
 coinsymbols=['BTC']
@@ -295,7 +295,7 @@ minOrderQuantityLimit=0.005
 
 try:
   #현재 이동평균선 확인 후 투자 비율 계산
-  print('start program')
+  print(f'start program: {datetime.now()}')
   disparity=getCurrentFutureMarkDisparity(symbol,'1d',30)
   accountChangeInfo=getAccountChange(coinsymbols,cashsymbols,disparity,leverage)
   minOrderLimit=float(getCurrentPrice(symbol)['price'])*minOrderQuantityLimit
@@ -378,8 +378,9 @@ try:
     if amt<0.1:
       earnAsset=[v for v in currentEarnAmount['rows'] if v['asset']==asset]
       if earnAsset and float(earnAsset[0]['totalAmount'])>0.1:
-          redeemFlexibleSimpleEarnProduct(earnAsset[0]['productId'],0.1)
-          amount+=0.1
+        print(f'asset: {earnAsset}')
+        redeemFlexibleSimpleEarnProduct(earnAsset[0]['productId'],0.1)
+        amount+=0.1
     sendMessage(f"Subscribe simple earn: {asset}, amount: {amount}")
     sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset],amount))
   print('Finish the program')
