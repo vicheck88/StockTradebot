@@ -32,27 +32,43 @@ if(isKoreanTradeOpen(token,apiConfig,account,today)=="N") stop("Market closed")
 cancelResult<-cancelAllOrders(apiConfig,account,token)
 for(res in cancelResult) sendMessage(res)
 
-trackCode<-'379810'
-prices<-adjustedPriceFromNaver('day',200,trackCode)
-averagePrice<-mean(prices[,1])
-currentPrice<-tail(prices,1)[,1]
-currentDisparity<-100*currentPrice/averagePrice-100
+snpTrackCode<-'360750'
+prices<-adjustedPriceFromNaver('day',200,snpTrackCode)
+averageSnpPrice<-mean(prices[,1])
+currentSnpPrice<-tail(prices,1)[,1]
+snpCurrentDisparity<-100*currentSnpPrice/averageSnpPrice-100
+
+nasdaqTrackCode<-'133690'
+prices<-adjustedPriceFromNaver('day',200,nasdaqTrackCode)
+averageNasdaqPrice<-mean(prices[,1])
+currentNasdaqPrice<-tail(prices,1)[,1]
+nasdaqCurrentDisparity<-100*currentNasdaqPrice/averageNasdaqPrice-100
 
 nasdaqLevCode<-'418660' #TIGER 미국나스닥100레버리지(합성)
 sofrCode<-'456880' #ACE 미국달러SOFR금리(합성)
 
-currentNasdaqPrice<-getCurrentPrice(apiConfig,account,token,nasdaqLevCode)
+currentNasdaqLevPrice<-getCurrentPrice(apiConfig,account,token,nasdaqLevCode)
 currentSofrPrice<-getCurrentPrice(apiConfig,account,token,sofrCode)
 
 #disp 1 ~ 2: 0.5
 #disp 2 ~ 20: 1
 #disp 20 ~ : 0
 
-goalRatio<-abs(floor(currentDisparity)*0.5)
+goalRatio<-abs(floor(snpCurrentDisparity)*0.5)
 goalRatio<-min(1,goalRatio)
 goalRatio<-max(0,goalRatio)
-if(currentDisparity>20) goalRatio<-0
+if(snpCurrentDisparity>20) goalRatio<-0
 
+if(hour(Sys.time())==12){
+  message<-paste0("TIGER 미국SnP500 가격: ",currentSnpPrice,"\n")
+  message<-paste0(message,"TIGER 미국나스닥100 가격: ",currentNasdaqPrice,"\n\n")
+  message<-paste0(message,"TIGER 미국SnP500 200 MA: ",round(averageSnpPrice,2),"\n")
+  message<-paste0(message,"TIGER 미국나스닥100 200 MA: ",round(averageNasdaqPrice,2),"\n\n")
+  message<-paste0(message,"TIGER 미국SnP500 Disparity: ", round(snpCurrentDisparity,2),"\n")
+  message<-paste0(message,"TIGER 미국나스닥100 Disparity: ", round(nasdaqCurrentDisparity,2),"\n\n")
+  message<-paste0(message,"TIGER 미국나스닥100레버리지 비율: ",goalRatio)
+  sendMessage(message)
+}
 
 currentBalance<-getBalancesheet(token,apiConfig,account)
 
@@ -68,7 +84,7 @@ totalBalanceSum<-currentBalance$sheet[,sum(as.numeric(evlu_amt))]+getOrderableAm
 goalBalanceSum<-totalBalanceSum*goalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
 
-goalBalanceSheet<-data.table(종목코드=nasdaqLevCode,종목명='TIGER 미국나스닥100레버리지(합성)',현재가=currentNasdaqPrice,목표금액=goalBalanceSum,signal=sign(currentDisparity),주문구분='00')
+goalBalanceSheet<-data.table(종목코드=nasdaqLevCode,종목명='TIGER 미국나스닥100레버리지(합성)',현재가=currentNasdaqLevPrice,목표금액=goalBalanceSum,signal=sign(snpCurrentDisparity),주문구분='00')
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='ACE 미국달러SOFR금리(합성)',현재가=currentSofrPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
 
 
