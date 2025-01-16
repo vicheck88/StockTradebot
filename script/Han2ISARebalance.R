@@ -44,6 +44,15 @@ averageNasdaqPrice<-mean(prices[,1])
 currentNasdaqPrice<-tail(prices,1)[,1]
 nasdaqCurrentDisparity<-100*currentNasdaqPrice/averageNasdaqPrice-100
 
+symbols = c('QQQ')
+getSymbols(symbols, src = 'yahoo')
+prices = tail(Ad(QQQ),200)
+currentPrice=tail(prices,1)
+QQQ.Adjusted.MA.200<-mean(prices)
+QQQcurrentDisparity<-(100*currentPrice/QQQ.Adjusted.MA.200)-100
+
+
+
 nasdaqLevCode<-'418660' #TIGER 미국나스닥100레버리지(합성)
 sofrCode<-'456880' #ACE 미국달러SOFR금리(합성)
 
@@ -54,10 +63,10 @@ currentSofrPrice<-getCurrentPrice(apiConfig,account,token,sofrCode)
 #disp 2 ~ 20: 1
 #disp 20 ~ : 0
 
-goalRatio<-abs(floor(snpCurrentDisparity)*0.5)
+goalRatio<-abs(floor(QQQcurrentDisparity)*0.5)
 goalRatio<-min(1,goalRatio)
 goalRatio<-max(0,goalRatio)
-if(snpCurrentDisparity>20) goalRatio<-0
+if(QQQcurrentDisparity>20) goalRatio<-0
 
 if(hour(Sys.time())==12){
   message<-paste0("TIGER 미국SnP500 가격: ",currentSnpPrice,"\n")
@@ -66,6 +75,7 @@ if(hour(Sys.time())==12){
   message<-paste0(message,"TIGER 미국나스닥100 200 MA: ",round(averageNasdaqPrice,2),"\n\n")
   message<-paste0(message,"TIGER 미국SnP500 Disparity: ", round(snpCurrentDisparity,2),"\n")
   message<-paste0(message,"TIGER 미국나스닥100 Disparity: ", round(nasdaqCurrentDisparity,2),"\n\n")
+  message<-paste0(message,"QQQ Disparity: ", round(QQQcurrentDisparity,2),"\n\n")
   message<-paste0(message,"TIGER 미국나스닥100레버리지 비율: ",goalRatio)
   sendMessage(message)
 }
