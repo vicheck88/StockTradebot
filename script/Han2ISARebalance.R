@@ -125,7 +125,7 @@ for(i in 1:nrow(combinedSheet)){
   if(length(remTable)>0) availableAmount <- availableAmount+remTable[,sum(평가금액)]
   availableAmount<-min(availableAmount,remainingPortion)
   if(row$목표금액>row$평가금액){
-    qty<-row[,min(0,floor((availableAmount-평가금액)/현재가))]
+    qty<-row[,max(0,floor((availableAmount-평가금액)/현재가))]
     if(qty==0){
       amt<-buySheet[i,평가금액]
     } else{
