@@ -123,7 +123,7 @@ for(i in 1:nrow(combinedSheet)){
   else{
     combinedSheet[i,목표금액:=remainingPortion/(nrow(remTable)+1)]
   }
-  remainingPortion<-remainingPortion-row$목표금액
+  remainingPortion<-remainingPortion-combinedSheet[i,목표금액]
 }
 combinedSheet<-combinedSheet[,c('종목코드','종목명','보유수량','목표금액','평가금액')]
 
