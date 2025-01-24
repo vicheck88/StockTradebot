@@ -88,9 +88,6 @@ if(currentBalance$status_code!='200'){
 
 totalBalanceSum<-currentBalance$sheet[,sum(as.numeric(evlu_amt))]+getOrderableAmount(apiConfig,account,token,nasdaqLevCode)
 
-#totalBalanceSum<-as.numeric(currentBalance$summary$tot_evlu_amt)
-#orderableAmount<-getOrderableAmount(apiConfig,account,token,nasdaqLevCode)
-
 goalBalanceSum<-totalBalanceSum*goalRatio
 bondBalanceSum<-totalBalanceSum-goalBalanceSum
 
@@ -113,29 +110,20 @@ combinedSheet[is.na(목표금액)]$목표금액<-0
 combinedSheet[is.na(평가금액)]$평가금액<-0
 combinedSheet[is.na(보유수량)]$보유수량<-0
 
-combinedSheet<-combinedSheet[(signal>0 & 목표금액>평가금액) | (signal<0 & 목표금액<평가금액) | (signal==0 & 평가금액!=목표금액)]
-
-
-buySheet<-combinedSheet[평가금액<=목표금액]
+setorder(combinedSheet,-목표금액)
 remainingPortion<-totalBalanceSum
 for(i in 1:nrow(combinedSheet)){
   row<-combinedSheet[i,]
   remTable<-combinedSheet[-(1:i),]
-  availableAmount<-getOrderableAmount(apiConfig,account,token,row$종목코드)+row$평가금액
-  if(length(remTable)>0) availableAmount <- availableAmount+remTable[,sum(평가금액)]
-  availableAmount<-min(availableAmount,remainingPortion)
-  if(row$목표금액>row$평가금액){
-    qty<-row[,max(0,floor((availableAmount-평가금액)/현재가))]
-    if(qty==0){
-      amt<-buySheet[i,평가금액]
-    } else{
-      amt<-availableAmount
-    }
-    combinedSheet[i,]$목표금액<-amt
-    remainingPortion<-remainingPortion-amt
-  } else{
-    combinedSheet[i,]$목표금액<-remainingPortion
+  availableAmount<-min(row$목표금액,remainingPortion)
+  if(row$목표금액>0){
+    qty<-row[,floor((availableAmount-평가금액)/현재가)]
+    combinedSheet[i,목표금액:=row$평가금액+qty*row$현재가]
   }
+  else{
+    combinedSheet[i,목표금액:=remainingPortion/(nrow(remTable)+1)]
+  }
+  remainingPortion<-remainingPortion-row$목표금액
 }
 combinedSheet<-combinedSheet[,c('종목코드','종목명','보유수량','목표금액','평가금액')]
 
