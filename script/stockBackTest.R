@@ -1,5 +1,5 @@
 #setwd("/home/pi/stockInfoCrawler/StockTradebot/Rscript")
-setwd("/Users/chhan/StockTradebot/Rscript")
+setwd("/Users/chhan/StockTradebot/script")
 
 library(data.table)
 library(xts)
@@ -52,7 +52,7 @@ priceWith200MA[,TQQQDisparity:=100*TQQQ.Adjusted/TQQQ.Adjusted.MA.200-100]
 priceWith200MA[,QQQDisparity:=100*QQQ.Adjusted/QQQ.Adjusted.MA.200-100]
 priceWith200MA<-na.omit(as.xts(priceWith200MA))
 
-rets<-rets[,-"QQQ.Adjusted"]
+#rets<-rets[,-"QQQ.Adjusted"]
 rets<-as.xts(rets)
 rets$Cash<-0
 
@@ -99,8 +99,8 @@ priceWithRatio<-priceWithRatio[,getTQQQInvestRatio(.SD)]
 priceWithRatio[,CashinvestRatio:=1-TQQQinvestRatio]
 priceWithRatio<-as.xts(priceWithRatio)
 
-#Tactical = Return.portfolio(rets[,c("TQQQ.Adjusted","Cash")], priceWithRatio[,c("TQQQinvestRatio","CashinvestRatio")], verbose = TRUE)
-Tactical = Return.portfolio(rets[,c("QLD.Adjusted","Cash")], priceWithRatio[,c("QLDinvestRatio","CashinvestRatio")], verbose = TRUE)
+Tactical = Return.portfolio(rets[,c("TQQQ.Adjusted","Cash")], priceWithRatio[,c("TQQQinvestRatio","CashinvestRatio")], verbose = TRUE)
+#Tactical = Return.portfolio(rets[,c("QQQ.Adjusted","Cash")], priceWithRatio[,c("TQQQinvestRatio","CashinvestRatio")], verbose = TRUE)
 
 portfolios = na.omit(cbind(rets[,1], Tactical$returns)) %>%
   setNames(c('Hold', 'MA strategy'))

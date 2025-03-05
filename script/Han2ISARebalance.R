@@ -44,6 +44,13 @@ averageNasdaqPrice<-mean(prices[,1])
 currentNasdaqPrice<-tail(prices,1)[,1]
 nasdaqCurrentDisparity<-100*currentNasdaqPrice/averageNasdaqPrice-100
 
+top7TrackCode<-'465580'
+prices<-adjustedPriceFromNaver('day',200,top7TrackCode)
+averageTop7Price<-mean(prices[,1])
+currentTop7Price<-tail(prices,1)[,1]
+top7CurrentDisparity<-100*currentTop7Price/averageTop7Price-100
+
+
 symbols = c('QQQ')
 getSymbols(symbols, src = 'yahoo')
 prices = tail(Ad(QQQ),200)
@@ -54,31 +61,12 @@ QQQcurrentDisparity<-(100*currentPrice/QQQ.Adjusted.MA.200)-100
 
 
 nasdaqLevCode<-'418660' #TIGER 미국나스닥100레버리지(합성)
+top7LevCode<-'465610' #ACE 미국빅테TOP7Plus레버리지(합성)
 sofrCode<-'456880' #ACE 미국달러SOFR금리(합성)
 
+currentTop7LevPrice<-getCurrentPrice(apiConfig,account,token,top7LevCode)
 currentNasdaqLevPrice<-getCurrentPrice(apiConfig,account,token,nasdaqLevCode)
 currentSofrPrice<-getCurrentPrice(apiConfig,account,token,sofrCode)
-
-#disp 1 ~ 2: 0.5
-#disp 2 ~ 20: 1
-#disp 20 ~ : 0
-
-goalRatio<-abs(floor(QQQcurrentDisparity)*0.5)
-goalRatio<-min(1,goalRatio)
-goalRatio<-max(0,goalRatio)
-if(QQQcurrentDisparity>20) goalRatio<-0
-
-if(hour(Sys.time())==12){
-  message<-paste0("TIGER 미국SnP500 가격: ",currentSnpPrice,"\n")
-  message<-paste0(message,"TIGER 미국나스닥100 가격: ",currentNasdaqPrice,"\n\n")
-  message<-paste0(message,"TIGER 미국SnP500 200 MA: ",round(averageSnpPrice,2),"\n")
-  message<-paste0(message,"TIGER 미국나스닥100 200 MA: ",round(averageNasdaqPrice,2),"\n\n")
-  message<-paste0(message,"TIGER 미국SnP500 Disparity: ", round(snpCurrentDisparity,2),"\n")
-  message<-paste0(message,"TIGER 미국나스닥100 Disparity: ", round(nasdaqCurrentDisparity,2),"\n\n")
-  message<-paste0(message,"QQQ Disparity: ", round(QQQcurrentDisparity,2),"\n\n")
-  message<-paste0(message,"TIGER 미국나스닥100레버리지 비율: ",goalRatio)
-  sendMessage(message)
-}
 
 currentBalance<-getBalancesheet(token,apiConfig,account)
 
@@ -87,12 +75,55 @@ if(currentBalance$status_code!='200'){
 }
 
 totalBalanceSum<-currentBalance$sheet[,sum(as.numeric(evlu_amt))]+getOrderableAmount(apiConfig,account,token,nasdaqLevCode)
+curStockRatio<-0
+if(nrow(currentBalance$sheet)>0){
+  curStockBalance<-sum(as.numeric(currentBalance$sheet[pdno!=456880,evlu_amt]))
+  curStockRatio<-curStockBalance/totalBalanceSum
+}
 
-goalBalanceSum<-totalBalanceSum*goalRatio
-bondBalanceSum<-totalBalanceSum-goalBalanceSum
 
-goalBalanceSheet<-data.table(종목코드=nasdaqLevCode,종목명='TIGER 미국나스닥100레버리지(합성)',현재가=currentNasdaqLevPrice,목표금액=goalBalanceSum,signal=sign(snpCurrentDisparity),주문구분='00')
-goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='ACE 미국달러SOFR금리(합성)',현재가=currentSofrPrice,목표금액=bondBalanceSum,signal=0,주문구분='00'))
+#disp 1 ~ 2: 0.5
+#disp 2 ~ 20: 1
+#disp 20 ~ : 0
+stockRatio<-abs(floor(QQQcurrentDisparity)*0.5)
+stockRatio<-min(1,stockRatio)
+stockRatio<-max(0,stockRatio)
+
+if(QQQcurrentDisparity>=0) {
+  stockRatio<-max(stockRatio,curStockRatio)
+  } else stockRatio<-min(stockRatio,curStockRatio)
+
+
+if(QQQcurrentDisparity>20) stockRatio<-0
+top7NasdaqDiff<-top7CurrentDisparity-nasdaqCurrentDisparity
+top7InvestRatio<-max(0,min(0.2,floor(top7NasdaqDiff)/10)*stockRatio)
+nasdaqInvestRatio<-stockRatio-top7InvestRatio
+
+
+if(hour(Sys.time())==12){
+  message<-paste0("TIGER 미국SnP500 가격: ",currentSnpPrice,"\n")
+  message<-paste0(message,"TIGER 미국나스닥100 가격: ",currentNasdaqPrice,"\n")
+  message<-paste0(message,"ACE 미국빅테크TOP7Plus 가격: ",currentTop7Price,"\n\n")
+  message<-paste0(message,"TIGER 미국SnP500 200 MA: ",round(averageSnpPrice,2),"\n")
+  message<-paste0(message,"TIGER 미국나스닥100 200 MA: ",round(averageNasdaqPrice,2),"\n")
+  message<-paste0(message,"ACE 미국빅테크TOP7Plus 200 MA: ",round(averageTop7Price,2),"\n\n")
+  message<-paste0(message,"TIGER 미국SnP500 Disparity: ", round(snpCurrentDisparity,2),"\n")
+  message<-paste0(message,"TIGER 미국나스닥100 Disparity: ", round(nasdaqCurrentDisparity,2),"\n")
+  message<-paste0(message,"ACE 미국빅테크TOP7Plus Disparity: ", round(top7CurrentDisparity,2),"\n\n")
+  message<-paste0(message,"QQQ Disparity: ", round(QQQcurrentDisparity,2),"\n\n")
+  message<-paste0(message,"TIGER 미국나스닥100레버리지 비율: ",nasdaqInvestRatio,"\n")
+  message<-paste0(message,"ACE 미국빅테크TOP7Plus 비율: ",top7InvestRatio)
+  sendMessage(message)
+}
+
+
+nasdaqBalanceSum<-totalBalanceSum*nasdaqInvestRatio
+top7BalanceSum<-totalBalanceSum*top7InvestRatio
+bondBalanceSum<-totalBalanceSum-top7BalanceSum-nasdaqBalanceSum
+
+goalBalanceSheet<-data.table(종목코드=nasdaqLevCode,종목명='ACE 미국빅테크TOP7Plus(합성)',현재가=currentTop7LevPrice,목표금액=top7BalanceSum,주문구분='00')
+goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=nasdaqLevCode,종목명='TIGER 미국나스닥100레버리지(합성)',현재가=currentNasdaqLevPrice,목표금액=nasdaqBalanceSum,주문구분='00'))
+goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='ACE 미국달러SOFR금리(합성)',현재가=currentSofrPrice,목표금액=bondBalanceSum,주문구분='00'))
 
 
 if(length(currentBalance$sheet)>0){
