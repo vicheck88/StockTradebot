@@ -74,14 +74,14 @@ if(nrow(currentBalance$sheet)>0){
 }
 
 #TQQQratio
-#TQQQGoalRatio<-floor(currentDisparity$TQQQ.Adjusted.MA.200)*0.5
-TQQQGoalRatio<-abs(floor(currentDisparity)*0.5)
-TQQQGoalRatio<-min(1,TQQQGoalRatio)
-TQQQGoalRatio<-max(0,TQQQGoalRatio)
-
-if(sign(currentDisparity)>=0) TQQQGoalRatio<-max(TQQQGoalRatio,curTQQQRatio)
-if(sign(currentDisparity)<0) TQQQGoalRatio<-min(TQQQGoalRatio,curTQQQRatio)
-
+TQQQGoalRatio<-floor(currentDisparity$TQQQ.Adjusted.MA.200)*0.5
+if(TQQQGoalRatio>=1){
+  TQQQGoalRatio<-1
+}else if(TQQQGoalRatio<=-1){
+  TQQQGoalRatio<--1
+}else{
+  TQQQGoalRatio<-min(abs(TQQQGoalRatio),curTQQQRatio)
+}
 #sendMessage
 message<-paste0("SPY price: ",currentPrice$SPY.Adjusted)
 message<-paste0(message,"\nQQQ price: ",currentPrice$QQQ.Adjusted)

@@ -85,14 +85,14 @@ if(nrow(currentBalance$sheet)>0){
 #disp 1 ~ 2: 0.5
 #disp 2 ~ 20: 1
 #disp 20 ~ : 0
-stockRatio<-abs(floor(QQQcurrentDisparity)*0.5)
-stockRatio<-min(1,stockRatio)
-stockRatio<-max(0,stockRatio)
-
-if(QQQcurrentDisparity>=0) {
-  stockRatio<-max(stockRatio,curStockRatio)
-  } else stockRatio<-min(stockRatio,curStockRatio)
-
+stockRatio<-floor(QQQcurrentDisparity)*0.5
+if(stockRatio>=1) {
+  stockRatio<-1
+}else if(stockRatio<=-1){
+    stockRatio<-0
+}else{
+    stockRatio<-min(abs(stockRatio),curStockRatio)
+  }
 
 if(QQQcurrentDisparity>20) stockRatio<-0
 top7NasdaqDiff<-top7CurrentDisparity-nasdaqCurrentDisparity
