@@ -78,10 +78,10 @@ TQQQGoalRatio<-floor(currentDisparity)*0.5
 if(TQQQGoalRatio>=1){
   TQQQGoalRatio<-1
 }else if(TQQQGoalRatio<=-1){
-  TQQQGoalRatio<--1
-}else{
-  TQQQGoalRatio<-min(abs(TQQQGoalRatio),curTQQQRatio)
-}
+  TQQQGoalRatio<-0
+}else if(currentDisparity<0){
+  TQQQGoalRatio<-min(0.5,curTQQQRatio)
+}else TQQQGoalRatio<-max(0.5,curTQQQRatio)
 #sendMessage
 message<-paste0("SPY price: ",currentPrice$SPY.Adjusted)
 message<-paste0(message,"\nQQQ price: ",currentPrice$QQQ.Adjusted)
