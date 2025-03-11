@@ -74,7 +74,7 @@ if(nrow(currentBalance$sheet)>0){
 }
 
 #TQQQratio
-TQQQGoalRatio<-floor(currentDisparity$TQQQ.Adjusted.MA.200)*0.5
+TQQQGoalRatio<-floor(currentDisparity)*0.5
 if(TQQQGoalRatio>=1){
   TQQQGoalRatio<-1
 }else if(TQQQGoalRatio<=-1){
