@@ -70,7 +70,7 @@ totalBalanceSum<-floor((as.numeric(currentBalance$summary2[,"tot_asst_amt"])-as.
 curTQQQRatio<-0
 if(nrow(currentBalance$sheet)>0){
   curTQQQBalance<-as.numeric(currentBalance$sheet[pdno=="TQQQ",frcr_evlu_amt2])
-  curTQQQRatio<-curTQQQBalance/totalBalanceSum
+  if(length(curTQQQBalance)>0) curTQQQRatio<-curTQQQBalance/totalBalanceSum
 }
 
 #TQQQratio

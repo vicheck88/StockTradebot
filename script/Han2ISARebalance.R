@@ -78,7 +78,7 @@ totalBalanceSum<-currentBalance$sheet[,sum(as.numeric(evlu_amt))]+getOrderableAm
 curStockRatio<-0
 if(nrow(currentBalance$sheet)>0){
   curStockBalance<-sum(as.numeric(currentBalance$sheet[pdno!=456880,evlu_amt]))
-  curStockRatio<-curStockBalance/totalBalanceSum
+  if(length(curStockBalance)>0) curStockRatio<-curStockBalance/totalBalanceSum
 }
 
 
@@ -90,8 +90,10 @@ if(stockRatio>=1) {
   stockRatio<-1
 }else if(stockRatio<=-1){
     stockRatio<-0
-}else{
+}else if(stockRatio<=0){
     stockRatio<-min(abs(stockRatio),curStockRatio)
+} else{
+  stockRatio<-max(abs(stockRatio),curStockRatio)
   }
 
 if(QQQcurrentDisparity>20) stockRatio<-0
