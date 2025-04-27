@@ -97,31 +97,21 @@ getInvestRatio<-function(table){
       }
     newRatio<-min(1,addRatio)
     newRatio<-max(0,newRatio)
-    table[i,]$investRatio<-newRatio
-  }
-  return(table)
-}
-getInvestRatio2<-function(table){
-  for(i in 1:nrow(table)){
-    disparity<-table[i,]$disparity
-    if(disparity<0) addRatio<-0
-    else{
-      disparity2<-table[i,]$disparity2
-      if(disparity2>0) {
-        addRatio<-floor(disparity2)*0.5
-      }  else addRatio<-floor(disparity2)*0.5
-      if(i>1){
-        prevRatio<-table[i-1,]$investRatio
-        if(addRatio>=0) addRatio<-max(prevRatio,addRatio)
-        if(addRatio<0) addRatio<-min(1+addRatio,prevRatio)
+    if(i>=10){
+      disparityTrend<-table[i-9:i,]$disparity
+      print(length(disparityTrend))
+      reg<-lm(1:10 ~ disparityTrend)
+      b<-summary(reg)$coefficients[2,1]
+      p<-summary(reg)$coefficients[2,-1][3]
+      if(p<0.05 & b<0){
+        newRatio<-newRatio/3
       }
     }
-    newRatio<-min(1,addRatio)
-    newRatio<-max(0,newRatio)
     table[i,]$investRatio<-newRatio
   }
   return(table)
 }
+
 coinPriceHistory<-coinPriceHistory[,getInvestRatio(.SD),by=market]
 
 #시간단위일 경우 시간변경 필요
@@ -139,6 +129,9 @@ coinAdjusted[,adjustedPrice:=(trade_price/prevValue)-1]
 coinAdjusted<-coinAdjusted[,.(candle_date_time_kst,adjustedPrice)]
 coinAdjusted$adjustedCache<-0
 
+coinAdjusted[,':='(investRatio=coinPriceHistory$investRatio,exposure=0)]
+coinAdjusted[1,exposure:=3]
+coinAdjusted
 
 coinAdjusted<-coinAdjusted[candle_date_time_kst>='2018-01-01 09:00:00']
 coinRatioTable<-coinRatioTable[candle_date_time_kst>='2018-01-01 09:00:00']
