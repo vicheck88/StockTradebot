@@ -51,12 +51,16 @@ currentTop7Price<-tail(prices,1)[,1]
 top7CurrentDisparity<-100*currentTop7Price/averageTop7Price-100
 
 
-symbols = c('QQQ')
+symbols = c('QQQ','SPY')
 getSymbols(symbols, src = 'yahoo')
-prices = tail(Ad(QQQ),200)
-currentPrice=tail(prices,1)
-QQQ.Adjusted.MA.200<-mean(prices)
-QQQcurrentDisparity<-(100*currentPrice/QQQ.Adjusted.MA.200)-100
+qqqPrices = tail(Ad(QQQ),200)
+spyPrices = tail(Ad(SPY),200)
+currentQQQPrice=tail(qqqPrices,1)
+currentSPYPrice=tail(spyPrices,1)
+QQQ.Adjusted.MA.200<-mean(qqqPrices)
+SPY.Adjusted.MA.200<-mean(spyPrices)
+QQQcurrentDisparity<-(100*currentQQQPrice/QQQ.Adjusted.MA.200)-100
+SPYcurrentDisparity<-(100*currentSPYPrice/SPY.Adjusted.MA.200)-100
 
 
 
@@ -79,7 +83,7 @@ if(currentBalance$status_code!='200'){
 totalBalanceSum<-currentBalance$sheet[,sum(as.numeric(evlu_amt))]+getOrderableAmount(apiConfig,account,token,nasdaqLevCode)
 curStockRatio<-0
 if(nrow(currentBalance$sheet)>0){
-  curStockBalance<-sum(as.numeric(currentBalance$sheet[pdno!=456880,evlu_amt]))
+  curStockBalance<-sum(as.numeric(currentBalance$sheet[pdno %in% c('418660','465610'),evlu_amt]))
   if(length(curStockBalance)>0) curStockRatio<-curStockBalance/totalBalanceSum
 }
 
@@ -114,7 +118,8 @@ if(hour(Sys.time())==12){
   message<-paste0(message,"TIGER 미국SnP500 Disparity: ", round(snpCurrentDisparity,2),"\n")
   message<-paste0(message,"TIGER 미국나스닥100 Disparity: ", round(nasdaqCurrentDisparity,2),"\n")
   message<-paste0(message,"ACE 미국빅테크TOP7Plus Disparity: ", round(top7CurrentDisparity,2),"\n\n")
-  message<-paste0(message,"QQQ Disparity: ", round(QQQcurrentDisparity,2),"\n\n")
+  message<-paste0(message,"QQQ Disparity: ", round(QQQcurrentDisparity,2),"\n")
+  message<-paste0(message,"SPY Disparity: ", round(SPYcurrentDisparity,2),"\n\n")
   message<-paste0(message,"TIGER 미국나스닥100레버리지 비율: ",nasdaqInvestRatio,"\n")
   message<-paste0(message,"ACE 미국빅테크TOP7Plus 비율: ",top7InvestRatio)
   sendMessage(message)
