@@ -130,7 +130,7 @@ nasdaqBalanceSum<-totalBalanceSum*nasdaqInvestRatio
 top7BalanceSum<-totalBalanceSum*top7InvestRatio
 bondBalanceSum<-totalBalanceSum-top7BalanceSum-nasdaqBalanceSum
 
-goalBalanceSheet<-data.table(종목코드=nasdaqLevCode,종목명='ACE 미국빅테크TOP7Plus(합성)',현재가=currentTop7LevPrice,목표금액=top7BalanceSum,주문구분='00')
+goalBalanceSheet<-data.table(종목코드=top7TrackCode,종목명='ACE 미국빅테크TOP7Plus(합성)',현재가=currentTop7LevPrice,목표금액=top7BalanceSum,주문구분='00')
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=nasdaqLevCode,종목명='TIGER 미국나스닥100레버리지(합성)',현재가=currentNasdaqLevPrice,목표금액=nasdaqBalanceSum,주문구분='00'))
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='ACE 미국달러SOFR금리(합성)',현재가=currentSofrPrice,목표금액=0,주문구분='00'))
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=highYieldCode,종목명='KODEX iShares미국하이일드액티브',현재가=currentHighyieldPrice,목표금액=bondBalanceSum,주문구분='00'))
