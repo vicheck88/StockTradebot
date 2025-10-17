@@ -41,7 +41,9 @@ isHoliday<-function(today){
   month = month(Sys.Date())
   key="PEWQgyukEMto9hnKQ1YpebLFfE%2F3VGib2d2TZ1XvjKICjFbNfZ8BeQNspNF9avuO%2B%2F4zqnDj2P4rgk2KjjkDgQ%3D%3D"
   url<-paste(base,'?serviceKey=',key,'&pageNo=1&numOfRows=10&solYear=',year,'&solMonth=',sprintf("%02d",month),sep="")
-  data<-content(GET(url))$response$body
+  resp=GET(url)$response
+  if(is.null(content$response)) return(TRUE)
+  data<-resp$body
   holidayList<-c()
   if(data$totalCount==1) holidayList=c(data$items$item$locdate)
   else if(data$totalCount>1){
