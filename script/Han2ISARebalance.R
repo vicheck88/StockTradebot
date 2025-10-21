@@ -1,11 +1,11 @@
 #Sys.setlocale('LC_ALL','en_US.UTF-8')
-source("~/StockTradebot/script/RQuantFunctionList.R") #macOS에서 읽는 경우
-source("~/StockTradebot/script/Han2FunctionList.R") #macOS에서 읽는 경우
-source("~/StockTradebot/script/telegramAPI.R") #macOS에서 읽는 경우
+source("~/StockTradebot/script/RQuantFunctionList.R") #라즈베리에서 읽는 경우
+source("~/StockTradebot/script/Han2FunctionList.R") #라즈베리에서 읽는 경우
+source("~/StockTradebot/script/telegramAPI.R") #라즈베리에서 읽는 경우
 
 #source("~/stockInfoCrawler/StockTradebot/script/RQuantFunctionList.R") #macOS에서 읽는 경우
-#source("~/stockInfoCrawler/StockTradebot/script/Han2FunctionList.R") #라즈베리에서 읽는 경우
-#source("~/stockInfoCrawler/StockTradebot/script/telegramAPI.R") #라즈베리에서 읽는 경우
+#source("~/stockInfoCrawler/StockTradebot/script/Han2FunctionList.R") #macOS에서 읽는 경우
+#source("~/stockInfoCrawler/StockTradebot/script/telegramAPI.R") #macOS에서 읽는 경우
 
 
 pkg = c('data.table','xts','quantmod','stringr','timeDate','lubridate')

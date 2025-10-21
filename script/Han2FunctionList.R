@@ -42,7 +42,7 @@ isHoliday<-function(today){
   key="PEWQgyukEMto9hnKQ1YpebLFfE%2F3VGib2d2TZ1XvjKICjFbNfZ8BeQNspNF9avuO%2B%2F4zqnDj2P4rgk2KjjkDgQ%3D%3D"
   url<-paste(base,'?serviceKey=',key,'&pageNo=1&numOfRows=10&solYear=',year,'&solMonth=',sprintf("%02d",month),sep="")
   resp=GET(url)$response
-  if(is.null(resp)) return(TRUE)
+  if(is.null(resp)) return(FALSE)
   data<-resp$body
   holidayList<-c()
   if(data$totalCount==1) holidayList=c(data$items$item$locdate)
@@ -90,13 +90,13 @@ getCurrentPrice<-function(apiConfig,account, token, code){
     Authorization=paste('Bearer',token),
     appkey=account$appkey,
     appsecret=account$appsecret,
-    tr_id='FHKST121600C0'
+    tr_id='FHKST01010100'
   )
   query<-list(FID_COND_MRKT_DIV_CODE='J',FID_INPUT_ISCD=code)
   response<-GET(priceUrl,add_headers(headers),query=query)
   res<-fromJSON(rawToChar(response$content))
-  if(res$rt_cd!=0) return(-1)
-  return(as.numeric(res$output2))
+  if(res$rt_cd!=0) return(NULL)
+  return(as.numeric(res$output$stck_prpr))
 }
 
 getETFComponentStocks<-function(apiConfig, account, token, etfCode){
