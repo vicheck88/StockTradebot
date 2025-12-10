@@ -42,7 +42,7 @@ isHoliday<-function(today){
   key="PEWQgyukEMto9hnKQ1YpebLFfE%2F3VGib2d2TZ1XvjKICjFbNfZ8BeQNspNF9avuO%2B%2F4zqnDj2P4rgk2KjjkDgQ%3D%3D"
   url<-paste(base,'?serviceKey=',key,'&pageNo=1&numOfRows=10&solYear=',year,'&solMonth=',sprintf("%02d",month),sep="")
   resp=GET(url)$response
-  if(is.null(content$response)) return(TRUE)
+  if(is.null(resp)) return(FALSE)
   data<-resp$body
   holidayList<-c()
   if(data$totalCount==1) holidayList=c(data$items$item$locdate)
@@ -95,8 +95,29 @@ getCurrentPrice<-function(apiConfig,account, token, code){
   query<-list(FID_COND_MRKT_DIV_CODE='J',FID_INPUT_ISCD=code)
   response<-GET(priceUrl,add_headers(headers),query=query)
   res<-fromJSON(rawToChar(response$content))
-  if(res$rt_cd!=0) return(-1)
+  if(res$rt_cd!=0) return(NULL)
   return(as.numeric(res$output$stck_prpr))
+}
+
+getETFComponentStocks<-function(apiConfig, account, token, etfCode){
+  componentUrl<-paste0(apiConfig$url,'/uapi/etfetn/v1/quotations/inquire-component-stock-price')
+  headers<-c(
+    Authorization=paste('Bearer',token),
+    appkey=account$appkey,
+    appsecret=account$appsecret,
+    tr_id='FHKST121600C0',
+    custtype='P'
+  )
+  query<-list(
+    FID_COND_MRKT_DIV_CODE='J',
+    FID_INPUT_ISCD=etfCode,
+    FID_COND_SCR_DIV_CODE='11216'
+  )
+  response<-GET(componentUrl,add_headers(headers),query=query)
+  res<-fromJSON(rawToChar(response$content))
+  if(res$rt_cd!=0) return(NULL)
+  
+  return(as.data.table(res$output2))
 }
 getAvailablePurchaseAmount<-function(token,apiConfig,account){
   url<-paste0(apiConfig$url,'/uapi/overseas-stock/v1/trading/inquire-psamount') 
@@ -182,9 +203,7 @@ getOverseasBalancesheet<-function(token,apiConfig,account, tr_cont='',CTX_AREA_F
   }
 }
 getBalancesheet<-function(token,apiConfig,account, tr_cont='',CTX_AREA_FK100='',CTX_AREA_NK100='',output=NULL){
-  #/uapi/domestic-stock/v1/trading/inquire-balance-rlz-pl #실현손익 포함한 잔고조회
   balanceUrl<-paste(apiConfig$url,'/uapi/domestic-stock/v1/trading/inquire-balance',sep='')
-  #token<-getToken(apiConfig,account)
   headers<-c(
              Authorization=paste('Bearer',token),
              appkey=account$appkey,
@@ -218,17 +237,15 @@ getBalancesheet<-function(token,apiConfig,account, tr_cont='',CTX_AREA_FK100='',
     output$msg_cd<-res$msg_cd
     output$msg<-res$msg1
     output$summary<-res$output2
-    #revokeToken(apiConfig,account,token)
     return(output)
   } else{
-    return(getBalancesheet(apiConfig,account,'N',res$ctx_area_fk100,res$ctx_area_nk100,output))
+    return(getBalancesheet(token,apiConfig,account,'N',res$ctx_area_fk100,res$ctx_area_nk100,output))
   }
 }
 cancelAllOrders<-function(apiConfig,account,token){
   orderList<-viewAllOrders(apiConfig,account,token)$output
-  #odno: 주문번호, psbl_qty: 취소가능수량
   orderNoList<-orderList$odno
-  cancelUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/order-rvsecncl') #취소주문
+  cancelUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/order-rvsecncl')
   headers<-c(
     Authorization=paste('Bearer',token),
     appkey=account$appkey,
@@ -281,7 +298,7 @@ viewAllOrders<-function(apiConfig,account,token,CTX_AREA_FK100='',CTX_AREA_NK100
     output$msg<-res$msg1
     return(output)
   } else{
-    return(getBalancesheet(apiConfig,account,'N',res$ctx_area_fk100,res$ctx_area_nk100,output))
+    return(viewAllOrders(apiConfig,account,'N',res$ctx_area_fk100,res$ctx_area_nk100,output))
   }
 }
 
