@@ -114,15 +114,21 @@ def orderFutureWithTimeLimit(symbol,side,quantity,price,timeLimit):
 def orderFutureMarketType(symbol,side,quantity):
   return requestData(futureURL,'/fapi/v1/order','post',f'symbol={symbol}&side={side}&type=MARKET&quantity={quantity}&timestamp={getCurrentTime()}')
 def setStopMarketPrice(symbol,side,stopPrice,quantity,workingType):
-  return requestData(futureURL,'/fapi/v1/order','post',f'symbol={symbol}&side={side}&type=STOP_MARKET&stopPrice={stopPrice}&quantity={quantity}&reduceOnly=false&workingType={workingType}&timestamp={getCurrentTime()}')
+  return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP_MARKET&price={stopPrice}&quantity={quantity}&reduceOnly=false&workingType={workingType}&timestamp={getCurrentTime()}')
 def setPositionClosePrice(symbol,side,stopPrice,workingType):
-  return requestData(futureURL,'/fapi/v1/order','post',f'symbol={symbol}&side={side}&type=STOP_MARKET&stopPrice={stopPrice}&closePosition=true&workingType={workingType}&timestamp={getCurrentTime()}')
+  return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP_MARKET&triggerprice={stopPrice}&closePosition=true&workingType={workingType}&timestamp={getCurrentTime()}')
 def setStopLimitPrice(symbol,side,stopPrice,quantity,workingType,priceMatch):
-  return requestData(futureURL,'/fapi/v1/order','post',f'symbol={symbol}&side={side}&type=STOP&stopPrice={stopPrice}&quantity={quantity}&reduceOnly=false&workingType={workingType}&priceMatch={priceMatch}&timestamp={getCurrentTime()}')
+  return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP&triggerprice={stopPrice}&quantity={quantity}&reduceOnly=false&workingType={workingType}&priceMatch={priceMatch}&timestamp={getCurrentTime()}')
 def getCurrentPosition():
   return requestData(futureURL,'/fapi/v3/positionRisk','get',f'timestamp={getCurrentTime()}')
 def getAllOpenOrders():
   return requestData(futureURL,'/fapi/v1/openOrders','get',f'timestamp={getCurrentTime()}')
+def getAllAlgoOpenOrders():
+  return requestData(futureURL,'/fapi/v1/openAlgoOrders','get',f'timestamp={getCurrentTime()}')
+def closeAllAlgoOpenOrders():
+  openOrderSymbolList=set([v['symbol'] for v in getAllAlgoOpenOrders()])
+  for symbol in openOrderSymbolList:
+    requestData(futureURL,'/fapi/v1/algoOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
 def closeAllOpenOrders():
   openOrderSymbolList=set([v['symbol'] for v in getAllOpenOrders()])
   for symbol in openOrderSymbolList:
@@ -347,7 +353,7 @@ try:
   positionAmountList=[v for v in getCurrentPosition() if v['symbol']==symbol and float(v['positionAmt'])>0]
   maximumPositionAmount=floorToDecimal(float(updatedChangeInfo['total'])*leverage/curPrice,3)
   if len(positionAmountList)>0:
-    closeAllOpenOrders()
+    closeAllAlgoOpenOrders()
     print('set stopmarket order')
     for position in positionAmountList:
       # currentLeverage=updatedChangeInfo['investRatio']*leverage
