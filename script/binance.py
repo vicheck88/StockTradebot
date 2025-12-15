@@ -12,6 +12,7 @@ from datetime import datetime,timezone,timedelta
 import time
 import math
 import traceback
+import numpy as np
 
 
 # In[2]:
@@ -146,6 +147,15 @@ def getCoinFutureMarkMovingAvg(symbol,unit,count):
   history=getCoinFutureMarkPriceHistory(symbol,unit,count)
   closePriceHistory=[float(d[4]) for d in history]
   return sum(closePriceHistory)/len(closePriceHistory)
+def getCoinFutureMarkMovingAvgList(symbol,unit,count,num):
+  allHistory=getCoinFutureMarkPriceHistory(symbol,unit,count+num-1)
+  historyList=[allHistory[i:i+count] for i in range(len(allHistory)-count+1)]
+  return [sum([float(d[4]) for d in history])/len(history) for history in historyList]
+def isMovingAvgIncreasing(averagePriceList):
+  x=np.arange(len(averagePriceList))
+  y=np.array(averagePriceList)
+  slope, _ = np.polyfit(x,y,1)
+  return slope>0
 def getCurrentDisparity(symbol,unit,count):
   curPrice=float(getCurrentPrice(symbol)['price'])
   avgPrice=getCoinMovingAvg(symbol,unit,count)
@@ -188,11 +198,11 @@ def convertAccountUnit(asset,investInfo):
   for asset in investInfo: investInfo[asset]*=ratio
   return investInfo
   
-def determineInvestInfo(disparity,currentInvestInfo,maxLeverage):
+def determineInvestInfo(disparity,currentInvestInfo,isIncreasing,maxLeverage):
   d=disparity-100
   ratio=math.floor(d)/2
   #ratio=math.floor((d+1)/2)/maxLeverage
-  newRatio=min(ratio,1) if d>0 else 0
+  newRatio=min(ratio,1) if d>0 and isIncreasing else 0
   ret={}
   ret['investRatio']=newRatio
   ret['total']=currentInvestInfo['total']
@@ -200,9 +210,9 @@ def determineInvestInfo(disparity,currentInvestInfo,maxLeverage):
   ret['earn']=ret['total']-ret['future']
   ret['spot']=0
   return ret
-def getAccountChange(coinsymbols,cashsymbols,disparity,maxLeverage):
+def getAccountChange(coinsymbols,cashsymbols,isIncreasing,disparity,maxLeverage):
   investInfo=convertAccountUnit(cashsymbols[0],getCurrentInvestInfo(coinsymbols,cashsymbols))
-  goalInvestInfo=determineInvestInfo(disparity,investInfo,maxLeverage)
+  goalInvestInfo=determineInvestInfo(disparity,investInfo,isIncreasing,maxLeverage)
   accountChangeInfo=goalInvestInfo
   accountChangeInfo['spot']-=investInfo['spot']
   accountChangeInfo['future']-=investInfo['future']
@@ -303,7 +313,11 @@ try:
   #현재 이동평균선 확인 후 투자 비율 계산
   print(f'start program: {datetime.now()}')
   disparity=getCurrentFutureMarkDisparity(symbol,'1d',30)
-  accountChangeInfo=getAccountChange(coinsymbols,cashsymbols,disparity,leverage)
+  averagePriceList=getCoinFutureMarkMovingAvgList(symbol,'1d',30,5)
+  isIncreasing=isMovingAvgIncreasing(averagePriceList)
+  sendMessage(f'averagePriceList: {averagePriceList}')
+  sendMessage(f'isIncreasing: {isIncreasing}')
+  accountChangeInfo=getAccountChange(coinsymbols,cashsymbols,isIncreasing,disparity,leverage)
   minOrderLimit=float(getCurrentPrice(symbol)['price'])*minOrderQuantityLimit
   minEarnLimit=0.1
   curPrice=floorToDecimal(float(getCurrentPrice(symbol)['price']),1)
@@ -335,8 +349,8 @@ try:
     if assetList:
       asset=assetList[0]
       newPositionAmount=floorToDecimal(float(asset['availableBalance'])*leverage/curPrice*avoidInsufficientErrorRatio,3)
-      averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
-      
+      averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30))
+      sendMessage(f'averagePriceList: {averagePrice}')
       sendMessage(f'averagePrice: {averagePrice}')
       sendMessage(f'price: {curPrice} newPositionAmount: {newPositionAmount}')
       

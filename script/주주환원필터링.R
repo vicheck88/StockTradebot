@@ -24,6 +24,8 @@ corpTable[,pcr:=시가총액/잉여현금흐름]
 corpTable[,pbr:=시가총액/자본]
 corpTable[,per:=시가총액/지배주주순이익]
 corpTable[,roe:=지배주주순이익/자본]
+corpTable[,roa:=지배주주순이익/자산]
+corpTable[,부채비율:=부채/자본]
 
 cols<-c('pcr','pbr','per','roe')
 corpTable[, paste0(cols, "_z") := lapply(.SD, function(v) {
