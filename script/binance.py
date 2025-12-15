@@ -315,8 +315,6 @@ try:
   disparity=getCurrentFutureMarkDisparity(symbol,'1d',30)
   averagePriceList=getCoinFutureMarkMovingAvgList(symbol,'1d',30,5)
   isIncreasing=isMovingAvgIncreasing(averagePriceList)
-  sendMessage(f'averagePriceList: {averagePriceList}')
-  sendMessage(f'isIncreasing: {isIncreasing}')
   accountChangeInfo=getAccountChange(coinsymbols,cashsymbols,isIncreasing,disparity,leverage)
   minOrderLimit=float(getCurrentPrice(symbol)['price'])*minOrderQuantityLimit
   minEarnLimit=0.1
@@ -333,7 +331,7 @@ try:
 
   freeBalances=[v for v in getAccount()['balances'] if v['free']!='0']
   print(f'free balances: {freeBalances}')
-  updatedChangeInfo=getAccountChange(coinsymbols,cashsymbols,disparity,leverage)
+  updatedChangeInfo=getAccountChange(coinsymbols,cashsymbols,isIncreasing,disparity,leverage)
   print(f'balance change: {updatedChangeInfo}')
 
   if updatedChangeInfo['future']>0 and updatedChangeInfo['future']>minOrderLimit:
