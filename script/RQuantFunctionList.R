@@ -22,74 +22,134 @@ recentBizDay <- function(){
     str_replace_all('\\.', '')
 }
 
-
-KRXIndStat <- function(businessDay,type){
-  # 산업별 현황 OTP 발급
-  gen_otp_url =
-    'http://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd'
-  gen_otp_data = list(
-    mktId = type,
-    trdDd = businessDay,
-    money = '1',
-    csvxls_isNo = 'false',
-    name = 'fileDown',
-    url='dbms/MDC/STAT/standard/MDCSTAT03901'
-    )
-  otp = POST(gen_otp_url, query = gen_otp_data) %>%
-    read_html() %>%
-    html_text()
-  # 산업별 현황 데이터 다운로드
-  down_url = 'http://data.krx.co.kr/comm/fileDn/download_csv/download.cmd'
-  down_sector = POST(down_url, query = list(code = otp)) %>%
-    read_html(.,encoding='cp949') %>%
-    html_text() %>%
-    read_csv()
-}
-KRXIndividualStat<-function(businessDay){
-  # 개별종목 지표 OTP 발급
-  gen_otp_url =
-    'http://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd'
-  gen_otp_data = list(
-    searchType = '1',
-    mktId = 'ALL',
-    csvxls_isNo = "false",
-    name = 'fileDown',
-    url = 'dbms/MDC/STAT/standard/MDCSTAT03501',
-    trdDd = businessDay # 최근영업일로 변경
-    )
+loginKRX <- function(user_id, password, h) {
+  login_url <- "https://data.krx.co.kr/contents/MDC/COMS/client/MDCCOMS001D1.cmd"
   
-  otp = POST(gen_otp_url, query = gen_otp_data) %>%
-    read_html() %>%
-    html_text()
-  
-  # 개별종목 지표 데이터 다운로드
-  down_url = 'http://data.krx.co.kr/comm/fileDn/download_csv/download.cmd'
-  down_ind = POST(down_url, query = list(code = otp)) %>%
-    read_html(.,encoding='cp949') %>%
-    html_text() %>%
-    read_csv()
-}
-KRXMonitoringStat<-function(){
-  # 개별종목 지표 OTP 발급
-  gen_otp_url =
-    'http://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd'
-  gen_otp_data = list(
-    mktId = 'ALL',
-    csvxls_isNo = "false",
-    name = 'fileDown',
-    url = 'dbms/MDC/STAT/standard/MDCSTAT02001'
+  response <- POST(
+    login_url,
+    handle = h,  # Use the handle to persist cookies
+    add_headers(
+      "Content-Type" = "application/x-www-form-urlencoded; charset=UTF-8",
+      "X-Requested-With" = "XMLHttpRequest",
+      "Referer" = "https://data.krx.co.kr/contents/MDC/COMS/client/view/login.jsp?site=mdc",
+      "Accept" = "application/json, text/javascript, */*; q=0.01"
+    ),
+    body = list(
+      mbrNm = "",
+      telNo = "",
+      di = "",
+      certType = "",
+      mbrId = user_id,
+      pw = password
+    ),
+    encode = "form"
   )
   
-  otp = POST(gen_otp_url, query = gen_otp_data) %>%
-    read_html() %>%
-    html_text()
+  json_data <- content(response, as = "text", encoding = "UTF-8") |> fromJSON()
   
-  # 개별종목 지표 데이터 다운로드
-  down_url = 'http://data.krx.co.kr/comm/fileDn/download_csv/download.cmd'
-  down_ind = POST(down_url, query = list(code = otp)) %>%
-    read_html(.,encoding='cp949') %>%
-    html_text() %>%
-    read_csv()
+  if (json_data$`_error_code` == "CD001") {
+    message("Login successful! Member: ", json_data$MBR_NO)
+    return(TRUE)
+  } else {
+    message("Login failed: ", json_data$`_error_message`)
+    return(FALSE)
+  }
+}
+
+getOTP<-function(otpBody,h){
+  # 산업별 현황 OTP 발급
+  gen_otp_url =
+    'https://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd'
+  
+  otp_response <- POST(
+    gen_otp_url,
+    handle = h,  # Same handle = same session cookies
+    add_headers(
+      "Content-Type" = "application/x-www-form-urlencoded; charset=UTF-8",
+      "X-Requested-With" = "XMLHttpRequest",  # Required!
+      "Referer" = "https://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020201"
+    ),
+    body = otpBody,
+    encode = "form"
+  )
+  return(content(otp_response, as = "text", encoding = "UTF-8"))
+}
+
+downloadKRXFile<-function(otp,h){
+  down_url = 'https://data.krx.co.kr/comm/fileDn/download_csv/download.cmd'
+  response <- POST(
+    down_url,
+    handle = h,  # Same session handle!
+    body = list(code = otp),  # body, not query!
+    encode = "form"
+  )
+  html<-read_html(response,encoding="CP949")
+  return(read_csv(html_text(html)))
+}
+
+KRXIndStat <- function(type,h){
+  otpBody<- list(
+    locale = "ko_KR",
+    mktId = type,  # "STK" for KOSPI, "KSQ" for KOSDAQ, "ALL" for all
+    share = "1",
+    csvxls_isNo = "false",
+    name = "fileDown",
+    url = "dbms/MDC/STAT/standard/MDCSTAT01901"
+  )
+  otp<-getOTP(otpBody,h)
+  return(downloadKRXFile(otp,h))
+}
+
+KRXMonitoringStat<-function(h){
+  otpBody<- list(
+    locale = "ko_KR",
+    mktId = "ALL",  # "STK" for KOSPI, "KSQ" for KOSDAQ, "ALL" for all
+    share = "1",
+    csvxls_isNo = "false",
+    name = "fileDown",
+    url = "dbms/MDC/STAT/standard/MDCSTAT02001"
+  )
+  otp<-getOTP(otpBody,h)
+  return(downloadKRXFile(otp,h))
+}
+KRXIndividualStat<-function(day,mktId,h){
+  otpBody <- list(
+    locale = "ko_KR",
+    mktId = mktId,  # "STK" or "KSQ", NOT "ALL"
+    trdDd = day,
+    money = "1",
+    csvxls_isNo = "false",
+    name = "fileDown",
+    url = "dbms/MDC/STAT/standard/MDCSTAT03901"
+  )
+  otp <- getOTP(otpBody, h)
+  return(downloadKRXFile(otp, h))
+}
+KRXIndDividen<-function(day,mktId,h){
+   otpBody<- list(
+     locale = "ko_KR",
+     searchType = "1",
+     mktId = mktId,
+     trdDd = day,
+     csvxls_isNo = "false",
+     name = "fileDown",
+     url = "dbms/MDC/STAT/standard/MDCSTAT03501"
+   )
+   otp<-getOTP(otpBody,h)
+   return(downloadKRXFile(otp,h))
+}
+KRXSectorStat<-function(day,mktId,h){
+  otpBody<-list(
+    locale = "ko_KR",
+    mktId = mktId,
+    trdDd = day,
+    money = "1",
+    csvxls_isNo = "false",
+    name = "fileDown",
+    url = "dbms/MDC/STAT/standard/MDCSTAT03901"
+  )
+  otp<-getOTP(otpBody,h)
+  return(downloadKRXFile(otp,h))
 }
 
 KRXDataMergeHan2<-function(){
@@ -99,17 +159,26 @@ KRXDataMergeHan2<-function(){
   sector_code<-as.data.table(read_csv("./python/idx_code.csv"))
 }
 
-KRXDataMerge<-function(businessDay){
-  down_sector_KOSPI<-KRXIndStat(businessDay,'STK')
-  down_sector_KOSDAQ<-KRXIndStat(businessDay,'KSQ')
+KRXDataMerge<-function(businessDay, loginInfo){
+  krxHandle <- handle("https://data.krx.co.kr")
+  loginKRX(loginInfo$id,loginInfo$password,krxHandle)
+  down_sector_KOSPI<-KRXIndStat('STK', krxHandle)
+  down_sector_KOSDAQ<-KRXIndStat('KSQ', krxHandle)
   down_sector<-rbind(down_sector_KOSPI,down_sector_KOSDAQ)
+  down_sector <- down_sector %>%
+    select(-`한글 종목명`) %>%
+    rename(종목명 = `한글 종목약명`)
   
-  down_monitoring<-KRXMonitoringStat()
+  down_monitoring<-KRXMonitoringStat(krxHandle)
   down_monitoring$관리종목<-str_replace_all(down_monitoring$관리종목,'O','관리종목')
   down_monitoring$관리종목<-str_replace_all(down_monitoring$관리종목,'X','-')
   down_monitoring<-down_monitoring[,c(1,2,5)]
   
-  down_ind<-KRXIndividualStat(businessDay)
+  down_ind_KOSPI<-KRXIndividualStat(businessDay,"STK",krxHandle)
+  down_ind_KOSDAQ<-KRXIndividualStat(businessDay,"KSQ",krxHandle)
+  down_ind<-rbind(down_ind_KOSPI,down_ind_KOSDAQ)
+  down_ind_dividen<-KRXIndDividen(businessDay, "ALL",krxHandle)
+  down_ind_dividen <- down_ind_dividen %>% select(-"종가")
   #데이터 정리(개별종목, 산업현황 데이터 병합)
   setdiff(down_sector[,'종목명'],down_ind[,'종목명']) #겹치지 않은 종목 ->제외(일반적이지 않은 종목들)
   
@@ -118,6 +187,7 @@ KRXDataMerge<-function(businessDay){
                      all = FALSE
   )
   KOR_ticker<-merge(KOR_ticker,down_monitoring,by=c("종목코드","종목명"),all=FALSE)
+  KOR_ticker<-merge(KOR_ticker,down_ind_dividen,by=c("종목코드","종목명"),all=FALSE)
   setDT(KOR_ticker)
   setorder(KOR_ticker,'시가총액') #시가총액으로 정렬
   

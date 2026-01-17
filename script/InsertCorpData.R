@@ -3,7 +3,10 @@ print(paste0(Sys.time()," : Starting Script"))
 library(RPostgres)
 library(DBI)
 library(jsonlite)
-dbConfig=read_json("~/config.json")$database
+
+config=read_json("~/config.json")
+dbConfig=config$database
+krxLogin=config$krx
 conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
 #함수 불러돌이기
 source("~/stockInfoCrawler/StockTradebot/script/RQuantFunctionList.R",encoding="utf-8")
@@ -29,7 +32,7 @@ while(count<10){
     print(paste0(Sys.time()," : Starting to get current coporation list"))
     day<-str_remove_all(availableDate,"-")
     #전달 말 등록된 기업정보
-    df<-KRXDataMerge(day)
+    df<-KRXDataMerge(day, krxLogin)
     corpTable<-as.data.table(df)
     print(paste0(Sys.time()," : Succeed in getting corp Data."))
     break
