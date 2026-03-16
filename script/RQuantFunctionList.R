@@ -45,7 +45,7 @@ loginKRX <- function(user_id, password, h) {
     encode = "form"
   )
   
-  json_data <- content(response, as = "text", encoding = "UTF-8") |> fromJSON()
+  json_data <- fronJSON(content(response, as = "text", encoding = "UTF-8"))
   
   if (json_data$`_error_code` == "CD001") {
     message("Login successful! Member: ", json_data$MBR_NO)

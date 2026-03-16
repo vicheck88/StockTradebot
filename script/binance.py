@@ -314,6 +314,7 @@ try:
   print(f'start program: {datetime.now()}')
   disparity=getCurrentFutureMarkDisparity(symbol,'1d',30)
   averagePriceList=getCoinFutureMarkMovingAvgList(symbol,'1d',30,5)
+  print(f'average price: {averagePriceList}')
   isIncreasing=isMovingAvgIncreasing(averagePriceList)
   accountChangeInfo=getAccountChange(coinsymbols,cashsymbols,isIncreasing,disparity,leverage)
   minOrderLimit=float(getCurrentPrice(symbol)['price'])*minOrderQuantityLimit

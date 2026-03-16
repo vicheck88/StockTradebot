@@ -1,4 +1,5 @@
 setwd("/Users/chyouk.han/Documents/personal_project/StockTradebot/script")
+setwd("/Users/chhan/StockTradebot/script")
 source("./Han2FunctionList.R")
 pkg = c('RPostgres', 'DBI','stringr')
 new.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]
