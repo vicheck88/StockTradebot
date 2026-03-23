@@ -31,6 +31,7 @@ symbols = c('TQQQ','QQQ','SPY')
 getSymbols(symbols, src = 'yahoo')
 prices = do.call(cbind,lapply(symbols, function(x) Ad(get(x))))
 prices<-as.data.table(prices)
+prices<-na.omit(prices)
 
 token<-getToken(apiConfig,account)
 
