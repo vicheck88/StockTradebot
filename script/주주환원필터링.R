@@ -34,7 +34,7 @@ corpTable[, paste0(cols, "_z") := lapply(.SD, function(v) {
   s <- sd(v, na.rm = TRUE)
   if (is.na(s) || s == 0) rep(NA_real_, .N) else (v - m) / s
 }), by = '산업분류', .SDcols = cols]
-
+filteredCorpTable<-corpTable[종목코드 %in% etfStockCodeList]
 filteredCorpTable<-corpTable[잉여현금흐름 > 0][지배주주순이익 >0][종목코드 %in% etfStockCodeList]
 #filteredCorpTable<-corpTable[잉여현금흐름 > 0][지배주주순이익 >0][order(-시가총액)][1:200,]
 filteredCorpTable[,pcr_z_rank:=rank(pcr_z)]
@@ -46,4 +46,4 @@ filteredCorpTable[,pcr_rank:=rank(pcr)]
 filteredCorpTable[,pbr_rank:=rank(pbr)]
 filteredCorpTable[,per_rank:=rank(per)]
 filteredCorpTable[,roe_rank:=rank(-roe)]
-filteredCorpTable[,.(종목코드,종목명,산업분류,per,per_z,pbr,pbr_z,pcr,pcr_z,roe,roe_z,per_rank,pbr_rank,pcr_rank,roe_rank,per_z_rank,pbr_z_rank,pcr_z_rank,roe_z_rank)][order(pcr_rank)]
+filteredCorpTable[,.(종목코드,종목명,산업분류,per,per_z,pbr,pbr_z,pcr,pcr_z,roe,roe_z,per_rank,pbr_rank,pcr_rank,roe_rank,per_z_rank,pbr_z_rank,pcr_z_rank,roe_z_rank)][order(roe_rank)]

@@ -65,13 +65,29 @@ conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$hos
 print(paste0(Sys.time()," : Starting to write FS"))
 for(code in corpList){
   tryCatch({
-    htmlData<-getFSHtmlFromFnGuide(code)
+    # 연결재무 (pGB=1)
+    htmlData<-getFSHtmlFromFnGuide(code, pGB=1)
     fsQ<-cleanFSHtmlToDataFrame('Q',htmlData[code])
     fsY<-cleanFSHtmlToDataFrame('Y',htmlData[code])
-    
+    if(!is.null(fsQ)) fsQ[, 연결구분 := '연결']
+    if(!is.null(fsY)) fsY[, 연결구분 := '연결']
+
+    # 별도재무 (pGB=2)
+    htmlData_sep<-getFSHtmlFromFnGuide(code, pGB=2)
+    fsQ_sep<-cleanFSHtmlToDataFrame('Q',htmlData_sep[code])
+    fsY_sep<-cleanFSHtmlToDataFrame('Y',htmlData_sep[code])
+    if(!is.null(fsQ_sep)){
+      fsQ_sep[, 연결구분 := '별도']
+      fsQ<-rbind(fsQ, fsQ_sep)
+    }
+    if(!is.null(fsY_sep)){
+      fsY_sep[, 연결구분 := '별도']
+      fsY<-rbind(fsY, fsY_sep)
+    }
+
     FfsY<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.연간재무제표 WHERE 종목코드='%s'",code))))
     FfsQ<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.분기재무제표 WHERE 종목코드='%s'",code))))
-    
+
     names(fsQ)<-names(FfsQ[,-'등록일자'])
     names(fsY)<-names(FfsY[,-'등록일자'])
     newfsQ<-fsetdiff(fsQ,FfsQ[,-'등록일자'])
@@ -99,11 +115,15 @@ if(latestDate!=availableDate && exists("corpTable")){
     for(i in 1:nrow(corpTable)){
       oldN<-NROW(fs)
       code<-corpTable[i,종목코드]
-      fsY<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.연간재무제표 WHERE 종목코드='%s'",code," order by 등록일자 desc"))))
-      fsQ<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.분기재무제표 WHERE 종목코드='%s'",code," order by 등록일자 desc"))))
+      fsY<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.연간재무제표 WHERE 종목코드='%s' AND 연결구분='연결'",code))))
+      fsQ<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.분기재무제표 WHERE 종목코드='%s' AND 연결구분='연결'",code))))
+      fsY_sep<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.연간재무제표 WHERE 종목코드='%s' AND 연결구분='별도'",code))))
+      fsQ_sep<-data.table(dbGetQuery(conn,SQL(sprintf("SELECT * from metainfo.분기재무제표 WHERE 종목코드='%s' AND 연결구분='별도'",code))))
       fsY<-unique(fsY,by=names(fsY)[1:4])
       fsQ<-unique(fsQ,by=names(fsQ)[1:4])
-      res<-cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,TRUE)
+      fsY_sep<-unique(fsY_sep,by=names(fsY_sep)[1:4])
+      fsQ_sep<-unique(fsQ_sep,by=names(fsQ_sep)[1:4])
+      res<-cleanDataAndExtractEntitiesFromFS(corpTable[i,],fsY,fsQ,TRUE,fsY_sep,fsQ_sep)
       if(!is.null(fs) & !is.null(res)) names(res)<-names(fs)
       fs<-rbind(fs,res)
       if(oldN<NROW(fs)) print(paste0(Sys.time()," : [",i,"/",nrow(corpTable),"] success: Summarizing Data of ",corpTable[i,]$종목코드))

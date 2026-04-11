@@ -29,9 +29,9 @@ sql<-sprintf("select * from metainfo.월별기업정보 a
 where 일자=(select max(일자) from metainfo.월별기업정보)
 and not exists (
 select 1 from (
-select * from metainfo.분기재무제표 c
+select * from metainfo.분기재무제표 c where c.연결구분='연결'
 union all
-select * from metainfo.연간재무제표 y
+select * from metainfo.연간재무제표 y where y.연결구분='연결'
 ) m
 where 일자>'%s' 
 and a.종목코드=m.종목코드

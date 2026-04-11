@@ -272,13 +272,13 @@ getLastBizdayofMonth<-function(cnt){
 }
 
 #Fnguide에서 데이터 받기
-getFSHtmlFromFnGuide<-function(codeList){
+getFSHtmlFromFnGuide<-function(codeList, pGB=1){
   htmlData<-list()
   i<-1
   for(code in codeList){
     url = paste0(
       'https://comp.fnguide.com/SVO2/ASP/'
-      ,'SVD_Finance.asp?pGB=1&gicode=A',
+      ,'SVD_Finance.asp?pGB=',pGB,'&gicode=A',
       code)
     # 이 후 과정은 위와 동일함
     # 데이터 다운로드 후 테이블 추출
@@ -380,7 +380,7 @@ getStockNumberList<-function(businessDay, codeList){
   return(result)
 }
 
-cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew){
+cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew,yearData_sep=NULL,quarterData_sep=NULL){
   result<-NULL
   tryCatch(
     {
@@ -388,32 +388,60 @@ cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew)
       code<-corpData[[2]]
       yData<-yearData[종목코드==code]
       qData<-quarterData[종목코드==code]
-      
+
       lastYearDate<-businessDate %m+% months(-12)
-      
+
       yData<-yData[등록일자>=lastYearDate]
       qData<-qData[등록일자>=lastYearDate]
-      
+
       if(!isNew){
         yData<-yData[등록일자<=businessDate]
         qData<-qData[등록일자<=businessDate]
       }
-      
+
       yDate<-as.character(yData$일자)
       qDate<-as.character(qData$일자)
-      
+
       qRank<-frank(-as.double(qDate),ties.method="dense")
       yRank<-frank(-as.double(yDate),ties.method="dense")
-      
+
       if(length(yRank) == 0 & length(unique(qRank)) < 4 ){return(result)}
-      
+
       curQRange<-diff(range(as.double(qDate)[qRank<5]))
-      
+
       if(length(unique(qDate))>=4 & curQRange<=1){
         data<-qData[qRank<=4]
       } else{ data<-yData[yRank==1] }
       data$일자<-as.character(data$일자)
       result <- extractFSEntities(corpData, data)
+
+      # 별도재무에서 FCF 산출
+      fcf_sep<-NA_real_
+      if(!is.null(yearData_sep) && !is.null(quarterData_sep)){
+        tryCatch({
+          yData_s<-yearData_sep[종목코드==code]
+          qData_s<-quarterData_sep[종목코드==code]
+          yData_s<-yData_s[등록일자>=lastYearDate]
+          qData_s<-qData_s[등록일자>=lastYearDate]
+          if(!isNew){
+            yData_s<-yData_s[등록일자<=businessDate]
+            qData_s<-qData_s[등록일자<=businessDate]
+          }
+          yDate_s<-as.character(yData_s$일자)
+          qDate_s<-as.character(qData_s$일자)
+          qRank_s<-frank(-as.double(qDate_s),ties.method="dense")
+          yRank_s<-frank(-as.double(yDate_s),ties.method="dense")
+          if(length(yRank_s)>0 || length(unique(qRank_s))>=4){
+            curQRange_s<-if(length(unique(qDate_s))>=4) diff(range(as.double(qDate_s)[qRank_s<5])) else Inf
+            if(length(unique(qDate_s))>=4 & curQRange_s<=1){
+              data_s<-qData_s[qRank_s<=4]
+            } else{ data_s<-yData_s[yRank_s==1] }
+            data_s$일자<-as.character(data_s$일자)
+            fcf_sep<-extractFCFFromData(data_s, code)
+          }
+        }, error=function(e){})
+      }
+      result[, 잉여현금흐름_별도 := fcf_sep]
     },
     error=function(e) print(paste0("Fail to Read: ",code," Date:",businessDate))
   )
@@ -471,6 +499,21 @@ extractFSEntities<-function(corpData,data){
   return(corpData)
 }
 
+# 별도재무 데이터에서 FCF만 추출
+extractFCFFromData<-function(data, code){
+  data<-data[data$종목코드==code]
+  data<-unique(data,by=c("종목코드","종류","계정","일자"),fromLast=T)
+  if(length(unique(data$일자))==4){
+    data<-sumQuarterData(data)
+  }
+  ocf<-data[계정=="영업활동으로인한현금흐름"]$값
+  fcf<-NA_real_
+  if(length(ocf)>0){
+    capex<-data[계정 %in% c("유형자산의증가","무형자산의증가")][,sum(값)]-data[계정 %in% c("유형자산의감소","무형자산의감소")][,sum(값)]
+    if(!is.na(capex)) fcf<-ocf-capex
+  }
+  return(fcf)
+}
 
 addMomentum<-function(businessDay, codeList){
   result<-NULL
