@@ -64,6 +64,13 @@ def get_fnguide_consensus(code: str) -> dict | None:
         return None
 
 
+def safe_int(v):
+    """숫자를 int로 변환. None, "NA", 비숫자는 None 반환."""
+    if v is None or v == "NA" or not isinstance(v, (int, float)):
+        return None
+    return int(v)
+
+
 def format_consensus_md(code: str, name: str, consensus: dict) -> str:
     """컨센서스 데이터를 마크다운으로 변환."""
     lines = [
@@ -89,9 +96,12 @@ def format_consensus_md(code: str, name: str, consensus: dict) -> str:
     lines.append(f"")
     lines.append(f"| 구분 | 값 |")
     lines.append(f"|------|---:|")
-    lines.append(f"| 평균 | {tp.get('avg', '-'):,} |" if tp.get('avg') else "| 평균 | - |")
-    lines.append(f"| 최고 | {tp.get('max', '-'):,} |" if tp.get('max') else "| 최고 | - |")
-    lines.append(f"| 최저 | {tp.get('min', '-'):,} |" if tp.get('min') else "| 최저 | - |")
+    avg_v = safe_int(tp.get('avg'))
+    max_v = safe_int(tp.get('max'))
+    min_v = safe_int(tp.get('min'))
+    lines.append(f"| 평균 | {avg_v:,} |" if avg_v else "| 평균 | - |")
+    lines.append(f"| 최고 | {max_v:,} |" if max_v else "| 최고 | - |")
+    lines.append(f"| 최저 | {min_v:,} |" if min_v else "| 최저 | - |")
     lines.append(f"| 증권사 수 | {tp.get('broker_count', 0)} |")
     lines.append(f"")
 
@@ -104,7 +114,7 @@ def format_consensus_md(code: str, name: str, consensus: dict) -> str:
             lines.append(f"|------|---:|")
             for item in data:
                 val = item.get("value")
-                val_str = f"{val:,.0f}" if val else "-"
+                val_str = f"{val:,.0f}" if val and isinstance(val, (int, float)) else "-"
                 lines.append(f"| {item.get('period', '')} | {val_str} |")
             lines.append(f"")
 
@@ -223,8 +233,10 @@ def process_stock(code: str, name: str, api_key: str, report_count: int = 5):
         (CONSENSUS_DIR / f"{code}_{name}_컨센서스.md").write_text(md, encoding="utf-8")
         op = consensus.get("opinion", {})
         tp = consensus.get("target_price", {})
+        avg_display = safe_int(tp.get('avg'))
+        avg_str = f"{avg_display:,}" if avg_display else "-"
         print(f"    매수{op.get('buy',0)} 중립{op.get('hold',0)} 매도{op.get('sell',0)} | "
-              f"목표가 {tp.get('avg','?'):,}")
+              f"목표가 {avg_str}")
     else:
         print(f"    컨센서스 없음 (커버리지 미존재)")
 
