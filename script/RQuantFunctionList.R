@@ -282,7 +282,8 @@ getFSHtmlFromFnGuide<-function(codeList, pGB=1){
       code)
     # 이 후 과정은 위와 동일함
     # 데이터 다운로드 후 테이블 추출
-    data = GET(url) %>%
+    data = GET(url,
+              user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")) %>%
       read_html() %>%
       html_table()
     htmlData[[code]]<-data

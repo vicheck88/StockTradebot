@@ -38,8 +38,7 @@ while(count<10){
     break
   }, error = function(e) {
     count<<-count+1
-    print(count)
-    print(paste0(Sys.time()," : Fail to get corp Data. Try again after 5mins"))
+    print(paste0(Sys.time()," : [",count,"/10] Fail to get corp Data: ",conditionMessage(e),". Try again after 5mins"))
     Sys.sleep(60*5)
   })
 }
@@ -62,7 +61,8 @@ if(exists("corpTable")) {
 dbDisconnect(conn)
 conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$host,port=dbConfig$port,user=dbConfig$user,password=dbConfig$passwd)
 
-print(paste0(Sys.time()," : Starting to write FS"))
+print(paste0(Sys.time()," : Starting to write FS (total: ",length(corpList)," corps)"))
+successCount<-0; failCount<-0
 for(code in corpList){
   tryCatch({
     # 연결재무 (pGB=1)
@@ -94,19 +94,21 @@ for(code in corpList){
     newfsY<-fsetdiff(fsY,FfsY[,-'등록일자'])
     newfsQ$등록일자<-Sys.Date()
     newfsY$등록일자<-Sys.Date()
-    names(newfsQ)<-names(FfsQ)
-    names(newfsY)<-names(FfsY)
+    setcolorder(newfsQ, names(FfsQ))
+    setcolorder(newfsY, names(FfsY))
     dbWriteTable(conn,SQL("metainfo.분기재무제표"),newfsQ,append=TRUE,row.names=FALSE)
     dbWriteTable(conn,SQL("metainfo.연간재무제표"),newfsY,append=TRUE,row.names=FALSE)
-    print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "Success: code: ",code," Quarter: ",nrow(newfsQ)," Year: ",nrow(newfsY)))
+    successCount<<-successCount+1
+    print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "Success: ",code," Q:",nrow(newfsQ)," Y:",nrow(newfsY)))
   },error=function(e){
-    print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "Fail: ",code))
+    failCount<<-failCount+1
+    print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "FAIL: ",code," | ",conditionMessage(e)))
   })
 }
 
-text<-paste0(Sys.time()," : Complete updating FS")
+text<-paste0(Sys.time()," : Complete updating FS (Success:",successCount," Fail:",failCount,")")
 print(text)
-print(paste0("telegream message send: ",sendMessage(text,0)))
+print(paste0("telegram message send: ",sendMessage(text,0)))
 
 #현재 날짜가 기록된 날짜보다 늦을 경우
 if(latestDate!=availableDate && exists("corpTable")){
