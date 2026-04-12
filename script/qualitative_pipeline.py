@@ -288,7 +288,7 @@ def main():
     group.add_argument("--codes", help="종목코드 (쉼표 구분, 예: 005930,000660)")
     group.add_argument("--codes-file", help="screening_result JSON 파일 경로")
     parser.add_argument("--top", type=int, default=30, help="JSON에서 상위 N개 (기본: 30)")
-    parser.add_argument("--count", type=int, default=5, help="종목당 리포트 수 (기본: 5)")
+    parser.add_argument("--count", type=int, default=10, help="종목당 리포트 수 (기본: 10)")
     args = parser.parse_args()
 
     api_key = load_api_key()

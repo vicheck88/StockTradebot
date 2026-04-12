@@ -191,7 +191,7 @@ def download_reports(
 def main():
     parser = argparse.ArgumentParser(description="네이버 금융 리서치 리포트 PDF 다운로드")
     parser.add_argument("--code", required=True, help="종목코드 (예: 005930)")
-    parser.add_argument("--count", type=int, default=5, help="다운로드할 리포트 수")
+    parser.add_argument("--count", type=int, default=10, help="다운로드할 리포트 수 (기본: 10)")
     parser.add_argument("--save-dir", type=str, default=str(SAVE_DIR))
     parser.add_argument("--with-meta", action="store_true")
     args = parser.parse_args()
