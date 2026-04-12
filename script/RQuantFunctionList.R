@@ -272,14 +272,14 @@ getLastBizdayofMonth<-function(cnt){
 }
 
 #Fnguide에서 데이터 받기
-getFSHtmlFromFnGuide<-function(codeList, pGB=1){
+getFSHtmlFromFnGuide<-function(codeList, reportGB='D'){
   htmlData<-list()
   i<-1
   for(code in codeList){
     url = paste0(
       'https://comp.fnguide.com/SVO2/ASP/'
-      ,'SVD_Finance.asp?pGB=',pGB,'&gicode=A',
-      code)
+      ,'SVD_Finance.asp?pGB=1&gicode=A',
+      code,'&ReportGB=',reportGB)
     # 이 후 과정은 위와 동일함
     # 데이터 다운로드 후 테이블 추출
     data = GET(url,

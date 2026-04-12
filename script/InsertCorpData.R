@@ -65,15 +65,15 @@ print(paste0(Sys.time()," : Starting to write FS (total: ",length(corpList)," co
 successCount<-0; failCount<-0
 for(code in corpList){
   tryCatch({
-    # 연결재무 (pGB=1)
-    htmlData<-getFSHtmlFromFnGuide(code, pGB=1)
+    # 연결재무 (ReportGB=D)
+    htmlData<-getFSHtmlFromFnGuide(code, reportGB='D')
     fsQ<-cleanFSHtmlToDataFrame('Q',htmlData[code])
     fsY<-cleanFSHtmlToDataFrame('Y',htmlData[code])
     if(!is.null(fsQ)) fsQ[, 연결구분 := '연결']
     if(!is.null(fsY)) fsY[, 연결구분 := '연결']
 
-    # 별도재무 (pGB=2)
-    htmlData_sep<-getFSHtmlFromFnGuide(code, pGB=2)
+    # 별도재무 (ReportGB=B)
+    htmlData_sep<-getFSHtmlFromFnGuide(code, reportGB='B')
     fsQ_sep<-cleanFSHtmlToDataFrame('Q',htmlData_sep[code])
     fsY_sep<-cleanFSHtmlToDataFrame('Y',htmlData_sep[code])
     if(!is.null(fsQ_sep)){
