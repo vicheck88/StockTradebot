@@ -137,11 +137,56 @@ getConsensusFromFnGuide <- function(code, reportGB = "D") {
     }
   }
 
+  # =========================================================
+  # 3. Grid1 분기(Q) 버전: 분기별 컨센서스 (실적+전망)
+  # =========================================================
+  resp_q <- GET(paste0(base_url, "/01_", gicode, "_Q_", reportGB, ".json"),
+                user_agent(ua), add_headers(Referer = referer))
+  data_q <- parseFnJson(resp_q)
+
+  quarterly <- data.frame(period = character(), revenue = numeric(),
+                          op_income = numeric(), net_income = numeric(),
+                          eps = numeric(), type = character(),
+                          stringsAsFactors = FALSE)
+
+  if (!is.null(data_q) && !is.null(data_q$comp) && nrow(data_q$comp) > 1) {
+    rows_q   <- data_q$comp
+    header_q <- rows_q[1, ]
+    d_cols_q <- names(header_q)[grepl("^D_", names(header_q))]
+
+    for (dc in d_cols_q) {
+      period_val <- header_q[[dc]]
+      if (is.na(period_val) || nchar(period_val) < 4) next
+
+      # (P)=잠정, (E)=추정, 없으면 확정
+      qtype <- if (grepl("\\(P\\)", period_val)) "P"
+               else if (grepl("\\(E\\)", period_val)) "E"
+               else "A"
+      period_clean <- gsub("\\(P\\)|\\(E\\)", "", period_val)
+
+      rev_row_q <- rows_q[grepl("^매출액", rows_q$ACCOUNT_NM) & rows_q$GB == "0", ]
+      oi_row_q  <- rows_q[grepl("^영업이익", rows_q$ACCOUNT_NM) & rows_q$GB == "0", ]
+      ni_row_q  <- rows_q[grepl("^지배주주순이익", rows_q$ACCOUNT_NM), ]
+      eps_row_q <- rows_q[grepl("^EPS", rows_q$ACCOUNT_NM), ]
+
+      quarterly <- rbind(quarterly, data.frame(
+        period    = period_clean,
+        revenue   = if (nrow(rev_row_q) > 0) parseNum(rev_row_q[[dc]][1]) else NA_real_,
+        op_income = if (nrow(oi_row_q) > 0) parseNum(oi_row_q[[dc]][1]) else NA_real_,
+        net_income = if (nrow(ni_row_q) > 0) parseNum(ni_row_q[[dc]][1]) else NA_real_,
+        eps       = if (nrow(eps_row_q) > 0) parseNum(eps_row_q[[dc]][1]) else NA_real_,
+        type      = qtype,
+        stringsAsFactors = FALSE
+      ))
+    }
+  }
+
   return(list(
     opinion      = opinion,
     target_price = target_price,
     eps          = eps,
     revenue      = revenue,
-    op_income    = op_income
+    op_income    = op_income,
+    quarterly    = quarterly
   ))
 }
