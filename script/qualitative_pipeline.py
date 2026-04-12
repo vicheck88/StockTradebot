@@ -242,15 +242,27 @@ def process_stock(code: str, name: str, api_key: str, report_count: int = 5):
 
     time.sleep(0.5)
 
-    # 2. 네이버 리서치 리포트
-    print(f"  [2/3] 네이버 리서치 리포트 ({report_count}건)...")
-    reports = download_reports(code, count=report_count, save_dir=REPORTS_DIR, with_meta=True)
+    # 2. 리포트 PDF 수집 (한경 메인 → 네이버 fallback)
+    print(f"  [2/3] 리포트 수집 ({report_count}건)...")
+    try:
+        from hankyung_report_downloader import download_reports as hk_download
+        reports = hk_download(code, count=report_count, save_dir=REPORTS_DIR)
+        source = "한경"
+    except Exception:
+        reports = []
+        source = ""
+
+    if not reports:
+        # fallback: 네이버
+        reports = download_reports(code, count=report_count, save_dir=REPORTS_DIR, with_meta=True)
+        source = "네이버"
+
     if reports:
         md = format_reports_md(code, name, reports)
         (CONSENSUS_DIR / f"{code}_{name}_리포트.md").write_text(md, encoding="utf-8")
-        print(f"    {len(reports)}건 수집")
+        print(f"    {len(reports)}건 수집 ({source})")
     else:
-        print(f"    리포트 없음")
+        print(f"    리포트 없음 (한경+네이버 모두)")
 
     time.sleep(0.5)
 
