@@ -367,100 +367,83 @@ if (nrow(sep_data) > 0) {
 }
 
 # ============================================================
-# 7d. 저PBR 보조지표 (value_gap + Piotroski F-Score)
-# PBR < 1 종목에만 적용. score_value에 반영하지 않는 별도 플래그.
+# 7d. Piotroski F-Score (전 종목) + 저PBR value_gap (PBR<1만)
+# F-Score: 재무 체질 지표 (9점 만점). 전 종목에 적용.
+# value_gap/value_label: PBR < 1 종목에만 적용.
 # ============================================================
-low_pbr_codes <- filtered[!is.na(PBR) & PBR < 1.0]$종목코드
 
-if (length(low_pbr_codes) > 0) {
-  # value_gap = 이론PBR(ROE/10) - 실제PBR. 양수 = 저평가
-  filtered[, value_gap := fifelse(!is.na(PBR) & PBR < 1.0 & !is.na(ROE),
-                                  round(ROE / 10 - PBR, 2), NA_real_)]
+# value_gap: PBR < 1 종목만
+filtered[, value_gap := fifelse(!is.na(PBR) & PBR < 1.0 & !is.na(ROE),
+                                round(ROE / 10 - PBR, 2), NA_real_)]
 
-  # Piotroski F-Score: 전년 데이터 조회
-  prev_date <- tryCatch(
-    dbGetQuery(conn, sprintf("
-      SELECT MAX(일자) FROM metainfo.월별기업정보
-      WHERE 일자 < '%s'::date - INTERVAL '10 months'
-    ", latest_date))[[1]],
-    error = function(e) { log_step("경고", "전년 데이터 조회 실패"); NA })
+# Piotroski F-Score: 전 종목 대상
+prev_date <- tryCatch(
+  dbGetQuery(conn, sprintf("
+    SELECT MAX(일자) FROM metainfo.월별기업정보
+    WHERE 일자 < '%s'::date - INTERVAL '10 months'
+  ", latest_date))[[1]],
+  error = function(e) { log_step("경고", "전년 데이터 조회 실패"); NA })
 
-  if (!is.na(prev_date)) {
-    prev_data <- tryCatch(
-      as.data.table(dbGetQuery(conn, sprintf("
-        SELECT 종목코드, 당기순이익, 영업활동으로인한현금흐름,
-               자산, 부채, 자본, 유동자산, 유동부채,
-               매출액, 매출총이익, 유상증자
-        FROM metainfo.월별기업정보
-        WHERE 일자 = '%s' AND 종목코드 IN (%s)
-      ", prev_date, to_sql_in(low_pbr_codes)))),
-      error = function(e) {
-        log_step("경고", "F-Score 전년 데이터 로드 실패: %s", conditionMessage(e))
-        data.table()
-      })
+if (!is.na(prev_date)) {
+  prev_data <- tryCatch(
+    as.data.table(dbGetQuery(conn, sprintf("
+      SELECT 종목코드, 당기순이익, 영업활동으로인한현금흐름,
+             자산, 부채, 자본, 유동자산, 유동부채,
+             매출액, 매출총이익, 유상증자
+      FROM metainfo.월별기업정보
+      WHERE 일자 = '%s' AND 종목코드 IN (%s)
+    ", prev_date, all_codes_sql))),
+    error = function(e) {
+      log_step("경고", "F-Score 전년 데이터 로드 실패: %s", conditionMessage(e))
+      data.table()
+    })
 
-    if (nrow(prev_data) > 0) {
-      setnames(prev_data, setdiff(names(prev_data), "종목코드"),
-               paste0(setdiff(names(prev_data), "종목코드"), "_prev"))
-      filtered <- merge(filtered, prev_data, by = "종목코드", all.x = TRUE)
+  if (nrow(prev_data) > 0) {
+    setnames(prev_data, setdiff(names(prev_data), "종목코드"),
+             paste0(setdiff(names(prev_data), "종목코드"), "_prev"))
+    filtered <- merge(filtered, prev_data, by = "종목코드", all.x = TRUE)
 
-      filtered[종목코드 %in% low_pbr_codes, fscore := {
-        # F1: 당기순이익 > 0
-        f1 <- fifelse(!is.na(당기순이익) & 당기순이익 > 0, 1L, 0L)
-        # F2: 영업CF > 0
-        f2 <- fifelse(!is.na(영업활동으로인한현금흐름) & 영업활동으로인한현금흐름 > 0, 1L, 0L)
-        # F3: ROA 개선 (YoY)
-        roa_cur  <- fifelse(!is.na(자산) & 자산 > 0, 당기순이익 / 자산, NA_real_)
-        roa_prev <- fifelse(!is.na(자산_prev) & 자산_prev > 0, 당기순이익_prev / 자산_prev, NA_real_)
-        f3 <- fifelse(!is.na(roa_cur) & !is.na(roa_prev) & roa_cur > roa_prev, 1L, 0L)
-        # F4: 영업CF > 당기순이익 (accrual quality)
-        f4 <- fifelse(!is.na(영업활동으로인한현금흐름) & !is.na(당기순이익) &
-                      영업활동으로인한현금흐름 > 당기순이익, 1L, 0L)
-        # F5: 부채비율 감소 (YoY)
-        dr_cur  <- fifelse(자본 > 0, 부채 / 자본, NA_real_)
-        dr_prev <- fifelse(!is.na(자본_prev) & 자본_prev > 0, 부채_prev / 자본_prev, NA_real_)
-        f5 <- fifelse(!is.na(dr_cur) & !is.na(dr_prev) & dr_cur < dr_prev, 1L, 0L)
-        # F6: 유동비율 증가 (YoY)
-        cr_cur  <- fifelse(!is.na(유동부채) & 유동부채 > 0, 유동자산 / 유동부채, NA_real_)
-        cr_prev <- fifelse(!is.na(유동부채_prev) & 유동부채_prev > 0, 유동자산_prev / 유동부채_prev, NA_real_)
-        f6 <- fifelse(!is.na(cr_cur) & !is.na(cr_prev) & cr_cur > cr_prev, 1L, 0L)
-        # F7: 유상증자 없음
-        f7 <- fifelse(is.na(유상증자) | 유상증자 == 0, 1L, 0L)
-        # F8: 매출총이익률 개선 (YoY)
-        gpm_cur  <- fifelse(!is.na(매출총이익) & !is.na(매출액) & 매출액 > 0, 매출총이익 / 매출액, NA_real_)
-        gpm_prev <- fifelse(!is.na(매출총이익_prev) & !is.na(매출액_prev) & 매출액_prev > 0, 매출총이익_prev / 매출액_prev, NA_real_)
-        f8 <- fifelse(!is.na(gpm_cur) & !is.na(gpm_prev) & gpm_cur > gpm_prev, 1L, 0L)
-        # F9: 자산회전율 개선 (YoY)
-        at_cur  <- fifelse(!is.na(매출액) & !is.na(자산) & 자산 > 0, 매출액 / 자산, NA_real_)
-        at_prev <- fifelse(!is.na(매출액_prev) & !is.na(자산_prev) & 자산_prev > 0, 매출액_prev / 자산_prev, NA_real_)
-        f9 <- fifelse(!is.na(at_cur) & !is.na(at_prev) & at_cur > at_prev, 1L, 0L)
-        f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8 + f9
-      }]
+    filtered[, fscore := {
+      f1 <- fifelse(!is.na(당기순이익) & 당기순이익 > 0, 1L, 0L)
+      f2 <- fifelse(!is.na(영업활동으로인한현금흐름) & 영업활동으로인한현금흐름 > 0, 1L, 0L)
+      roa_cur  <- fifelse(!is.na(자산) & 자산 > 0, 당기순이익 / 자산, NA_real_)
+      roa_prev <- fifelse(!is.na(자산_prev) & 자산_prev > 0, 당기순이익_prev / 자산_prev, NA_real_)
+      f3 <- fifelse(!is.na(roa_cur) & !is.na(roa_prev) & roa_cur > roa_prev, 1L, 0L)
+      f4 <- fifelse(!is.na(영업활동으로인한현금흐름) & !is.na(당기순이익) &
+                    영업활동으로인한현금흐름 > 당기순이익, 1L, 0L)
+      dr_cur  <- fifelse(자본 > 0, 부채 / 자본, NA_real_)
+      dr_prev <- fifelse(!is.na(자본_prev) & 자본_prev > 0, 부채_prev / 자본_prev, NA_real_)
+      f5 <- fifelse(!is.na(dr_cur) & !is.na(dr_prev) & dr_cur < dr_prev, 1L, 0L)
+      cr_cur  <- fifelse(!is.na(유동부채) & 유동부채 > 0, 유동자산 / 유동부채, NA_real_)
+      cr_prev <- fifelse(!is.na(유동부채_prev) & 유동부채_prev > 0, 유동자산_prev / 유동부채_prev, NA_real_)
+      f6 <- fifelse(!is.na(cr_cur) & !is.na(cr_prev) & cr_cur > cr_prev, 1L, 0L)
+      f7 <- fifelse(is.na(유상증자) | 유상증자 == 0, 1L, 0L)
+      gpm_cur  <- fifelse(!is.na(매출총이익) & !is.na(매출액) & 매출액 > 0, 매출총이익 / 매출액, NA_real_)
+      gpm_prev <- fifelse(!is.na(매출총이익_prev) & !is.na(매출액_prev) & 매출액_prev > 0, 매출총이익_prev / 매출액_prev, NA_real_)
+      f8 <- fifelse(!is.na(gpm_cur) & !is.na(gpm_prev) & gpm_cur > gpm_prev, 1L, 0L)
+      at_cur  <- fifelse(!is.na(매출액) & !is.na(자산) & 자산 > 0, 매출액 / 자산, NA_real_)
+      at_prev <- fifelse(!is.na(매출액_prev) & !is.na(자산_prev) & 자산_prev > 0, 매출액_prev / 자산_prev, NA_real_)
+      f9 <- fifelse(!is.na(at_cur) & !is.na(at_prev) & at_cur > at_prev, 1L, 0L)
+      f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8 + f9
+    }]
 
-      # cleanup prev columns
-      prev_cols <- grep("_prev$", names(filtered), value = TRUE)
-      filtered[, (prev_cols) := NULL]
-    }
+    prev_cols <- grep("_prev$", names(filtered), value = TRUE)
+    filtered[, (prev_cols) := NULL]
   }
-
-  # value_label 판정
-  filtered[, value_label := fifelse(
-    is.na(value_gap), NA_character_,
-    fifelse(value_gap > 0.5 & !is.na(fscore) & fscore >= 7, "TRUE_VALUE",
-    fifelse(value_gap > 0.5 & !is.na(fscore) & fscore <= 3, "TRAP_RISK",
-    fifelse(value_gap <= 0.5 & !is.na(fscore) & fscore >= 7, "MODERATE",
-    fifelse(value_gap <= 0.5 & !is.na(fscore) & fscore <= 6, "TRAP_RISK",
-    "MODERATE")))))]
-
-  n_true <- sum(filtered$value_label == "TRUE_VALUE", na.rm = TRUE)
-  n_mod  <- sum(filtered$value_label == "MODERATE", na.rm = TRUE)
-  n_trap <- sum(filtered$value_label == "TRAP_RISK", na.rm = TRUE)
-  log_step("저PBR", "value_gap + F-Score 계산: TRUE_VALUE %d, MODERATE %d, TRAP_RISK %d",
-           n_true, n_mod, n_trap)
-} else {
-  filtered[, `:=`(value_gap = NA_real_, fscore = NA_integer_, value_label = NA_character_)]
-  log_step("저PBR", "PBR < 1 종목 없음, 보조지표 스킵")
 }
+
+# value_label: PBR < 1 종목만
+filtered[, value_label := fifelse(
+  is.na(value_gap), NA_character_,
+  fifelse(value_gap > 0.5 & !is.na(fscore) & fscore >= 7, "TRUE_VALUE",
+  fifelse(value_gap > 0.5 & !is.na(fscore) & fscore <= 3, "TRAP_RISK",
+  fifelse(value_gap <= 0.5 & !is.na(fscore) & fscore >= 7, "MODERATE",
+  fifelse(value_gap <= 0.5 & !is.na(fscore) & fscore <= 6, "TRAP_RISK",
+  "MODERATE")))))]
+
+n_fscore <- sum(!is.na(filtered$fscore))
+log_step("F-Score", "전 종목 F-Score 계산: %d종목 (평균 %.1f)",
+         n_fscore, mean(filtered$fscore, na.rm = TRUE))
 
 # ============================================================
 # 헬퍼: z-score 기반 스코어 (0-10)
