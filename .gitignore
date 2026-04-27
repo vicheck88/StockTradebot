@@ -3,3 +3,6 @@
 ################################################################################
 
 /script/config.json
+
+# MCP server config (contains DB credentials)
+.mcp.json
