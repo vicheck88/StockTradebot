@@ -1,11 +1,42 @@
 #Sys.setlocale('LC_ALL','en_US.UTF-8')
-source("~/StockTradebot/script/RQuantFunctionList.R") #라즈베리에서 읽는 경우
-source("~/StockTradebot/script/Han2FunctionList.R") #라즈베리에서 읽는 경우
-source("~/StockTradebot/script/telegramAPI.R") #라즈베리에서 읽는 경우
+## 라이브러리 경로 자동 감지 (라즈베리파이/macOS 양쪽 호환)
+.lib_root <- if(file.exists("~/stockInfoCrawler/StockTradebot/script/RQuantFunctionList.R")){
+  path.expand("~/stockInfoCrawler/StockTradebot/script")
+} else if(file.exists("~/StockTradebot/script/RQuantFunctionList.R")){
+  path.expand("~/StockTradebot/script")
+} else {
+  stop("RQuantFunctionList.R not found in ~/stockInfoCrawler/StockTradebot/script or ~/StockTradebot/script")
+}
+source(file.path(.lib_root, "RQuantFunctionList.R"))
+source(file.path(.lib_root, "Han2FunctionList.R"))
+source(file.path(.lib_root, "telegramAPI.R"))
 
-#source("~/stockInfoCrawler/StockTradebot/script/RQuantFunctionList.R") #macOS에서 읽는 경우
-#source("~/stockInfoCrawler/StockTradebot/script/Han2FunctionList.R") #macOS에서 읽는 경우
-#source("~/stockInfoCrawler/StockTradebot/script/telegramAPI.R") #macOS에서 읽는 경우
+## ISSUE-8 FIX: Han2FunctionList.R::isHoliday 버그 회피
+##   (1) `content$response` typo (content는 httr 함수 → closure 에러)
+##   (2) Sys.Date() 월만 조회 → today 인자의 월 무시 → 다른 월 공휴일 누락
+##   여기서 재정의해 GlobalEnv 함수를 override (인프라 미수정). API 실패 시 stop.
+isHoliday <- function(today){
+  today_str <- as.character(today)
+  yyyy <- substr(today_str, 1, 4)
+  mm <- substr(today_str, 5, 6)
+  base <- "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo"
+  key <- "fa78d410f1b0e894bec67bc81ba0cff0c0c784dc97b037512ac567fc2bf1ebd6"  # 2026-03-17 재발급
+  url <- paste0(base, '?serviceKey=', key, '&pageNo=1&numOfRows=20&solYear=', yyyy, '&solMonth=', mm)
+  resp <- httr::GET(url, httr::timeout(5))
+  if(is.null(resp) || resp$status_code != 200){
+    stop(paste("isHoliday API fail: http", ifelse(is.null(resp), "NULL", resp$status_code)))
+  }
+  parsed <- httr::content(resp)
+  body <- parsed$response$body
+  if(is.null(body)) stop("isHoliday: empty response body")
+  total_raw <- body$totalCount
+  total <- if(is.null(total_raw) || length(total_raw)==0) 0 else as.integer(total_raw)
+  if(is.na(total)) stop("isHoliday: invalid totalCount")
+  if(total == 0) return(FALSE)
+  items <- body$items$item
+  holidays <- if(total == 1) as.character(items$locdate) else sapply(items, function(x) as.character(x$locdate))
+  return(today_str %in% holidays)
+}
 
 
 pkg = c('data.table','xts','quantmod','stringr','timeDate','lubridate','jsonlite')
