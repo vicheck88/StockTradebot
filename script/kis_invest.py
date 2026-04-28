@@ -225,13 +225,17 @@ def get_tech(api_url: str, app_key: str, app_secret: str, token: str, code: str,
         return sum(closes[-n:]) / n
 
     def rsi(n=14):
+        # Wilder RSI: 첫 n개 SMA 시드 → 재귀 평활(α=1/n)
         if len(closes) < n + 1: return None
-        gains, losses = [], []
-        for i in range(-n, 0):
-            d = closes[i] - closes[i - 1]
-            (gains if d > 0 else losses).append(abs(d) if d else 0)
-        ag = sum(gains) / n if gains else 0
-        al = sum(losses) / n if losses else 0
+        diffs = [closes[i] - closes[i - 1] for i in range(1, len(closes))]
+        gains = [d if d > 0 else 0 for d in diffs]
+        losses = [-d if d < 0 else 0 for d in diffs]
+        if len(diffs) < n: return None
+        ag = sum(gains[:n]) / n
+        al = sum(losses[:n]) / n
+        for i in range(n, len(diffs)):
+            ag = (ag * (n - 1) + gains[i]) / n
+            al = (al * (n - 1) + losses[i]) / n
         if al == 0: return 100.0
         rs = ag / al
         return round(100 - 100 / (1 + rs), 1)

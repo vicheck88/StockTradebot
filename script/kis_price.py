@@ -145,18 +145,19 @@ def calculate_indicators(ohlcv: list) -> dict:
         return sum(closes[-n:]) / n
 
     def rsi(n=14):
+        # Wilder RSI: 첫 n개 SMA 시드 → 재귀 평활(α=1/n)
         if len(closes) < n + 1:
             return None
-        gains = []
-        losses = []
-        for i in range(-n, 0):
-            diff = closes[i] - closes[i - 1]
-            if diff > 0:
-                gains.append(diff)
-            else:
-                losses.append(-diff)
-        avg_gain = sum(gains) / n if gains else 0
-        avg_loss = sum(losses) / n if losses else 0
+        diffs = [closes[i] - closes[i - 1] for i in range(1, len(closes))]
+        gains = [d if d > 0 else 0 for d in diffs]
+        losses = [-d if d < 0 else 0 for d in diffs]
+        if len(diffs) < n:
+            return None
+        avg_gain = sum(gains[:n]) / n
+        avg_loss = sum(losses[:n]) / n
+        for i in range(n, len(diffs)):
+            avg_gain = (avg_gain * (n - 1) + gains[i]) / n
+            avg_loss = (avg_loss * (n - 1) + losses[i]) / n
         if avg_loss == 0:
             return 100.0
         rs = avg_gain / avg_loss

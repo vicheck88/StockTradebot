@@ -11,31 +11,40 @@ source(file.path(.lib_root, "RQuantFunctionList.R"))
 source(file.path(.lib_root, "Han2FunctionList.R"))
 source(file.path(.lib_root, "telegramAPI.R"))
 
-## ISSUE-8 FIX: Han2FunctionList.R::isHoliday 버그 회피
+## ISSUE-8 FIX: Han2FunctionList.R::isHoliday 버그 회피 + fail-open
 ##   (1) `content$response` typo (content는 httr 함수 → closure 에러)
 ##   (2) Sys.Date() 월만 조회 → today 인자의 월 무시 → 다른 월 공휴일 누락
-##   여기서 재정의해 GlobalEnv 함수를 override (인프라 미수정). API 실패 시 stop.
+##   (3) KASI 외부 API 장애/응답없음/에러 시 FALSE 반환 (매수 진행 우선)
+##   여기서 재정의해 GlobalEnv 함수를 override (인프라 미수정).
 isHoliday <- function(today){
-  today_str <- as.character(today)
-  yyyy <- substr(today_str, 1, 4)
-  mm <- substr(today_str, 5, 6)
-  base <- "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo"
-  key <- "fa78d410f1b0e894bec67bc81ba0cff0c0c784dc97b037512ac567fc2bf1ebd6"  # 2026-03-17 재발급
-  url <- paste0(base, '?serviceKey=', key, '&pageNo=1&numOfRows=20&solYear=', yyyy, '&solMonth=', mm)
-  resp <- httr::GET(url, httr::timeout(5))
-  if(is.null(resp) || resp$status_code != 200){
-    stop(paste("isHoliday API fail: http", ifelse(is.null(resp), "NULL", resp$status_code)))
-  }
-  parsed <- httr::content(resp)
-  body <- parsed$response$body
-  if(is.null(body)) stop("isHoliday: empty response body")
-  total_raw <- body$totalCount
-  total <- if(is.null(total_raw) || length(total_raw)==0) 0 else as.integer(total_raw)
-  if(is.na(total)) stop("isHoliday: invalid totalCount")
-  if(total == 0) return(FALSE)
-  items <- body$items$item
-  holidays <- if(total == 1) as.character(items$locdate) else sapply(items, function(x) as.character(x$locdate))
-  return(today_str %in% holidays)
+  tryCatch({
+    today_str <- as.character(today)
+    yyyy <- substr(today_str, 1, 4)
+    mm <- substr(today_str, 5, 6)
+    base <- "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo"
+    key <- "fa78d410f1b0e894bec67bc81ba0cff0c0c784dc97b037512ac567fc2bf1ebd6"  # 2026-03-17 재발급
+    url <- paste0(base, '?serviceKey=', key, '&pageNo=1&numOfRows=20&solYear=', yyyy, '&solMonth=', mm)
+    resp <- httr::GET(url, httr::timeout(10))
+    if(is.null(resp) || resp$status_code != 200){
+      cat("isHoliday API fail (http ", ifelse(is.null(resp),"NULL",resp$status_code), ") → FALSE\n", sep="")
+      return(FALSE)
+    }
+    parsed <- httr::content(resp)
+    body <- parsed$response$body
+    if(is.null(body)){
+      cat("isHoliday: empty body → FALSE\n")
+      return(FALSE)
+    }
+    total_raw <- body$totalCount
+    total <- if(is.null(total_raw) || length(total_raw)==0) 0 else as.integer(total_raw)
+    if(is.na(total) || total == 0) return(FALSE)
+    items <- body$items$item
+    holidays <- if(total == 1) as.character(items$locdate) else sapply(items, function(x) as.character(x$locdate))
+    return(today_str %in% holidays)
+  }, error = function(e){
+    cat("isHoliday error (", e$message, ") → FALSE\n", sep="")
+    return(FALSE)
+  })
 }
 
 
@@ -50,18 +59,20 @@ DRY_RUN <- !is.null(Sys.getenv("DRY_RUN", unset=NA)) && tolower(Sys.getenv("DRY_
 
 today<-str_replace_all(Sys.Date(),"-","")
 
-if(!DRY_RUN){
-  if(wday(Sys.Date()) %in% c(1,7)) stop("Weekend")
-  if(isHoliday(today)) stop("Holiday")
-}
-
-# ====== 분할 일정 (5/5 어린이날 회피) ======
+# ====== 분할 일정 (5/5 어린이날 회피) — SCHEDULE_DATES 우선 체크 ======
+## 비매수날엔 isHoliday API 호출 없이 즉시 종료 (cron 매일 발동 부담 최소화)
 SCHEDULE_DATES <- c("20260428","20260504","20260512","20260519")
 if(!(today %in% SCHEDULE_DATES)){
   cat("[",today,"] Not a scheduled split-buy date. Skip (no token issued).\n", sep="")
   quit()
 }
 ROUND_NO <- which(SCHEDULE_DATES == today)
+
+## 매수일 진입 후에만 weekday/holiday 검증
+if(!DRY_RUN){
+  if(wday(Sys.Date()) %in% c(1,7)) stop("Weekend")
+  if(isHoliday(today)) stop("Holiday")
+}
 ROUND_LIMIT <- 25000000   # 차수당 한도
 TOTAL_CAP   <- 100000000  # 총 목표
 
@@ -160,12 +171,19 @@ if(DRY_RUN && ROUND_NO %in% c(2,3,4) && nrow(cur[code==SOFR_CODE])==0){
 
 # ====== RSI 14일 계산 (네이버 200일 종가) ======
 calc_rsi <- function(closes, n=14){
+  # Wilder RSI (네이버/키움/TradingView 표준): 첫 n개 SMA 시드 → 재귀 평활(α=1/n)
   if(length(closes) < n+1) return(NA_real_)
   diffs <- diff(closes)
   gains <- pmax(diffs, 0)
   losses <- pmax(-diffs, 0)
-  ag <- mean(tail(gains, n))
-  al <- mean(tail(losses, n))
+  ag <- mean(gains[1:n])
+  al <- mean(losses[1:n])
+  if(length(diffs) > n){
+    for(i in (n+1):length(diffs)){
+      ag <- (ag * (n-1) + gains[i]) / n
+      al <- (al * (n-1) + losses[i]) / n
+    }
+  }
   if(al == 0) return(100)
   rs <- ag / al
   return(round(100 - 100/(1+rs), 1))
