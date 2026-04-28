@@ -61,7 +61,7 @@ today<-str_replace_all(Sys.Date(),"-","")
 
 # ====== 분할 일정 (5/5 어린이날 회피) — SCHEDULE_DATES 우선 체크 ======
 ## 비매수날엔 isHoliday API 호출 없이 즉시 종료 (cron 매일 발동 부담 최소화)
-SCHEDULE_DATES <- c("20260428","20260504","20260512","20260519")
+SCHEDULE_DATES <- c("20260429","20260504","20260512","20260519")
 if(!(today %in% SCHEDULE_DATES)){
   cat("[",today,"] Not a scheduled split-buy date. Skip (no token issued).\n", sep="")
   quit()
