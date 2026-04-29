@@ -67,13 +67,14 @@ if(!(today %in% SCHEDULE_DATES)){
   quit()
 }
 ROUND_NO <- which(SCHEDULE_DATES == today)
+IS_LAST_ROUND <- ROUND_NO == length(SCHEDULE_DATES)  # 마지막 매수일: RSI 무관 강제집행
 
 ## 매수일 진입 후에만 weekday/holiday 검증
 if(!DRY_RUN){
   if(wday(Sys.Date()) %in% c(1,7)) stop("Weekend")
   if(isHoliday(today)) stop("Holiday")
 }
-ROUND_LIMIT <- 25000000   # 차수당 한도
+ROUND_LIMIT <- 25000000   # 일별 매수 한도
 TOTAL_CAP   <- 100000000  # 총 목표
 
 # ====== 잠금 8종목 (코어 4 + 위성 4) ======
@@ -87,11 +88,11 @@ LOCKED <- data.table(
 LOCKED[, target_amt := TOTAL_CAP * weight / 100]
 
 # ====== 1차 한정 잠금 외 매도 ======
-NON_LOCKED_SELL <- c("017670","055550","005830")  # SKT/신한지주/DB손보
+# 잠금 8종 + 안전자산(SOFR_CODE) 외 보유분은 모두 매도 대상
 
 # ====== SOFR ETF ======
-SOFR_CODE <- "456610"
-SOFR_NAME <- "TIGER 미국달러SOFR금리액티브(합성)"
+SOFR_CODE <- "459580"
+SOFR_NAME <- "KODEX KOFR금리액티브(합성)"
 
 # ====== KIS 토큰 캐시 (24h) ======
 TOKEN_CACHE_PATH <- "~/.kis_token_main.json"
@@ -228,26 +229,22 @@ LOCKED[, held_qty := sapply(code, function(c){ p<-cur[code==c]; if(nrow(p)>0) p$
 LOCKED[, held_amt := sapply(code, function(c){ p<-cur[code==c]; if(nrow(p)>0) p$eval_amt else 0 })]
 LOCKED[, gap := pmax(0, target_amt - held_amt)]
 
-# ====== 차수별 매수액 산출 ======
-if(ROUND_NO == 4){
-  ## ISSUE-1 FIX: 4차 강제집행도 ROUND_LIMIT 한도는 유지
-  LOCKED[, raw_buy := gap]  # RSI 룰은 무시하되 한도 스케일은 적용
-  total_raw <- sum(LOCKED$raw_buy)
-  scale <- if(total_raw > ROUND_LIMIT) ROUND_LIMIT / total_raw else 1
-  LOCKED[, buy_amt := raw_buy * scale]
-  if(total_raw > ROUND_LIMIT && !DRY_RUN){
-    sendMessage(paste0(
-      "[경고] 4차 잔여 매수액이 차수 한도 초과: ",
-      format(total_raw, big.mark=","), "원 > ",
-      format(ROUND_LIMIT, big.mark=","), "원\n",
-      "ROUND_LIMIT 내 비례 축소 적용. 잔여분은 추가 분할 집행 권고."
-    ))
-  }
+# ====== 매수액 산출 (마지막 매수일이면 RSI 무관 강제집행, 일별 한도 유지) ======
+if(IS_LAST_ROUND){
+  LOCKED[, raw_buy := gap]  # RSI 룰 무시
 } else {
   LOCKED[, raw_buy := gap * ratio]
-  total_raw <- sum(LOCKED$raw_buy)
-  scale <- if(total_raw > ROUND_LIMIT) ROUND_LIMIT / total_raw else 1
-  LOCKED[, buy_amt := raw_buy * scale]
+}
+total_raw <- sum(LOCKED$raw_buy)
+scale <- if(total_raw > ROUND_LIMIT) ROUND_LIMIT / total_raw else 1
+LOCKED[, buy_amt := raw_buy * scale]
+if(IS_LAST_ROUND && total_raw > ROUND_LIMIT && !DRY_RUN){
+  sendMessage(paste0(
+    "[경고] 마지막 매수일 잔여 매수액이 일별 한도 초과: ",
+    format(total_raw, big.mark=","), "원 > ",
+    format(ROUND_LIMIT, big.mark=","), "원\n",
+    "ROUND_LIMIT 내 비례 축소 적용. 잔여분은 추가 분할 집행 권고."
+  ))
 }
 
 LOCKED[, qty_to_buy := floor(buy_amt / cur_price)]
@@ -355,71 +352,73 @@ scale_buy_sheet_to_cash <- function(sheet, cash_avail){
 sellSheet <- data.table(종목코드=character(), 종목명=character(), 보유수량=numeric(),
                         현재가=numeric(), 평가금액=numeric(), 목표금액=numeric(), 주문구분=character())
 
-# 1차 한정: 잠금 외 전량 매도
-if(ROUND_NO == 1){
-  for(c in NON_LOCKED_SELL){
-    p <- cur[code==c]
-    if(nrow(p)>0 && p$qty>0){
-      cp <- if(!is.na(p$cur_price) && p$cur_price>0) p$cur_price else getCurrentPrice(apiConfig,account,token,c)
-      sellSheet <- rbind(sellSheet, data.table(
-        종목코드=c, 종목명=p$name,
-        보유수량=p$qty,
-        현재가=cp,
-        평가금액=p$eval_amt,
-        목표금액=0,         # 전량 매도
-        주문구분="00"
-      ))
-    }
+# ====== 잠금 8종 + KOFR 외 보유 모두 매도 (매수일마다) ======
+KEEP_CODES <- c(LOCKED$code, SOFR_CODE)
+sellable <- cur[!(code %in% KEEP_CODES) & qty > 0]
+if(nrow(sellable) > 0){
+  for(i in 1:nrow(sellable)){
+    p <- sellable[i,]
+    cp <- if(!is.na(p$cur_price) && p$cur_price > 0) p$cur_price else getCurrentPrice(apiConfig,account,token,p$code)
+    if(is.null(cp) || length(cp)==0 || is.na(cp[1]) || cp[1] <= 0) next  # 휴지/거래정지 skip
+    sellSheet <- rbind(sellSheet, data.table(
+      종목코드=p$code, 종목명=p$name,
+      보유수량=p$qty,
+      현재가=as.numeric(cp[1]),
+      평가금액=p$eval_amt,
+      목표금액=0,         # 전량 매도
+      주문구분="00"
+    ))
   }
 }
 
-# 2~4차: 매수 자금 부족 시 SOFR 부분 매도
+# ====== cash 부족 시 SOFR 매도 (차수 무관) ======
 ## ISSUE-5 FIX: cash 조회 실패 시 SOFR 매도 결정 보류 (fail-closed)
-if(ROUND_NO %in% c(2,3,4)){
-  if(DRY_RUN){
-    cash_avail <- 0  # SOFR 매도 sim 발동을 위해 cash 0 가정
-    cat("[DRY RUN sim] cash_avail = 0 가정 (SOFR 매도 sim 발동용)\n")
-    cash_ok <- TRUE
+if(DRY_RUN){
+  cash_avail <- 0  # SOFR 매도 sim 발동을 위해 cash 0 가정
+  cat("[DRY RUN sim] cash_avail = 0 가정 (SOFR 매도 sim 발동용)\n")
+  cash_ok <- TRUE
+} else {
+  cash_res <- safe_orderable_amount(apiConfig, account, token, LOCKED[1,code])
+  if(!cash_res$ok){
+    cash_ok <- FALSE
+    sendMessage("⚠️ SOFR 매도 결정용 cash 조회 실패 — SOFR 매도 보류, 후처리 단계에서 재시도")
   } else {
-    cash_res <- safe_orderable_amount(apiConfig, account, token, LOCKED[1,code])
-    if(!cash_res$ok){
-      cash_ok <- FALSE
-      sendMessage(paste0(
-        "⚠️ 차수 ",ROUND_NO," SOFR 매도 결정용 cash 조회 실패 — SOFR 매도 보류, 후처리 단계에서 재시도"
-      ))
-    } else {
-      cash_ok <- TRUE
-      cash_avail <- cash_res$value
-    }
+    cash_ok <- TRUE
+    cash_avail <- cash_res$value
   }
-  if(cash_ok){
-    total_buy_needed <- get_buy_needed(buySheet)
-    shortfall <- total_buy_needed - cash_avail
-    if(shortfall > 0){
-      sofr <- cur[code==SOFR_CODE]
-      if(nrow(sofr)>0 && sofr$qty>0){
-        sofr_price <- if(!is.na(sofr$cur_price) && sofr$cur_price>0) sofr$cur_price else getCurrentPrice(apiConfig,account,token,SOFR_CODE)
-        sofr_remaining <- max(0, sofr$eval_amt - shortfall - 100000)
-        sellSheet <- rbind(sellSheet, data.table(
-          종목코드=SOFR_CODE, 종목명=SOFR_NAME,
-          보유수량=sofr$qty,
-          현재가=sofr_price,
-          평가금액=sofr$eval_amt,
-          목표금액=sofr_remaining,
-          주문구분="00"
-        ))
-        if(!DRY_RUN){
-          sendMessage(paste0(
-            "매수자금 부족으로 SOFR 매도 예정: 부족 ",
-            format(round(shortfall), big.mark=","), "원"
-          ))
-        }
-      } else if(!DRY_RUN){
+}
+if(cash_ok){
+  total_buy_needed <- get_buy_needed(buySheet)
+  ## 매도 회수 예상액(잠금 외 매도분)을 cash에 더해서 부족분 계산
+  expected_sell_proceeds <- 0
+  if(nrow(sellSheet)>0){
+    expected_sell_proceeds <- sum(pmax(0, sellSheet$평가금액 - sellSheet$목표금액))
+  }
+  shortfall <- total_buy_needed - cash_avail - expected_sell_proceeds
+  if(shortfall > 0){
+    sofr <- cur[code==SOFR_CODE]
+    if(nrow(sofr)>0 && sofr$qty>0){
+      sofr_price <- if(!is.na(sofr$cur_price) && sofr$cur_price>0) sofr$cur_price else getCurrentPrice(apiConfig,account,token,SOFR_CODE)
+      sofr_remaining <- max(0, sofr$eval_amt - shortfall - 100000)  # 10만원 여유
+      sellSheet <- rbind(sellSheet, data.table(
+        종목코드=SOFR_CODE, 종목명=SOFR_NAME,
+        보유수량=sofr$qty,
+        현재가=sofr_price,
+        평가금액=sofr$eval_amt,
+        목표금액=sofr_remaining,
+        주문구분="00"
+      ))
+      if(!DRY_RUN){
         sendMessage(paste0(
-          "[경고] 매수자금 부족이나 SOFR 보유 수량 없음: 부족 ",
-          format(round(shortfall), big.mark=","), "원. 매도 후 현금 확인 단계에서 매수 축소 예정."
+          "매수자금 부족으로 SOFR 매도 예정: 부족 ",
+          format(round(shortfall), big.mark=","), "원"
         ))
       }
+    } else if(!DRY_RUN){
+      sendMessage(paste0(
+        "[경고] 매수자금 부족이나 SOFR 보유 수량 없음: 부족 ",
+        format(round(shortfall), big.mark=","), "원. 매도 후 현금 확인 단계에서 매수 축소 예정."
+      ))
     }
   }
 }
@@ -428,22 +427,13 @@ if(ROUND_NO %in% c(2,3,4)){
 ## ISSUE-4 FIX: 11시 매수 전부 체결되면 13/15시 재실행 시 quit()
 ## ISSUE-5 FIX: cash 조회 실패 시 fail-closed (quit X, 정상 흐름 진행)
 if(!DRY_RUN && nrow(buySheet) == 0 && nrow(sellSheet) == 0){
-  cash_lookup_ok <- TRUE
-  cash_check <- 0
-  if(ROUND_NO == 1){
-    cash_res <- safe_orderable_amount(apiConfig, account, token, SOFR_CODE)
-    if(!cash_res$ok){
-      cash_lookup_ok <- FALSE
-      sendMessage(paste0("⚠️ 차수 ",ROUND_NO," 조기종료 판단용 cash 조회 실패 — quit 보류, SOFR 매수 단계 정상 진행"))
-    } else {
-      cash_check <- cash_res$value
-    }
-  }
-  needs_sofr_buy <- (ROUND_NO == 1) && (!cash_lookup_ok || cash_check > 100000)
-  if(cash_lookup_ok && !needs_sofr_buy){
-    cat("[",today,"] 차수 ",ROUND_NO," 매수/매도/SOFR 모두 완료. Skip.\n", sep="")
+  cash_res <- safe_orderable_amount(apiConfig, account, token, SOFR_CODE)
+  if(!cash_res$ok){
+    sendMessage("⚠️ 조기종료 판단용 cash 조회 실패 — quit 보류, SOFR 매수 단계 정상 진행")
+  } else if(cash_res$value <= 100000){
+    cat("[",today,"] 매수/매도/SOFR 모두 완료. Skip.\n", sep="")
     if(hour(Sys.time())==11){
-      sendMessage(paste0("차수 ",ROUND_NO," — 매수/매도 사전 완료, 실행 없음"))
+      sendMessage("오늘 매수/매도 사전 완료, 실행 없음")
     }
     quit()
   }
@@ -555,9 +545,9 @@ if(nrow(buySheet)>0){
   }
 }
 
-# ====== 1차 마무리: 잔여 자금 SOFR 매수 ======
+# ====== 매수 후 잔여 자금 SOFR 매수 (차수 무관) ======
 ## ISSUE-5 FIX: cash 조회 실패 시 SOFR 매수 스킵 + 텔레그램 경고 (fail-closed)
-if(ROUND_NO == 1){
+{
   Sys.sleep(60)
   cash_res <- safe_orderable_amount(apiConfig, account, token, SOFR_CODE)
   if(!cash_res$ok){
