@@ -225,9 +225,11 @@ getBalancesheet<-function(token,apiConfig,account, tr_cont='',CTX_AREA_FK100='',
   }
 }
 cancelAllOrders<-function(apiConfig,account,token){
-  orderList<-viewAllOrders(apiConfig,account,token)$output
-  #odno: 주문번호, psbl_qty: 취소가능수량
-  orderNoList<-orderList$odno
+  ## FIX: 기존 $output → $sheet (viewAllOrders 반환 구조), KRX_FWDG_ORD_ORGNO에 ord_gno_brno 사용
+  orderResult<-viewAllOrders(apiConfig,account,token)
+  orderList<-orderResult$sheet
+  if(is.null(orderList) || nrow(orderList)==0) return(NULL)
+
   cancelUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/order-rvsecncl') #취소주문
   headers<-c(
     Authorization=paste('Bearer',token),
@@ -236,11 +238,13 @@ cancelAllOrders<-function(apiConfig,account,token){
     tr_id=apiConfig$cancelModifyOrderTrid
   )
   result<-NULL
-  for(orderNo in orderNoList){
+  for(i in 1:nrow(orderList)){
+    orgno <- if("ord_gno_brno" %in% names(orderList) && !is.na(orderList$ord_gno_brno[i]) && nchar(as.character(orderList$ord_gno_brno[i]))>0)
+      as.character(orderList$ord_gno_brno[i]) else ""
     body<-list(CANO=substr(account$accNo,1,8),
                ACNT_PRDT_CD=substr(account$accNo,9,10),
-               KRX_FWDG_ORD_ORGNO="",
-               ORGN_ODNO=orderNo,
+               KRX_FWDG_ORD_ORGNO=orgno,
+               ORGN_ODNO=as.character(orderList$odno[i]),
                ORD_DVSN='00',
                RVSE_CNCL_DVSN_CD='02',
                ORD_QTY='0',
@@ -254,7 +258,8 @@ cancelAllOrders<-function(apiConfig,account,token){
   return(result)
 }
 viewAllOrders<-function(apiConfig,account,token,CTX_AREA_FK100='',CTX_AREA_NK100='',output=NULL){
-  viewUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/inquire-psbl-rvsecncl') #취소가능한 주문목록
+  ## 1단계: inquire-psbl-rvsecncl (정정/취소 가능 주문 — 기존)
+  viewUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/inquire-psbl-rvsecncl')
   headers<-c(
     Authorization=paste('Bearer',token),
     appkey=account$appkey,
@@ -271,18 +276,58 @@ viewAllOrders<-function(apiConfig,account,token,CTX_AREA_FK100='',CTX_AREA_NK100
   response<-GET(viewUrl,add_headers(headers),query=query)
   output$status_code<-response$status_code
   if(response$status_code!=200) return(output)
-  
+
   res<-fromJSON(rawToChar(response$content))
-  output$sheet<-as.data.table(rbind(output$sheet,res$output))
-  tr_cont<-response$headers$tr_cont
-  if(tr_cont=='D' | tr_cont=='E'){
-    output$rt_cd<-res$rt_cd
-    output$msg_cd<-res$msg_cd
-    output$msg<-res$msg1
-    return(output)
-  } else{
-    return(getBalancesheet(apiConfig,account,'N',res$ctx_area_fk100,res$ctx_area_nk100,output))
+  if(!is.null(res$output) && length(res$output)>0){
+    output$sheet<-as.data.table(rbind(output$sheet,res$output, fill=TRUE))
   }
+  tr_cont<-response$headers$tr_cont
+  if(!is.null(tr_cont) && (tr_cont=='F' || tr_cont=='M')){
+    ## FIX: getBalancesheet → viewAllOrders 재귀 호출 (페이징 버그 수정)
+    return(viewAllOrders(apiConfig,account,token,res$ctx_area_fk100,res$ctx_area_nk100,output))
+  }
+
+  ## 2단계: inquire-daily-ccld 보강 (KIS의 두 API 불일치 보완 — 첫 호출 시만)
+  if(CTX_AREA_FK100=='' && CTX_AREA_NK100==''){
+    today_str <- format(Sys.Date(), "%Y%m%d")
+    daily_url <- paste0(apiConfig$url, '/uapi/domestic-stock/v1/trading/inquire-daily-ccld')
+    daily_resp <- tryCatch(GET(daily_url,
+      add_headers(Authorization=paste('Bearer',token),
+        appkey=account$appkey, appsecret=account$appsecret, tr_id="TTTC8001R"),
+      query=list(CANO=substr(account$accNo,1,8), ACNT_PRDT_CD=substr(account$accNo,9,10),
+        INQR_STRT_DT=today_str, INQR_END_DT=today_str,
+        SLL_BUY_DVSN_CD="00", INQR_DVSN="00", PDNO="",
+        CCLD_DVSN="02", ORD_GNO_BRNO="", ODNO="",
+        INQR_DVSN_3="00", INQR_DVSN_1="",
+        CTX_AREA_FK100="", CTX_AREA_NK100="")),
+      error=function(e) NULL)
+    if(!is.null(daily_resp) && daily_resp$status_code==200){
+      daily_res <- fromJSON(rawToChar(daily_resp$content))
+      if(!is.null(daily_res$output1) && length(daily_res$output1)>0){
+        daily_dt <- as.data.table(daily_res$output1)
+        if("rmn_qty" %in% names(daily_dt)){
+          daily_dt[, rmn_qty := suppressWarnings(as.numeric(rmn_qty))]
+          unfilled <- daily_dt[!is.na(rmn_qty) & rmn_qty > 0]
+          if(nrow(unfilled) > 0){
+            existing_odno <- if(!is.null(output$sheet) && "odno" %in% names(output$sheet))
+              as.character(output$sheet$odno) else character(0)
+            new_unfilled <- unfilled[!(as.character(odno) %in% existing_odno)]
+            if(nrow(new_unfilled) > 0){
+              if(!"psbl_qty" %in% names(new_unfilled)){
+                new_unfilled[, psbl_qty := rmn_qty]
+              }
+              output$sheet <- as.data.table(rbind(output$sheet, new_unfilled, fill=TRUE))
+            }
+          }
+        }
+      }
+    }
+  }
+
+  output$rt_cd<-res$rt_cd
+  output$msg_cd<-res$msg_cd
+  output$msg<-res$msg1
+  return(output)
 }
 
 getOrderableAmount<-function(apiConfig,account,token,code){
@@ -309,12 +354,14 @@ getOrderableAmount<-function(apiConfig,account,token,code){
   return(as.numeric(res$output$nrcvb_buy_amt))
 }
 
-orderStock<-function(apiConfig,account,token,code,qty,price){
+orderStock<-function(apiConfig,account,token,code,qty,price,excg='SOR'){
+  ## 신버전 TR_ID (TTTC0011U/TTTC0012U) + EXCG_ID_DVSN_CD 필드로 KRX/NXT/SOR 지원
+  ## excg 기본 'SOR' (KRX/NXT 자동 라우팅)
   if(qty==0) return(NULL)
-  if(qty>0) tr_id=apiConfig$buyTrid
-  if(qty<0) tr_id=apiConfig$sellTrid
-  
-  orderUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/order-cash') #현금주문
+  if(qty>0) tr_id="TTTC0012U"  # 현금 매수 (신버전)
+  if(qty<0) tr_id="TTTC0011U"  # 현금 매도 (신버전)
+
+  orderUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/order-cash')
   headers<-c(
     Authorization=paste('Bearer',token),
     appkey=account$appkey,
@@ -326,7 +373,8 @@ orderStock<-function(apiConfig,account,token,code,qty,price){
               PDNO=code,
               ORD_DVSN='00',
               ORD_QTY=as.character(abs(qty)),
-              ORD_UNPR=as.character(price)
+              ORD_UNPR=as.character(price),
+              EXCG_ID_DVSN_CD=excg
   )
   response<-POST(orderUrl,add_headers(headers),body=toJSON(body,auto_unbox=T))
   res<-fromJSON(rawToChar(response$content))
