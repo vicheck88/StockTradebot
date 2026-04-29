@@ -94,7 +94,7 @@ LOCKED[, target_amt := TOTAL_CAP * weight / 100]
 # 우선: CD금리액티브 (수익률 약간 ↑, 운용보수 0.02%)
 # 잔돈: KOFR금리액티브 (단가 작아 잔돈까지 정밀 매수)
 SAFE_PRIMARY_CODE   <- "459580"; SAFE_PRIMARY_NAME   <- "KODEX CD금리액티브(합성)"
-SAFE_SECONDARY_CODE <- "442740"; SAFE_SECONDARY_NAME <- "KODEX KOFR금리액티브(합성)"
+SAFE_SECONDARY_CODE <- "423160"; SAFE_SECONDARY_NAME <- "KODEX KOFR금리액티브(합성)"
 # 호환성 alias
 SOFR_CODE <- SAFE_PRIMARY_CODE
 SOFR_NAME <- SAFE_PRIMARY_NAME
