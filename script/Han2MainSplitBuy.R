@@ -87,12 +87,17 @@ LOCKED <- data.table(
 )
 LOCKED[, target_amt := TOTAL_CAP * weight / 100]
 
-# ====== 1차 한정 잠금 외 매도 ======
-# 잠금 8종 + 안전자산(SOFR_CODE) 외 보유분은 모두 매도 대상
+# ====== 매도 대상 ======
+# 잠금 8종 + 안전자산(SAFE_PRIMARY/SECONDARY) 외 보유분은 모두 매도 대상
 
-# ====== SOFR ETF ======
-SOFR_CODE <- "459580"
-SOFR_NAME <- "KODEX KOFR금리액티브(합성)"
+# ====== 안전자산 ETF (분배금 0, 배당세 0) ======
+# 우선: CD금리액티브 (수익률 약간 ↑, 운용보수 0.02%)
+# 잔돈: KOFR금리액티브 (단가 작아 잔돈까지 정밀 매수)
+SAFE_PRIMARY_CODE   <- "459580"; SAFE_PRIMARY_NAME   <- "KODEX CD금리액티브(합성)"
+SAFE_SECONDARY_CODE <- "442740"; SAFE_SECONDARY_NAME <- "KODEX KOFR금리액티브(합성)"
+# 호환성 alias
+SOFR_CODE <- SAFE_PRIMARY_CODE
+SOFR_NAME <- SAFE_PRIMARY_NAME
 
 # ====== KIS 토큰 캐시 (24h) ======
 TOKEN_CACHE_PATH <- "~/.kis_token_main.json"
@@ -352,8 +357,8 @@ scale_buy_sheet_to_cash <- function(sheet, cash_avail){
 sellSheet <- data.table(종목코드=character(), 종목명=character(), 보유수량=numeric(),
                         현재가=numeric(), 평가금액=numeric(), 목표금액=numeric(), 주문구분=character())
 
-# ====== 잠금 8종 + KOFR 외 보유 모두 매도 (매수일마다) ======
-KEEP_CODES <- c(LOCKED$code, SOFR_CODE)
+# ====== 잠금 8종 + 안전자산 2종 외 보유 모두 매도 (매수일마다) ======
+KEEP_CODES <- c(LOCKED$code, SAFE_PRIMARY_CODE, SAFE_SECONDARY_CODE)
 sellable <- cur[!(code %in% KEEP_CODES) & qty > 0]
 if(nrow(sellable) > 0){
   for(i in 1:nrow(sellable)){
@@ -381,7 +386,7 @@ if(DRY_RUN){
   cash_res <- safe_orderable_amount(apiConfig, account, token, LOCKED[1,code])
   if(!cash_res$ok){
     cash_ok <- FALSE
-    sendMessage("⚠️ SOFR 매도 결정용 cash 조회 실패 — SOFR 매도 보류, 후처리 단계에서 재시도")
+    sendMessage("⚠️ 안전자산 매도 결정용 cash 조회 실패 — 매도 보류, 후처리 단계에서 재시도")
   } else {
     cash_ok <- TRUE
     cash_avail <- cash_res$value
@@ -410,13 +415,13 @@ if(cash_ok){
       ))
       if(!DRY_RUN){
         sendMessage(paste0(
-          "매수자금 부족으로 SOFR 매도 예정: 부족 ",
+          "매수자금 부족으로 ",SAFE_PRIMARY_NAME," 매도 예정: 부족 ",
           format(round(shortfall), big.mark=","), "원"
         ))
       }
     } else if(!DRY_RUN){
       sendMessage(paste0(
-        "[경고] 매수자금 부족이나 SOFR 보유 수량 없음: 부족 ",
+        "[경고] 매수자금 부족이나 안전자산 보유 수량 없음: 부족 ",
         format(round(shortfall), big.mark=","), "원. 매도 후 현금 확인 단계에서 매수 축소 예정."
       ))
     }
@@ -429,7 +434,7 @@ if(cash_ok){
 if(!DRY_RUN && nrow(buySheet) == 0 && nrow(sellSheet) == 0){
   cash_res <- safe_orderable_amount(apiConfig, account, token, SOFR_CODE)
   if(!cash_res$ok){
-    sendMessage("⚠️ 조기종료 판단용 cash 조회 실패 — quit 보류, SOFR 매수 단계 정상 진행")
+    sendMessage("⚠️ 조기종료 판단용 cash 조회 실패 — quit 보류, 안전자산 매수 단계 정상 진행")
   } else if(cash_res$value <= 100000){
     cat("[",today,"] 매수/매도/SOFR 모두 완료. Skip.\n", sep="")
     if(hour(Sys.time())==11){
@@ -545,39 +550,50 @@ if(nrow(buySheet)>0){
   }
 }
 
-# ====== 매수 후 잔여 자금 SOFR 매수 (차수 무관) ======
-## ISSUE-5 FIX: cash 조회 실패 시 SOFR 매수 스킵 + 텔레그램 경고 (fail-closed)
+# ====== 매수 후 잔여 자금 안전자산 매수 (CD 우선 → 잔돈 KOFR) ======
+## ISSUE-5 FIX: cash 조회 실패 시 매수 스킵 + 텔레그램 경고 (fail-closed)
+buy_safe_asset <- function(safe_code, safe_name, available_cash){
+  if(available_cash <= 100000) return(0)
+  price_raw <- getCurrentPrice(apiConfig, account, token, safe_code)
+  if(is.null(price_raw) || length(price_raw)==0 || is.na(price_raw[1]) || price_raw[1] <= 0){
+    sendMessage(paste0("⚠️ ", safe_name, " 시세 조회 실패 — 매수 스킵"))
+    return(0)
+  }
+  price <- as.numeric(price_raw[1])
+  qty <- floor(available_cash / price)
+  if(qty <= 0) return(0)
+  pos <- cur[code == safe_code]
+  held_qty <- if(nrow(pos) > 0) pos$qty else 0
+  held_amt <- if(nrow(pos) > 0) pos$eval_amt else 0
+  sheet <- data.table(
+    종목코드 = safe_code, 종목명 = safe_name,
+    보유수량 = held_qty,
+    현재가 = price,
+    평가금액 = held_amt,
+    목표금액 = held_amt + qty * price,
+    주문구분 = "00"
+  )
+  res <- safe_buy_dispatch(token, apiConfig, account, sheet, available_cash)
+  if(!is.null(res) && nrow(res) > 0){
+    sendMessage(paste0(safe_name, " 매수 ", qty, "주 (", format(qty * price, big.mark=","), "원)"))
+    return(qty * price)
+  }
+  return(0)
+}
+
 {
   Sys.sleep(60)
-  cash_res <- safe_orderable_amount(apiConfig, account, token, SOFR_CODE)
+  cash_res <- safe_orderable_amount(apiConfig, account, token, SAFE_PRIMARY_CODE)
   if(!cash_res$ok){
-    sendMessage("⚠️ 1차 SOFR 매수 단계 cash 조회 실패 — SOFR 매수 스킵 (수동 확인 필요)")
-  } else if(cash_res$value > 100000){
+    sendMessage("⚠️ 안전자산 매수 단계 cash 조회 실패 — 매수 스킵 (수동 확인 필요)")
+  } else {
     cash_after <- cash_res$value
-    sofr_price <- getCurrentPrice(apiConfig,account,token,SOFR_CODE)
-    if(is.null(sofr_price) || length(sofr_price)==0 || is.na(sofr_price[1]) || sofr_price[1]<=0){
-      sendMessage("⚠️ 1차 SOFR 매수 단계 시세 조회 실패 — SOFR 매수 스킵")
-    } else {
-      sofr_price <- as.numeric(sofr_price[1])
-      sofr_buy_qty <- floor(cash_after / sofr_price)
-      if(sofr_buy_qty > 0){
-        sofr_pos <- cur[code==SOFR_CODE]
-        sofr_held_qty <- if(nrow(sofr_pos)>0) sofr_pos$qty else 0
-        sofr_held_amt <- if(nrow(sofr_pos)>0) sofr_pos$eval_amt else 0
-        sofrSheet <- data.table(
-          종목코드=SOFR_CODE, 종목명=SOFR_NAME,
-          보유수량=sofr_held_qty,
-          현재가=sofr_price,
-          평가금액=sofr_held_amt,
-          목표금액=sofr_held_amt + sofr_buy_qty * sofr_price,
-          주문구분="00"
-        )
-        ## ISSUE-6 FIX: safe_buy_dispatch로 cash 검증 강제
-        sofrRes <- safe_buy_dispatch(token, apiConfig, account, sofrSheet, cash_after)
-        if(!is.null(sofrRes) && nrow(sofrRes)>0){
-          sendMessage(paste0("SOFR 매수 ",sofr_buy_qty,"주 (",format(sofr_buy_qty*sofr_price, big.mark=","),"원)"))
-        }
-      }
+    # 1차: CD금리액티브(459580) 우선 매수
+    spent_primary <- buy_safe_asset(SAFE_PRIMARY_CODE, SAFE_PRIMARY_NAME, cash_after)
+    cash_after <- cash_after - spent_primary
+    # 2차: 잔돈 → KOFR(442740) 매수
+    if(cash_after > 100000){
+      buy_safe_asset(SAFE_SECONDARY_CODE, SAFE_SECONDARY_NAME, cash_after)
     }
   }
 }
