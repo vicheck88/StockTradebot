@@ -307,7 +307,13 @@ viewAllOrders<-function(apiConfig,account,token,CTX_AREA_FK100='',CTX_AREA_NK100
         daily_dt <- as.data.table(daily_res$output1)
         if("rmn_qty" %in% names(daily_dt)){
           daily_dt[, rmn_qty := suppressWarnings(as.numeric(rmn_qty))]
-          unfilled <- daily_dt[!is.na(rmn_qty) & rmn_qty > 0]
+          # 취소된 주문 제외 (cncl_cfrm_qty > 0이면 이미 KIS에서 자동/수동 취소됨)
+          if("cncl_cfrm_qty" %in% names(daily_dt)){
+            daily_dt[, cncl_cfrm_qty := suppressWarnings(as.numeric(cncl_cfrm_qty))]
+            unfilled <- daily_dt[!is.na(rmn_qty) & rmn_qty > 0 & (is.na(cncl_cfrm_qty) | cncl_cfrm_qty == 0)]
+          } else {
+            unfilled <- daily_dt[!is.na(rmn_qty) & rmn_qty > 0]
+          }
           if(nrow(unfilled) > 0){
             existing_odno <- if(!is.null(output$sheet) && "odno" %in% names(output$sheet))
               as.character(output$sheet$odno) else character(0)
@@ -354,12 +360,14 @@ getOrderableAmount<-function(apiConfig,account,token,code){
   return(as.numeric(res$output$nrcvb_buy_amt))
 }
 
-orderStock<-function(apiConfig,account,token,code,qty,price,excg='SOR'){
+orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
   ## 신버전 TR_ID (TTTC0011U/TTTC0012U) + EXCG_ID_DVSN_CD 필드로 KRX/NXT/SOR 지원
-  ## excg 기본 'SOR' (KRX/NXT 자동 라우팅)
+  ## excg 미지정 시 SOR → KRX → NXT 순 fallback
   if(qty==0) return(NULL)
   if(qty>0) tr_id="TTTC0012U"  # 현금 매수 (신버전)
   if(qty<0) tr_id="TTTC0011U"  # 현금 매도 (신버전)
+
+  excg_list <- if(!is.null(excg)) excg else c("SOR","KRX","NXT")
 
   orderUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/order-cash')
   headers<-c(
@@ -368,21 +376,28 @@ orderStock<-function(apiConfig,account,token,code,qty,price,excg='SOR'){
     appsecret=account$appsecret,
     tr_id=tr_id
   )
-  body<-list(CANO=substr(account$accNo,1,8),
-              ACNT_PRDT_CD=substr(account$accNo,9,10),
-              PDNO=code,
-              ORD_DVSN='00',
-              ORD_QTY=as.character(abs(qty)),
-              ORD_UNPR=as.character(price),
-              EXCG_ID_DVSN_CD=excg
-  )
-  response<-POST(orderUrl,add_headers(headers),body=toJSON(body,auto_unbox=T))
-  res<-fromJSON(rawToChar(response$content))
-  res$output<-NULL
-  res$code<-code
-  res$qty<-qty
-  res$price<-price
-  return(res)
+
+  res <- NULL
+  for(e in excg_list){
+    body<-list(CANO=substr(account$accNo,1,8),
+                ACNT_PRDT_CD=substr(account$accNo,9,10),
+                PDNO=code,
+                ORD_DVSN='00',
+                ORD_QTY=as.character(abs(qty)),
+                ORD_UNPR=as.character(price),
+                EXCG_ID_DVSN_CD=e
+    )
+    response<-POST(orderUrl,add_headers(headers),body=toJSON(body,auto_unbox=T))
+    res<-fromJSON(rawToChar(response$content))
+    res$output<-NULL
+    res$code<-code
+    res$qty<-qty
+    res$price<-price
+    res$excg<-e
+    if(!is.null(res$rt_cd) && res$rt_cd == "0") return(res)
+    Sys.sleep(0.3)  # rate limit + 다음 거래소 시도 전 짧게 대기
+  }
+  return(res)  # 모두 실패 시 마지막 응답 반환
 }
 
 orderStocks<-function(token,apiConfig, account, stockTable){

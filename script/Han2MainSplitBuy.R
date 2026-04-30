@@ -61,21 +61,22 @@ today<-str_replace_all(Sys.Date(),"-","")
 
 # ====== 분할 일정 (5/5 어린이날 회피) — SCHEDULE_DATES 우선 체크 ======
 ## 비매수날엔 isHoliday API 호출 없이 즉시 종료 (cron 매일 발동 부담 최소화)
-SCHEDULE_DATES <- c("20260429","20260504","20260512","20260519")
+SCHEDULE_DATES <- c("20260430","20260512","20260519")
+CUMULATIVE_LIMITS <- c(50000000, 75000000, 100000000)  # 차수별 누적 한도 (50%/75%/100%)
 if(!(today %in% SCHEDULE_DATES)){
   cat("[",today,"] Not a scheduled split-buy date. Skip (no token issued).\n", sep="")
   quit()
 }
 ROUND_NO <- which(SCHEDULE_DATES == today)
-IS_LAST_ROUND <- ROUND_NO == length(SCHEDULE_DATES)  # 마지막 매수일: RSI 무관 강제집행
+TODAY_LIMIT <- CUMULATIVE_LIMITS[ROUND_NO]  # 오늘 누적 한도
+IS_LAST_ROUND <- ROUND_NO == length(SCHEDULE_DATES)
 
 ## 매수일 진입 후에만 weekday/holiday 검증
 if(!DRY_RUN){
   if(wday(Sys.Date()) %in% c(1,7)) stop("Weekend")
   if(isHoliday(today)) stop("Holiday")
 }
-ROUND_LIMIT <- 25000000   # 일별 매수 한도
-TOTAL_CAP   <- 100000000  # 총 목표
+TOTAL_CAP <- 100000000  # 총 목표
 
 # ====== 잠금 8종목 (코어 4 + 위성 4) ======
 LOCKED <- data.table(
@@ -85,7 +86,8 @@ LOCKED <- data.table(
   tier   = c("core","core","core","core","sat","sat","sat","sat"),
   held   = c(TRUE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE)
 )
-LOCKED[, target_amt := TOTAL_CAP * weight / 100]
+LOCKED[, total_target := TOTAL_CAP * weight / 100]
+LOCKED[, today_target := TODAY_LIMIT * weight / 100]  # 오늘 누적한도 × 비중
 
 # ====== 매도 대상 ======
 # 잠금 8종 + 안전자산(SAFE_PRIMARY/SECONDARY) 외 보유분은 모두 매도 대상
@@ -142,7 +144,15 @@ token<-get_cached_token(apiConfig,account)
 if(!DRY_RUN){
   if(isKoreanTradeOpen(token,apiConfig,account,today)=="N") stop("Market closed")
   cancelResult<-cancelAllOrders(apiConfig,account,token)
-  for(res in cancelResult) sendMessage(res)
+  ## cancel 응답 텔레그램 폭격 방지 — 실패 (rt_cd != "0") 만 알림
+  if(!is.null(cancelResult)){
+    for(i in seq_along(cancelResult)){
+      r <- cancelResult[[i]]
+      if(is.list(r) && !is.null(r$rt_cd) && r$rt_cd != "0"){
+        sendMessage(paste0("⚠️ cancel 실패: rt_cd=", r$rt_cd, " msg=", r$msg1))
+      }
+    }
+  }
 }
 
 # ====== 잔고 조회 ======
@@ -177,7 +187,7 @@ if(DRY_RUN && ROUND_NO %in% c(2,3,4) && nrow(cur[code==SOFR_CODE])==0){
 
 # ====== RSI 14일 계산 (네이버 200일 종가) ======
 calc_rsi <- function(closes, n=14){
-  # Wilder RSI (네이버/키움/TradingView 표준): 첫 n개 SMA 시드 → 재귀 평활(α=1/n)
+  ## Wilder RSI 14일 raw (네이버/KIS HTS 표시 메인값)
   if(length(closes) < n+1) return(NA_real_)
   diffs <- diff(closes)
   gains <- pmax(diffs, 0)
@@ -200,12 +210,22 @@ LOCKED[, cur_price := NA_real_]
 for(i in 1:nrow(LOCKED)){
   c <- LOCKED[i, code]
   prices <- tryCatch(adjustedPriceFromNaver('day', 200, c), error=function(e) NULL)
+  ## 실시간 현재가로 마지막 종가 대체 (장중이면 어제까지 데이터 + 오늘 현재가)
+  cur_p <- tryCatch(getCurrentPrice(apiConfig,account,token,c), error=function(e) NA_real_)
+  if(!is.null(cur_p) && length(cur_p)>0 && !is.na(cur_p[1]) && cur_p[1] > 0){
+    cur_p <- as.numeric(cur_p[1])
+  } else cur_p <- NA_real_
   if(is.null(prices) || nrow(prices)==0){
-    LOCKED[i, cur_price := getCurrentPrice(apiConfig,account,token,c)]
+    LOCKED[i, cur_price := cur_p]
     next
   }
   closes <- as.numeric(prices[,1])
-  LOCKED[i, cur_price := tail(closes, 1)]
+  if(!is.na(cur_p)){
+    closes[length(closes)] <- cur_p   # 오늘 정규장 현재가로 마지막 종가 대체
+    LOCKED[i, cur_price := cur_p]
+  } else {
+    LOCKED[i, cur_price := tail(closes, 1)]
+  }
   LOCKED[i, rsi := calc_rsi(closes, 14)]
 }
 
@@ -229,31 +249,20 @@ rsi_ratio <- function(rsi, tier, held){
 }
 LOCKED[, ratio := mapply(rsi_ratio, rsi, tier, held)]
 
-# ====== 종목별 갭 (목표 - 현재 평가) ======
+# ====== 종목별 갭 (today_target - held) ======
 LOCKED[, held_qty := sapply(code, function(c){ p<-cur[code==c]; if(nrow(p)>0) p$qty else 0 })]
 LOCKED[, held_amt := sapply(code, function(c){ p<-cur[code==c]; if(nrow(p)>0) p$eval_amt else 0 })]
-LOCKED[, gap := pmax(0, target_amt - held_amt)]
+LOCKED[, gap := today_target - held_amt]   # 양수=매수 / 음수=매도
 
-# ====== 매수액 산출 (마지막 매수일이면 RSI 무관 강제집행, 일별 한도 유지) ======
-if(IS_LAST_ROUND){
-  LOCKED[, raw_buy := gap]  # RSI 룰 무시
-} else {
-  LOCKED[, raw_buy := gap * ratio]
-}
-total_raw <- sum(LOCKED$raw_buy)
-scale <- if(total_raw > ROUND_LIMIT) ROUND_LIMIT / total_raw else 1
-LOCKED[, buy_amt := raw_buy * scale]
-if(IS_LAST_ROUND && total_raw > ROUND_LIMIT && !DRY_RUN){
-  sendMessage(paste0(
-    "[경고] 마지막 매수일 잔여 매수액이 일별 한도 초과: ",
-    format(total_raw, big.mark=","), "원 > ",
-    format(ROUND_LIMIT, big.mark=","), "원\n",
-    "ROUND_LIMIT 내 비례 축소 적용. 잔여분은 추가 분할 집행 권고."
-  ))
-}
-
+# ====== 매수액 산출 (RSI 룰 적용, gap > 0 종목만) ======
+LOCKED[, buy_amt := pmax(0, gap) * ratio]
 LOCKED[, qty_to_buy := floor(buy_amt / cur_price)]
 LOCKED[, final_amt := qty_to_buy * cur_price]
+
+# ====== 매도액 산출 (gap < 0인 종목, RSI 무관 초과분 매도) ======
+LOCKED[, sell_amt := pmax(0, -gap)]
+LOCKED[, qty_to_sell := floor(sell_amt / cur_price)]
+LOCKED[, sell_final_amt := qty_to_sell * cur_price]
 
 # ====== 매수 시트 (orderStocks 호환: 보유수량 + 평가금액 + 목표금액) ======
 buySheet <- LOCKED[qty_to_buy > 0, .(
@@ -357,6 +366,41 @@ scale_buy_sheet_to_cash <- function(sheet, cash_avail){
 sellSheet <- data.table(종목코드=character(), 종목명=character(), 보유수량=numeric(),
                         현재가=numeric(), 평가금액=numeric(), 목표금액=numeric(), 주문구분=character())
 
+# ====== 호가단위 보정 함수 ======
+tick_size <- function(price){
+  if(price < 1000) return(1)
+  if(price < 5000) return(5)
+  if(price < 10000) return(10)
+  if(price < 50000) return(50)
+  if(price < 100000) return(100)
+  if(price < 500000) return(500)
+  return(1000)
+}
+round_to_tick <- function(price){
+  ts <- tick_size(price)
+  floor(price / ts) * ts
+}
+
+# ====== 잠금 종목 리밸런싱 — held > today_target이면 초과분 매도 ======
+## 사용자 명령: 누적한도 초과분 매도
+for(i in 1:nrow(LOCKED)){
+  qty_sell_i <- LOCKED[i, qty_to_sell]
+  if(qty_sell_i <= 0) next
+  cur_price_i <- LOCKED[i, cur_price]
+  if(is.na(cur_price_i) || cur_price_i <= 0) next
+  held_qty_i <- LOCKED[i, held_qty]
+  if(qty_sell_i >= held_qty_i) qty_sell_i <- held_qty_i  # 보유 초과 매도 방지
+  remaining_amt <- (held_qty_i - qty_sell_i) * cur_price_i
+  sellSheet <- rbind(sellSheet, data.table(
+    종목코드=LOCKED[i, code], 종목명=LOCKED[i, name],
+    보유수량=held_qty_i,
+    현재가=round_to_tick(cur_price_i),
+    평가금액=LOCKED[i, held_amt],
+    목표금액=remaining_amt,
+    주문구분="00"
+  ))
+}
+
 # ====== 잠금 8종 + 안전자산 2종 외 보유 모두 매도 (매수일마다) ======
 KEEP_CODES <- c(LOCKED$code, SAFE_PRIMARY_CODE, SAFE_SECONDARY_CODE)
 sellable <- cur[!(code %in% KEEP_CODES) & qty > 0]
@@ -368,7 +412,7 @@ if(nrow(sellable) > 0){
     sellSheet <- rbind(sellSheet, data.table(
       종목코드=p$code, 종목명=p$name,
       보유수량=p$qty,
-      현재가=as.numeric(cp[1]),
+      현재가=round_to_tick(as.numeric(cp[1])),
       평가금액=p$eval_amt,
       목표금액=0,         # 전량 매도
       주문구분="00"
