@@ -245,12 +245,19 @@ cancelAllOrders<-function(apiConfig,account,token){
     appsecret=account$appsecret,
     tr_id=apiConfig$cancelModifyOrderTrid
   )
+  ## excg / orgno를 안전하게 뽑는 헬퍼 (NA/NULL/길이0 모두 default로)
+  pick <- function(col, default){
+    if(!col %in% names(orderList)) return(default)
+    v <- orderList[[col]][i]
+    if(is.null(v) || length(v)==0) return(default)
+    v <- tryCatch(as.character(v), error=function(e) NA_character_)
+    if(is.na(v) || nchar(v)==0) return(default)
+    v
+  }
   result<-vector("list", nrow(orderList))
   for(i in 1:nrow(orderList)){
-    orgno <- if("ord_gno_brno" %in% names(orderList) && !is.na(orderList$ord_gno_brno[i]) && nchar(as.character(orderList$ord_gno_brno[i]))>0)
-      as.character(orderList$ord_gno_brno[i]) else ""
-    excg <- if("excg_id_dvsn_cd" %in% names(orderList) && !is.na(orderList$excg_id_dvsn_cd[i]) && nchar(as.character(orderList$excg_id_dvsn_cd[i]))>0)
-      as.character(orderList$excg_id_dvsn_cd[i]) else "KRX"
+    orgno <- pick("ord_gno_brno", "")
+    excg  <- pick("excg_id_dvsn_cd", "KRX")
     body<-list(CANO=substr(account$accNo,1,8),
                ACNT_PRDT_CD=substr(account$accNo,9,10),
                KRX_FWDG_ORD_ORGNO=orgno,
@@ -378,7 +385,8 @@ getOrderableAmount<-function(apiConfig,account,token,code){
 orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
   ## 신버전 TR_ID (TTTC0011U/TTTC0012U) + EXCG_ID_DVSN_CD 필드로 KRX/NXT/SOR 지원
   ## excg 미지정 시 SOR → KRX → NXT 순 fallback
-  ## price를 KRX 호가단위로 floor (SOR/NXT 모두 KRX 호가 받아줌)
+  ## price는 caller(getCurrentPrice)가 이미 호가 정렬된 값을 넘김 — 추가 floor 안 함
+  ##   (이전에 ETF 1,073,780 → 1,073,000으로 잘못 내려가는 버그가 있었음)
   if(qty==0) return(NULL)
   if(qty>0) tr_id="TTTC0012U"  # 현금 매수 (신버전)
   if(qty<0) tr_id="TTTC0011U"  # 현금 매도 (신버전)
@@ -393,18 +401,7 @@ orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
     tr_id=tr_id
   )
 
-  ## KRX 호가단위 (SOR/NXT 모두 통과) — NXT의 세분 호가가 KRX/SOR에서 거부되는 케이스 방지
-  .krx_tick <- function(p){
-    if(p < 1000) return(1)
-    if(p < 5000) return(5)
-    if(p < 10000) return(10)
-    if(p < 50000) return(50)
-    if(p < 100000) return(100)
-    if(p < 500000) return(500)
-    return(1000)
-  }
-  p_num <- as.numeric(price)
-  use_price <- floor(p_num / .krx_tick(p_num)) * .krx_tick(p_num)
+  use_price <- as.numeric(price)
 
   res <- NULL
   for(e in excg_list){
