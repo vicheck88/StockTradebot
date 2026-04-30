@@ -363,6 +363,7 @@ getOrderableAmount<-function(apiConfig,account,token,code){
 orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
   ## 신버전 TR_ID (TTTC0011U/TTTC0012U) + EXCG_ID_DVSN_CD 필드로 KRX/NXT/SOR 지원
   ## excg 미지정 시 SOR → KRX → NXT 순 fallback
+  ## price를 KRX 호가단위로 floor (SOR/NXT 모두 KRX 호가 받아줌)
   if(qty==0) return(NULL)
   if(qty>0) tr_id="TTTC0012U"  # 현금 매수 (신버전)
   if(qty<0) tr_id="TTTC0011U"  # 현금 매도 (신버전)
@@ -377,6 +378,19 @@ orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
     tr_id=tr_id
   )
 
+  ## KRX 호가단위 (SOR/NXT 모두 통과) — NXT의 세분 호가가 KRX/SOR에서 거부되는 케이스 방지
+  .krx_tick <- function(p){
+    if(p < 1000) return(1)
+    if(p < 5000) return(5)
+    if(p < 10000) return(10)
+    if(p < 50000) return(50)
+    if(p < 100000) return(100)
+    if(p < 500000) return(500)
+    return(1000)
+  }
+  p_num <- as.numeric(price)
+  use_price <- floor(p_num / .krx_tick(p_num)) * .krx_tick(p_num)
+
   res <- NULL
   for(e in excg_list){
     body<-list(CANO=substr(account$accNo,1,8),
@@ -384,7 +398,7 @@ orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
                 PDNO=code,
                 ORD_DVSN='00',
                 ORD_QTY=as.character(abs(qty)),
-                ORD_UNPR=as.character(price),
+                ORD_UNPR=as.character(use_price),
                 EXCG_ID_DVSN_CD=e
     )
     response<-POST(orderUrl,add_headers(headers),body=toJSON(body,auto_unbox=T))
@@ -392,7 +406,7 @@ orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
     res$output<-NULL
     res$code<-code
     res$qty<-qty
-    res$price<-price
+    res$price<-use_price
     res$excg<-e
     if(!is.null(res$rt_cd) && res$rt_cd == "0") return(res)
     Sys.sleep(0.3)  # rate limit + 다음 거래소 시도 전 짧게 대기
