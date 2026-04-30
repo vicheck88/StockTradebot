@@ -379,7 +379,9 @@ getOrderableAmount<-function(apiConfig,account,token,code){
   if(response$status_code!=200) return(NULL)
   
   res<-fromJSON(rawToChar(response$content))
-  return(as.numeric(res$output$nrcvb_buy_amt))
+  ## max_buy_amt = ord_psbl_cash + ruse_psbl_amt (재사용가능 = 가수도/익일정산 일부 포함)
+  ## nrcvb_buy_amt(미수없는)는 보수적이라 T+2 정산 대기 자금을 뺌 → 매도일에 CD 매수 불가
+  return(as.numeric(res$output$max_buy_amt))
 }
 
 orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
