@@ -225,10 +225,18 @@ getBalancesheet<-function(token,apiConfig,account, tr_cont='',CTX_AREA_FK100='',
   }
 }
 cancelAllOrders<-function(apiConfig,account,token){
-  ## FIX: 기존 $output → $sheet (viewAllOrders 반환 구조), KRX_FWDG_ORD_ORGNO에 ord_gno_brno 사용
+  ## FIX1: 기존 $output → $sheet (viewAllOrders 반환 구조)
+  ## FIX2: KRX_FWDG_ORD_ORGNO에 ord_gno_brno 사용
+  ## FIX3: cancel body에 EXCG_ID_DVSN_CD 필요 (SOR/NXT 주문 cancel 시 APBK0344 방지)
+  ## FIX4: result를 list-of-lists로 반환해 caller에서 [[i]]$rt_cd 접근 가능하게
   orderResult<-viewAllOrders(apiConfig,account,token)
   orderList<-orderResult$sheet
   if(is.null(orderList) || nrow(orderList)==0) return(NULL)
+
+  ## odno가 유효한 행만 필터 (junk row 방어)
+  if(!"odno" %in% names(orderList)) return(NULL)
+  orderList <- orderList[!is.na(odno) & nchar(as.character(odno))>0]
+  if(nrow(orderList)==0) return(NULL)
 
   cancelUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/trading/order-rvsecncl') #취소주문
   headers<-c(
@@ -237,10 +245,12 @@ cancelAllOrders<-function(apiConfig,account,token){
     appsecret=account$appsecret,
     tr_id=apiConfig$cancelModifyOrderTrid
   )
-  result<-NULL
+  result<-vector("list", nrow(orderList))
   for(i in 1:nrow(orderList)){
     orgno <- if("ord_gno_brno" %in% names(orderList) && !is.na(orderList$ord_gno_brno[i]) && nchar(as.character(orderList$ord_gno_brno[i]))>0)
       as.character(orderList$ord_gno_brno[i]) else ""
+    excg <- if("excg_id_dvsn_cd" %in% names(orderList) && !is.na(orderList$excg_id_dvsn_cd[i]) && nchar(as.character(orderList$excg_id_dvsn_cd[i]))>0)
+      as.character(orderList$excg_id_dvsn_cd[i]) else "KRX"
     body<-list(CANO=substr(account$accNo,1,8),
                ACNT_PRDT_CD=substr(account$accNo,9,10),
                KRX_FWDG_ORD_ORGNO=orgno,
@@ -249,11 +259,16 @@ cancelAllOrders<-function(apiConfig,account,token){
                RVSE_CNCL_DVSN_CD='02',
                ORD_QTY='0',
                ORD_UNPR='0',
-               QTY_ALL_ORD_YN='Y'
+               QTY_ALL_ORD_YN='Y',
+               EXCG_ID_DVSN_CD=excg
     )
     response<-POST(cancelUrl,add_headers(headers),body=toJSON(body,auto_unbox=T))
     res<-fromJSON(rawToChar(response$content))
-    result<-c(result,res)
+    res$odno <- as.character(orderList$odno[i])
+    res$pdno <- if("pdno" %in% names(orderList)) as.character(orderList$pdno[i]) else NA_character_
+    res$excg <- excg
+    result[[i]] <- res
+    Sys.sleep(0.3)
   }
   return(result)
 }
