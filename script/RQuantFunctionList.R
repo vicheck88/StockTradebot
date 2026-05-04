@@ -450,12 +450,14 @@ cleanDataAndExtractEntitiesFromFS<-function(corpData,yearData,quarterData,isNew,
 }
 
 sumQuarterData<-function(data){
+  ## 별도재무 추가로 '연결구분' 컬럼이 들어와 fs(5col)/data(4col) 불일치 → 양쪽에서 동일하게 제거
+  drop_cols <- intersect(c('일자','등록일자','연결구분'), names(data))
   fs<-data[data$종류=='재무상태표']
   data<-data[data$종류!='재무상태표']
   fs<-fs[fs$일자==max(fs$일자)]
-  fs<-fs[,-c('일자','등록일자')]
+  fs<-fs[, !drop_cols, with=FALSE]
   if(length(unique(data$일자))>1) data<-data[,.(값=sum(값)),by=c('종목코드','종류','계정')] else{
-    data<-data[,-c('일자','등록일자')]
+    data<-data[, !drop_cols, with=FALSE]
   }
   names(fs)<-names(data)
   data<-rbind(data,fs)
