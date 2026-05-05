@@ -445,29 +445,57 @@ if(cash_ok){
   }
   shortfall <- total_buy_needed - cash_avail - expected_sell_proceeds
   if(shortfall > 0){
-    sofr <- cur[code==SOFR_CODE]
-    if(nrow(sofr)>0 && sofr$qty>0){
-      sofr_price <- if(!is.na(sofr$cur_price) && sofr$cur_price>0) sofr$cur_price else getCurrentPrice(apiConfig,account,token,SOFR_CODE)
-      sofr_remaining <- max(0, sofr$eval_amt - shortfall - 100000)  # 10만원 여유
+    remaining <- shortfall + 100000  # 10만원 여유 buffer
+
+    ## 1차: CD(SAFE_PRIMARY) 매도 — 큰 단위 우선
+    cd <- cur[code==SAFE_PRIMARY_CODE]
+    if(nrow(cd)>0 && cd$qty>0){
+      cd_price <- if(!is.na(cd$cur_price) && cd$cur_price>0) cd$cur_price else getCurrentPrice(apiConfig,account,token,SAFE_PRIMARY_CODE)
+      cd_sell <- min(remaining, cd$eval_amt)
       sellSheet <- rbind(sellSheet, data.table(
-        종목코드=SOFR_CODE, 종목명=SOFR_NAME,
-        보유수량=sofr$qty,
-        현재가=sofr_price,
-        평가금액=sofr$eval_amt,
-        목표금액=sofr_remaining,
+        종목코드=SAFE_PRIMARY_CODE, 종목명=SAFE_PRIMARY_NAME,
+        보유수량=cd$qty,
+        현재가=cd_price,
+        평가금액=cd$eval_amt,
+        목표금액=cd$eval_amt - cd_sell,
         주문구분="00"
       ))
+      remaining <- remaining - cd_sell
       if(!DRY_RUN){
         sendMessage(paste0(
-          "매수자금 부족으로 ",SAFE_PRIMARY_NAME," 매도 예정: 부족 ",
-          format(round(shortfall), big.mark=","), "원"
+          "매수자금 부족으로 ",SAFE_PRIMARY_NAME," 매도 예정: ",
+          format(round(cd_sell), big.mark=","), "원"
         ))
       }
-    } else if(!DRY_RUN){
-      sendMessage(paste0(
-        "[경고] 매수자금 부족이나 안전자산 보유 수량 없음: 부족 ",
-        format(round(shortfall), big.mark=","), "원. 매도 후 현금 확인 단계에서 매수 축소 예정."
-      ))
+    }
+
+    ## 2차: CD 매도 후 부족분만 KOFR(SAFE_SECONDARY) 매도
+    if(remaining > 0){
+      kofr <- cur[code==SAFE_SECONDARY_CODE]
+      if(nrow(kofr)>0 && kofr$qty>0){
+        kofr_price <- if(!is.na(kofr$cur_price) && kofr$cur_price>0) kofr$cur_price else getCurrentPrice(apiConfig,account,token,SAFE_SECONDARY_CODE)
+        kofr_sell <- min(remaining, kofr$eval_amt)
+        sellSheet <- rbind(sellSheet, data.table(
+          종목코드=SAFE_SECONDARY_CODE, 종목명=SAFE_SECONDARY_NAME,
+          보유수량=kofr$qty,
+          현재가=kofr_price,
+          평가금액=kofr$eval_amt,
+          목표금액=kofr$eval_amt - kofr_sell,
+          주문구분="00"
+        ))
+        remaining <- remaining - kofr_sell
+        if(!DRY_RUN){
+          sendMessage(paste0(
+            SAFE_SECONDARY_NAME," 추가 매도 예정: ",
+            format(round(kofr_sell), big.mark=","), "원"
+          ))
+        }
+      } else if(!DRY_RUN){
+        sendMessage(paste0(
+          "[경고] CD 매도 후에도 매수자금 부족 + KOFR 보유 0: 부족 ",
+          format(round(remaining), big.mark=","), "원"
+        ))
+      }
     }
   }
 }
