@@ -61,15 +61,40 @@ today<-str_replace_all(Sys.Date(),"-","")
 
 # ====== 분할 일정 (5/5 어린이날 회피) — SCHEDULE_DATES 우선 체크 ======
 ## 비매수날엔 isHoliday API 호출 없이 즉시 종료 (cron 매일 발동 부담 최소화)
-SCHEDULE_DATES <- c("20260430","20260512","20260519")
-CUMULATIVE_RATIOS <- c(0.50, 0.75, 1.00)  # 차수별 누적 비율 (정률) — 총자산 기준
-if(!(today %in% SCHEDULE_DATES)){
+SCHEDULE_DATES <- c("20260430","20260512","20260519")  # 메인 분할매수 (50%/75%/100%)
+TAIL_START <- "20260520"  # 메인 종료 다음날부터 매일 tail (RSI 차단 잔여 처리)
+CUMULATIVE_RATIOS <- c(0.50, 0.75, 1.00)  # 메인 누적 비율
+
+## 완료 flag — 모든 잠금 종목이 total_target의 95%+ 도달 시 생성됨. 이후 cron 즉시 종료
+COMPLETE_FLAG <- path.expand("~/.han2_split_complete")
+if(file.exists(COMPLETE_FLAG) && !DRY_RUN){
+  cat("[",today,"] 분할매수 완료 상태 (flag: ",COMPLETE_FLAG,"). Skip.\n", sep="")
+  quit()
+}
+
+today_dt  <- as.Date(today, "%Y%m%d")
+tail_from <- as.Date(TAIL_START, "%Y%m%d")
+is_main <- today %in% SCHEDULE_DATES
+is_tail <- !is_main && today_dt >= tail_from   # 5/20부터 매일 tail (완료 flag로 종료)
+
+if(!is_main && !is_tail){
   cat("[",today,"] Not a scheduled split-buy date. Skip (no token issued).\n", sep="")
   quit()
 }
-ROUND_NO <- which(SCHEDULE_DATES == today)
-TODAY_RATIO <- CUMULATIVE_RATIOS[ROUND_NO]  # 오늘 누적 비율 (0.5 / 0.75 / 1.0)
-IS_LAST_ROUND <- ROUND_NO == length(SCHEDULE_DATES)
+
+if(is_main){
+  ROUND_NO <- which(SCHEDULE_DATES == today)
+  TODAY_RATIO <- CUMULATIVE_RATIOS[ROUND_NO]
+  IS_TAIL_PHASE <- FALSE
+  IS_LAST_ROUND <- ROUND_NO == length(SCHEDULE_DATES)
+} else {  # tail (매일)
+  days_into_tail <- as.integer(today_dt - tail_from) + 1
+  ROUND_NO <- length(SCHEDULE_DATES) + days_into_tail
+  TODAY_RATIO <- 1.00  # tail은 항상 100% 정률
+  IS_TAIL_PHASE <- TRUE
+  IS_LAST_ROUND <- TRUE
+  cat("[",today,"] TAIL PHASE day ",days_into_tail," (RSI 차단 잔여 처리, 리밸런싱·매도 skip)\n", sep="")
+}
 
 ## 매수일 진입 후에만 weekday/holiday 검증
 if(!DRY_RUN){
@@ -269,6 +294,14 @@ LOCKED[, held_qty := sapply(code, function(c){ p<-cur[code==c]; if(nrow(p)>0) p$
 LOCKED[, held_amt := sapply(code, function(c){ p<-cur[code==c]; if(nrow(p)>0) p$eval_amt else 0 })]
 LOCKED[, gap := today_target - held_amt]   # 양수=매수 / 음수=매도
 
+## TAIL_PHASE 가드: total_target의 95%+ 도달한 종목은 ratio 0으로 강제 (입금/가격상승 따른 의도치 않은 재매수 방지)
+if(IS_TAIL_PHASE){
+  LOCKED[, completion_now := pmin(1.0, held_amt / pmax(total_target, 1))]
+  LOCKED[completion_now >= 0.95, ratio := 0]
+  cat("[TAIL] 95%+ 도달 종목 ratio=0 강제\n")
+  print(LOCKED[, .(code, name, completion=round(completion_now*100,1), ratio)])
+}
+
 # ====== 매수액 산출 (RSI 룰 적용, gap > 0 종목만) ======
 LOCKED[, buy_amt := pmax(0, gap) * ratio]
 LOCKED[, qty_to_buy := floor(buy_amt / cur_price)]
@@ -398,40 +431,46 @@ round_to_tick <- function(price){
 
 # ====== 잠금 종목 리밸런싱 — held > today_target이면 초과분 매도 ======
 ## 사용자 명령: 누적한도 초과분 매도
-for(i in 1:nrow(LOCKED)){
-  qty_sell_i <- LOCKED[i, qty_to_sell]
-  if(qty_sell_i <= 0) next
-  cur_price_i <- LOCKED[i, cur_price]
-  if(is.na(cur_price_i) || cur_price_i <= 0) next
-  held_qty_i <- LOCKED[i, held_qty]
-  if(qty_sell_i >= held_qty_i) qty_sell_i <- held_qty_i  # 보유 초과 매도 방지
-  remaining_amt <- (held_qty_i - qty_sell_i) * cur_price_i
-  sellSheet <- rbind(sellSheet, data.table(
-    종목코드=LOCKED[i, code], 종목명=LOCKED[i, name],
-    보유수량=held_qty_i,
-    현재가=round_to_tick(cur_price_i),
-    평가금액=LOCKED[i, held_amt],
-    목표금액=remaining_amt,
-    주문구분="00"
-  ))
+## TAIL_PHASE에서는 리밸런싱 매도 skip (RSI 차단 잔여 매수만 진행)
+if(!IS_TAIL_PHASE){
+  for(i in 1:nrow(LOCKED)){
+    qty_sell_i <- LOCKED[i, qty_to_sell]
+    if(qty_sell_i <= 0) next
+    cur_price_i <- LOCKED[i, cur_price]
+    if(is.na(cur_price_i) || cur_price_i <= 0) next
+    held_qty_i <- LOCKED[i, held_qty]
+    if(qty_sell_i >= held_qty_i) qty_sell_i <- held_qty_i  # 보유 초과 매도 방지
+    remaining_amt <- (held_qty_i - qty_sell_i) * cur_price_i
+    sellSheet <- rbind(sellSheet, data.table(
+      종목코드=LOCKED[i, code], 종목명=LOCKED[i, name],
+      보유수량=held_qty_i,
+      현재가=round_to_tick(cur_price_i),
+      평가금액=LOCKED[i, held_amt],
+      목표금액=remaining_amt,
+      주문구분="00"
+    ))
+  }
 }
 
 # ====== 잠금 8종 + 안전자산 2종 외 보유 모두 매도 (매수일마다) ======
+## TAIL_PHASE에서는 잠금 외 매도도 skip
 KEEP_CODES <- c(LOCKED$code, SAFE_PRIMARY_CODE, SAFE_SECONDARY_CODE)
-sellable <- cur[!(code %in% KEEP_CODES) & qty > 0]
-if(nrow(sellable) > 0){
-  for(i in 1:nrow(sellable)){
-    p <- sellable[i,]
-    cp <- if(!is.na(p$cur_price) && p$cur_price > 0) p$cur_price else getCurrentPrice(apiConfig,account,token,p$code)
-    if(is.null(cp) || length(cp)==0 || is.na(cp[1]) || cp[1] <= 0) next  # 휴지/거래정지 skip
-    sellSheet <- rbind(sellSheet, data.table(
-      종목코드=p$code, 종목명=p$name,
-      보유수량=p$qty,
-      현재가=round_to_tick(as.numeric(cp[1])),
-      평가금액=p$eval_amt,
-      목표금액=0,         # 전량 매도
-      주문구분="00"
-    ))
+if(!IS_TAIL_PHASE){
+  sellable <- cur[!(code %in% KEEP_CODES) & qty > 0]
+  if(nrow(sellable) > 0){
+    for(i in 1:nrow(sellable)){
+      p <- sellable[i,]
+      cp <- if(!is.na(p$cur_price) && p$cur_price > 0) p$cur_price else getCurrentPrice(apiConfig,account,token,p$code)
+      if(is.null(cp) || length(cp)==0 || is.na(cp[1]) || cp[1] <= 0) next  # 휴지/거래정지 skip
+      sellSheet <- rbind(sellSheet, data.table(
+        종목코드=p$code, 종목명=p$name,
+        보유수량=p$qty,
+        현재가=round_to_tick(as.numeric(cp[1])),
+        평가금액=p$eval_amt,
+        목표금액=0,         # 전량 매도
+        주문구분="00"
+      ))
+    }
   }
 }
 
@@ -681,6 +720,31 @@ buy_safe_asset <- function(safe_code, safe_name, available_cash){
     # 2차: 잔돈 → KOFR(442740) 매수
     if(cash_after > 100000){
       buy_safe_asset(SAFE_SECONDARY_CODE, SAFE_SECONDARY_NAME, cash_after)
+    }
+  }
+}
+
+# ====== 분할매수 완료 감지 (모든 잠금 종목 95%+ 도달 시 flag 생성 → 후속 cron 정지) ======
+if(!DRY_RUN){
+  Sys.sleep(60)  # 매수 체결 안정화 대기
+  bal_check <- tryCatch(getBalancesheet(token, apiConfig, account), error=function(e) NULL)
+  if(!is.null(bal_check) && bal_check$status_code == '200' && nrow(bal_check$sheet) > 0){
+    cur_check <- bal_check$sheet[, .(code=pdno, eval_amt=as.numeric(evlu_amt))]
+    LOCKED[, current_held := sapply(code, function(c){ p<-cur_check[code==c]; if(nrow(p)>0) p$eval_amt else 0 })]
+    LOCKED[, completion := pmin(1.0, current_held / pmax(total_target, 1))]
+    completion_pct <- round(LOCKED$completion * 100, 1)
+    cat("\n=== 잠금 종목 도달률 ===\n")
+    print(LOCKED[, .(name, total_target=round(total_target), held=round(current_held), pct=round(completion*100,1))])
+
+    if(all(LOCKED$completion >= 0.95)){
+      file.create(COMPLETE_FLAG)
+      msg <- paste0("✅ 분할매수 완료 — 잠금 8종 모두 95%+ 도달. 후속 cron 자동 정지 (flag: ",
+                    basename(COMPLETE_FLAG), ")")
+      cat(msg, "\n")
+      sendMessage(msg)
+    } else {
+      under <- LOCKED[completion < 0.95, .(name, pct=round(completion*100,1))]
+      cat("미달 종목:\n"); print(under)
     }
   }
 }
