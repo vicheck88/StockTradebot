@@ -62,13 +62,13 @@ today<-str_replace_all(Sys.Date(),"-","")
 # ====== 분할 일정 (5/5 어린이날 회피) — SCHEDULE_DATES 우선 체크 ======
 ## 비매수날엔 isHoliday API 호출 없이 즉시 종료 (cron 매일 발동 부담 최소화)
 SCHEDULE_DATES <- c("20260430","20260512","20260519")
-CUMULATIVE_LIMITS <- c(50000000, 75000000, 100000000)  # 차수별 누적 한도 (50%/75%/100%)
+CUMULATIVE_RATIOS <- c(0.50, 0.75, 1.00)  # 차수별 누적 비율 (정률) — 총자산 기준
 if(!(today %in% SCHEDULE_DATES)){
   cat("[",today,"] Not a scheduled split-buy date. Skip (no token issued).\n", sep="")
   quit()
 }
 ROUND_NO <- which(SCHEDULE_DATES == today)
-TODAY_LIMIT <- CUMULATIVE_LIMITS[ROUND_NO]  # 오늘 누적 한도
+TODAY_RATIO <- CUMULATIVE_RATIOS[ROUND_NO]  # 오늘 누적 비율 (0.5 / 0.75 / 1.0)
 IS_LAST_ROUND <- ROUND_NO == length(SCHEDULE_DATES)
 
 ## 매수일 진입 후에만 weekday/holiday 검증
@@ -76,7 +76,6 @@ if(!DRY_RUN){
   if(wday(Sys.Date()) %in% c(1,7)) stop("Weekend")
   if(isHoliday(today)) stop("Holiday")
 }
-TOTAL_CAP <- 100000000  # 총 목표
 
 # ====== 잠금 8종목 (코어 4 + 위성 4) ======
 LOCKED <- data.table(
@@ -86,8 +85,7 @@ LOCKED <- data.table(
   tier   = c("core","core","core","core","sat","sat","sat","sat"),
   held   = c(TRUE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE)
 )
-LOCKED[, total_target := TOTAL_CAP * weight / 100]
-LOCKED[, today_target := TODAY_LIMIT * weight / 100]  # 오늘 누적한도 × 비중
+## TOTAL_CAP / TODAY_LIMIT / today_target 은 balance 조회 후 정률 계산 (line ~175)
 
 # ====== 매도 대상 ======
 # 잠금 8종 + 안전자산(SAFE_PRIMARY/SECONDARY) 외 보유분은 모두 매도 대상
@@ -171,6 +169,23 @@ if(nrow(currentBalance$sheet)>0){
 } else {
   cur <- data.table(code=character(), name=character(), qty=numeric(), eval_amt=numeric(), cur_price=numeric())
 }
+
+## 정률 한도 계산 — 총자산(tot_evlu_amt) × CUMULATIVE_RATIO 기반
+## 총자산 = 보유 평가액 + 예수금 + 가수도/익일정산 (KIS summary tot_evlu_amt)
+total_assets <- as.numeric(currentBalance$summary$tot_evlu_amt)
+if(is.na(total_assets) || total_assets <= 0){
+  if(DRY_RUN){
+    total_assets <- 100000000  # DRY_RUN fallback
+    cat("[DRY RUN] total_assets fallback = 1억\n")
+  } else stop("total_assets 조회 실패")
+}
+TOTAL_CAP <- total_assets   # 100% 시점에 잠금이 도달할 목표 (= 총자산)
+TODAY_LIMIT <- total_assets * TODAY_RATIO  # 오늘 누적 한도 (정률)
+LOCKED[, total_target := TOTAL_CAP * weight / 100]
+LOCKED[, today_target := TODAY_LIMIT * weight / 100]
+cat(sprintf("[정률] 총자산=%s원, 누적비율=%.0f%%, TODAY_LIMIT=%s원\n",
+            format(total_assets, big.mark=","), TODAY_RATIO*100,
+            format(round(TODAY_LIMIT), big.mark=",")))
 
 ## DRY RUN 시 가상 SOFR 보유 + cash 부족 시나리오 주입 (2~4차 매도 sim 발동용)
 if(DRY_RUN && ROUND_NO %in% c(2,3,4) && nrow(cur[code==SOFR_CODE])==0){
