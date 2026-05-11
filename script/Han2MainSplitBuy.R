@@ -630,7 +630,7 @@ if(DRY_RUN){
 }
 
 # ====== 매도 → 매수 (ISA 패턴) ======
-if(nrow(sellSheet)>0){
+if(nrow(sellSheet)>0 && !DRY_RUN){
   sellRes <- orderStocks(token,apiConfig,account,sellSheet)
   if(length(sellRes)>0){
     sendMessage("Sell orders")
@@ -667,7 +667,7 @@ if(nrow(buySheet)>0){
 }
 
 ## ISSUE-6 FIX: orderStocks 대신 safe_buy_dispatch 사용 — cash NULL 시 발송 막음
-if(nrow(buySheet)>0){
+if(nrow(buySheet)>0 && !DRY_RUN){
   buyRes <- safe_buy_dispatch(token, apiConfig, account, buySheet, cash_avail_after_sell)
   if(!is.null(buyRes) && nrow(buyRes)>0){
     sendMessage("Buy orders")
