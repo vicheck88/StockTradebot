@@ -626,7 +626,7 @@ if(DRY_RUN){
   cat("매수 시뮬 합계 (실제 발송 예정):", format(buy_total, big.mark=","), "원\n")
   cat("매도 시뮬 합계 (실제 회수 예정):", format(sell_total, big.mark=","), "원\n")
   cat("순 자금 필요   :", format(buy_total - sell_total, big.mark=","), "원 (양수=현금/SOFR 차감, 음수=잔여)\n")
-  quit()
+  ## quit() 제거 — safe_buy phase까지 시뮬 진행 (DRY_RUN check가 각 단계에 있음)
 }
 
 # ====== 매도 → 매수 (ISA 패턴) ======
