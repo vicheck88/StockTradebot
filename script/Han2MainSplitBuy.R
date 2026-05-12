@@ -705,7 +705,18 @@ buy_safe_asset <- function(safe_code, safe_name, available_cash){
   )
   res <- safe_buy_dispatch(token, apiConfig, account, sheet, available_cash)
   if(!is.null(res) && nrow(res) > 0){
-    sendMessage(paste0(safe_name, " 매수 ", qty, "주 (", format(qty * price, big.mark=","), "원)"))
+    ## DRY_RUN 또는 rt_cd != "0" (KIS 거절) 시 sendMessage skip
+    success <- !DRY_RUN && all(res$rt_cd == "0")
+    if(success){
+      sendMessage(paste0(safe_name, " 매수 ", qty, "주 (", format(qty * price, big.mark=","), "원)"))
+    } else if(DRY_RUN){
+      cat(sprintf("[DRY RUN] %s 매수 시뮬 %d주 (%s원) — 텔레그램 발송 X\n",
+                  safe_name, qty, format(qty * price, big.mark=",")))
+    } else {
+      ## 실주문이지만 KIS 거절 — 실패 알림
+      fail_msg <- paste0("⚠️ ", safe_name, " 매수 실패 ", qty, "주 — rt_cd=", res$rt_cd[1], " msg=", res$msg1[1])
+      sendMessage(fail_msg)
+    }
     return(qty * price)
   }
   return(0)
