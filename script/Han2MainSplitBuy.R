@@ -715,9 +715,15 @@ buy_safe_asset <- function(safe_code, safe_name, available_cash){
   if(!DRY_RUN) Sys.sleep(60)
   if(DRY_RUN){
     ## DRY_RUN 시 main rebalance 후 예상 잔여 cash 계산
-    ## main 매도 - 매수 = 잔여 + 기존 예수금(작게 가정)
-    cash_after <- max(0, sum(sellSheet$평가금액 - sellSheet$목표금액) - sum(buySheet$목표금액 - buySheet$평가금액))
-    cat(sprintf("[DRY RUN] safe_buy 단계 가용 cash = %s원\n", format(round(cash_after), big.mark=",")))
+    ## main 매도 - 원래 잠금 매수 계획 = 잔여
+    ## buySheet는 scale_buy_sheet_to_cash로 축소됐으므로 LOCKED$final_amt 사용
+    main_sell <- sum(sellSheet$평가금액 - sellSheet$목표금액)
+    main_buy <- if(exists("LOCKED")) sum(LOCKED$final_amt) else 0
+    cash_after <- max(0, main_sell - main_buy)
+    cat(sprintf("[DRY RUN] main_sell=%s, main_buy=%s, leftover=%s\n",
+                format(round(main_sell), big.mark=","),
+                format(round(main_buy), big.mark=","),
+                format(round(cash_after), big.mark=",")))
     cash_ok <- TRUE
   } else {
     cash_res <- safe_orderable_amount(apiConfig, account, token, SAFE_PRIMARY_CODE)
