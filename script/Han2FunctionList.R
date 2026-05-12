@@ -85,7 +85,7 @@ getCurrentOverseasPrice<-function(apiConfig, account, token, code, excdcode){
 }
 
 getCurrentPrice<-function(apiConfig,account, token, code){
-  priceUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/quotations/inquire-price') 
+  priceUrl<-paste0(apiConfig$url,'/uapi/domestic-stock/v1/quotations/inquire-price')
   headers<-c(
     Authorization=paste('Bearer',token),
     appkey=account$appkey,
@@ -97,6 +97,28 @@ getCurrentPrice<-function(apiConfig,account, token, code){
   res<-fromJSON(rawToChar(response$content))
   if(res$rt_cd!=0) return(-1)
   return(as.numeric(res$output$stck_prpr))
+}
+
+## 호가창 ASK1/BID1 조회 (매수/매도 즉시 체결용)
+## 반환: list(ask=매도1호가, bid=매수1호가, prpr=현재가)
+## 실패 시 NULL
+getOrderbookPrice<-function(apiConfig, account, token, code){
+  url <- paste0(apiConfig$url, '/uapi/domestic-stock/v1/quotations/inquire-asking-price-exp-ccn')
+  headers <- c(
+    Authorization=paste('Bearer',token),
+    appkey=account$appkey, appsecret=account$appsecret,
+    tr_id='FHKST01010200'
+  )
+  query <- list(FID_COND_MRKT_DIV_CODE='J', FID_INPUT_ISCD=code)
+  response <- tryCatch(GET(url, add_headers(headers), query=query), error=function(e) NULL)
+  if(is.null(response) || response$status_code != 200) return(NULL)
+  res <- fromJSON(rawToChar(response$content))
+  if(is.null(res$output1) || is.null(res$rt_cd) || res$rt_cd != "0") return(NULL)
+  ask <- as.numeric(res$output1$askp1)
+  bid <- as.numeric(res$output1$bidp1)
+  prpr <- as.numeric(res$output1$stck_prpr)
+  if(is.na(ask) || ask <= 0) return(NULL)
+  list(ask=ask, bid=bid, prpr=prpr)
 }
 getAvailablePurchaseAmount<-function(token,apiConfig,account){
   url<-paste0(apiConfig$url,'/uapi/overseas-stock/v1/trading/inquire-psamount') 
@@ -385,8 +407,10 @@ getOrderableAmount<-function(apiConfig,account,token,code){
 orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
   ## 신버전 TR_ID (TTTC0011U/TTTC0012U) + EXCG_ID_DVSN_CD 필드로 KRX/NXT/SOR 지원
   ## excg 미지정 시 SOR → KRX → NXT 순 fallback
-  ## price는 caller(getCurrentPrice)가 이미 호가 정렬된 값을 넘김 — 추가 floor 안 함
-  ##   (이전에 ETF 1,073,780 → 1,073,000으로 잘못 내려가는 버그가 있었음)
+  ## 호가창 ASK1(매수) / BID1(매도) 사용으로 즉시 체결 우선
+  ##   - getCurrentPrice는 last_traded_price 반환 → BID와 ASK 사이에 끼어 sitting 발생
+  ##   - getOrderbookPrice로 ASK/BID 조회 후 즉시 체결 가격으로 발송
+  ##   - 호가 조회 실패 시 caller가 넘긴 price로 fallback
   if(qty==0) return(NULL)
   if(qty>0) tr_id="TTTC0012U"  # 현금 매수 (신버전)
   if(qty<0) tr_id="TTTC0011U"  # 현금 매도 (신버전)
@@ -401,7 +425,13 @@ orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
     tr_id=tr_id
   )
 
-  use_price <- as.numeric(price)
+  ## 호가창 ASK/BID 조회 — 매수: ASK / 매도: BID (즉시 체결)
+  ob <- getOrderbookPrice(apiConfig, account, token, code)
+  if(!is.null(ob)){
+    use_price <- if(qty > 0) ob$ask else ob$bid
+  } else {
+    use_price <- as.numeric(price)  # 호가 조회 실패 시 fallback
+  }
 
   res <- NULL
   for(e in excg_list){
