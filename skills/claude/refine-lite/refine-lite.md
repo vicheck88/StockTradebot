@@ -45,6 +45,10 @@ Agent({ name: "lite-scorer", subagent_type: "general-purpose", model: "sonnet",
     평가 차원(고정): Correctness 40% / Test Coverage 25% / Simplicity 20% / Edge Cases 15%
     (모드=test면 대상 자체가 테스트 스위트 — Test Coverage는 시나리오 커버 폭, Edge Cases는
     경계·예외 케이스 포함 여부로 채점)
+    (Simplicity는 인지 복잡도 기준으로 채점 — main path가 edge case보다 먼저 읽히는지,
+    가드 클로즈 미사용 3단+ 중첩, 긴 if/switch 체인, 반복 부정, callback chain,
+    boolean flag/mode string으로 한 함수에 여러 동작을 넣는 패턴, parsing/I/O/mutation/formatting
+    혼재, 불필요한 mutable state, dead/future-only branch, 파라미터 5개+는 감점.)
 
     1. 대상 파일과 관련 테스트/피대상 코드를 읽어라.
     2. 각 차원을 0-100으로 채점하고 근거를 파일:라인 단위로 남겨라.
@@ -70,7 +74,11 @@ SendMessage({ to: "{활성 lite-scorer}", summary: "Round {N} 재채점 요청",
 
 ### Step 3 — 일괄 수정
 
-입력: Step 1/2의 이슈 목록. 이슈를 전부 한 번에 수정한다(테스트 실패 항목 최우선) — PATH가 테스트 파일(mode=test)이면 수정은 PATH 자체를 기본 범위로 하고, 실패 원인이 대상 소스 코드의 버그로 확인되면 그 소스도 함께 고친다. 수정 후 위 Round 2+ 템플릿으로 lite-scorer를 재사용해 재채점한다(full).
+입력: Step 1/2의 이슈 목록. 이슈를 전부 한 번에 수정한다(테스트 실패 항목 최우선) — PATH가 테스트 파일(mode=test)이면 수정은 PATH 자체를 기본 범위로 하고, 실패 원인이 대상 소스 코드의 버그로 확인되면 그 소스도 함께 고친다.
+
+수정에는 작은 단순화 pass를 포함한다: main path가 먼저 읽히도록 guard clause/early return으로 중첩을 줄이고, parsing·branching·I/O·mutation·formatting이 섞인 함수는 도메인 규칙 기준으로 분리하며, dead/duplicate branch와 불필요한 mutable state를 제거한다. boolean flag/mode string이 divergent behavior를 만들면 이름 있는 함수 또는 더 단순한 dispatch shape를 검토한다. 새 추상화는 실제 분기/상태 복잡도를 줄일 때만 유지한다.
+
+수정 후 위 Round 2+ 템플릿으로 lite-scorer를 재사용해 재채점한다(full).
 산출: 수정 반영된 파일, full 재채점 결과. ROUND += 1.
 다음 분기: ROUND < MAX_ROUNDS면 Step 2로(게이트 재확인). ROUND >= MAX_ROUNDS면 게이트 결과와 무관하게 Step 4로 진행한다.
 
@@ -84,7 +92,7 @@ CODEX_LOG=/tmp/refine-lite-codex.$(date +%s).log
 if [ -z "$CODEX_SCRIPT" ]; then
   echo "not_installed" > "$CODEX_LOG"
 else
-  node "$CODEX_SCRIPT" task "{CHANGED_FILES} 적대적 리뷰: 버그·누락 케이스·과잉 복잡도를 지적하라." > "$CODEX_LOG" 2>&1 || true
+  node "$CODEX_SCRIPT" task "{CHANGED_FILES} 적대적 리뷰: 버그·누락 케이스·과잉 복잡도(main path를 가리는 중첩/긴 조건 체인/반복 부정/boolean-mode 분기/혼재 책임/불필요 state/dead branch)를 지적하라." > "$CODEX_LOG" 2>&1 || true
 fi
 ```
 

@@ -277,7 +277,7 @@ Task:
 3. For doc modes, also produce the mandatory contract/stale-term audit: active contract inventory, retired-term text sweep, prose/schema/API/Pydantic/diagram consistency matrix, ID/API encoding check when applicable, and implementation hazard check for reserved names, unstable list identity, unenforced invariants, and unbounded raw payloads.
 4. For code/test/integrate modes, produce the issue closure ledger: reviewer/user/contract findings, status, and evidence. Treat any fixed/tested/integrated claim without evidence as open.
 5. Score each dimension 0-100 using only evidence you can verify.
-6. Punish ambiguity, unsupported claims, missing tests, dead references, orphan sections, missing concept owners, uneven peer coverage, stale active terms, prose/schema contradictions, reserved-name traps, mutable-index identity, unenforced invariants, unbounded hot-row payloads, and open issue closure items.
+6. Punish ambiguity, unsupported claims, missing tests, dead references, orphan sections, missing concept owners, uneven peer coverage, stale active terms, prose/schema contradictions, reserved-name traps, mutable-index identity, unenforced invariants, unbounded hot-row payloads, high cognitive complexity, and open issue closure items.
 7. For round 2+, rescore dimensions affected by the diff and keep unaffected dimensions unchanged only when the prior evidence still applies.
 8. If you cannot inspect enough evidence, write UNAVAILABLE: <reason>.
 
@@ -400,6 +400,7 @@ Identify the full batch of weaknesses to attack this round:
 - if `FOCUS` is set, include every below-threshold question inside the focused dimensions, plus any critical audit/ledger blocker that would make completion invalid
 - include any question where the reviewer score is `20+` lower than the baseline score, even if the averaged dimension is not below `70`
 - in `code` or `integrate`, failing tests outrank everything else
+- in `code`, `test`, or `integrate`, include cognitive-complexity findings when the main path is obscured by deep nesting, callback chains, repeated negations, long condition chains, boolean flags or mode strings that create divergent behavior, mixed parsing/I/O/mutation/formatting responsibilities, unnecessary mutable state, dead branches, or future-only paths
 - include any `REGRESSION_ISSUE` injected by auto regression passes as a first-class weakness
 - assign priority by blocker status, severity, then higher-weight dimension; priority resolves conflicts but does not reduce the batch by itself
 - if two weaknesses require incompatible edits, keep the higher-priority one in this round and explicitly defer the other to the next DIAGNOSE with the conflict reason
@@ -441,13 +442,14 @@ Then immediately move to APPLY.
 2. for `code` or `integrate`, run lint and fix failures
 3. if contracts, data models, or interface terms changed, sync related docs
 4. run a review pass on the whole diff and verify the batch did not introduce conflicting behavior
-5. rerun relevant tests
-5b. For `test`, `integrate`, and TDD-active `code` rounds that add or strengthen tests, run a small mutation sanity check on the specific branch those tests claim to verify when feasible: temporarily break that branch, confirm the new/changed test fails, and immediately restore. If the test still passes, treat that coverage claim as open in the next DIAGNOSE.
-6. fix any valid issues immediately
-7. for `code`, `test`, or `integrate`, update the issue closure ledger with status and evidence for every touched issue
-8. append the round record to `.refine.log`, listing every selected, fixed, deferred, skipped, or rolled-back item
-9. save the round diff against the snapshot when available; if the next SCORE is worse and the current file hashes still match the post-apply hashes, roll back only this round's patch as a batch. If hashes differ because of outside edits, stop automatic rollback and report the conflict.
-10. start the next round at SCORE
+5. run a simplification pass for code/test/integrate changes: prefer guard clauses and early returns where they clarify the main path, split mixed-responsibility functions, remove dead or duplicate branches, reduce shared mutable state, and keep helper names tied to domain rules rather than mechanical operations
+6. rerun relevant tests
+7. For `test`, `integrate`, and TDD-active `code` rounds that add or strengthen tests, run a small mutation sanity check on the specific branch those tests claim to verify when feasible: temporarily break that branch, confirm the new/changed test fails, and immediately restore. If the test still passes, treat that coverage claim as open in the next DIAGNOSE.
+8. fix any valid issues immediately
+9. for `code`, `test`, or `integrate`, update the issue closure ledger with status and evidence for every touched issue
+10. append the round record to `.refine.log`, listing every selected, fixed, deferred, skipped, or rolled-back item
+11. save the round diff against the snapshot when available; if the next SCORE is worse and the current file hashes still match the post-apply hashes, roll back only this round's patch as a batch. If hashes differ because of outside edits, stop automatic rollback and report the conflict.
+12. start the next round at SCORE
 
 Emit:
 

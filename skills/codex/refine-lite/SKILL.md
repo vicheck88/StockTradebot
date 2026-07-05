@@ -34,7 +34,7 @@ Score every round with these fixed dimensions:
 |-----------|--------|----------|
 | Correctness | 40% | Implements the intended behavior, handles actual callers/contracts, and has no evident bug. |
 | Test Coverage | 25% | Critical behavior is tested. In `test` mode, this means the target suite covers meaningful scenarios. |
-| Simplicity | 20% | Avoids unnecessary abstractions, branches, state, indirection, dead code, and future-only options. |
+| Simplicity | 20% | Keeps the main path easy to follow before edge cases. Avoids unnecessary abstractions, branches, state, indirection, dead code, future-only options, deep nesting, boolean-mode behavior, repeated negations, and long condition chains. |
 | Edge Cases | 15% | Covers boundary, error, empty, large, stale-state, concurrency, or external-failure paths that apply. |
 
 Anchors: `0-20` absent, `21-40` abstract only, `41-60` more than half unmet, `61-70` mostly there with important gaps, `71-85` solid with minor gaps, `86-95` complete with extra depth, `96-100` essentially complete. Be strict: `50` is not acceptable, and `71` is the start of good.
@@ -73,11 +73,13 @@ If the gate passes, go to Step 4. If it fails and `ROUND < MAX_ROUNDS`, go to St
 
 Fix all selected issues in one batch, with failing tests first. In `test` mode, default to editing the test target; if a failure proves a source bug, fix the source too and say so.
 
+For every code/test batch, include a small simplification pass when applicable: prefer guard clauses and early returns where they clarify the main path, split functions that mix parsing, branching, I/O, mutation, and formatting, remove dead or duplicate branches, reduce shared mutable state, and replace boolean flags or mode strings with named functions when behavior truly diverges. Do not add a new abstraction unless it removes real branch/state complexity.
+
 After editing, rerun the relevant verification command and rescore only the dimensions affected by the diff while carrying unchanged dimensions forward. Increment the round and return to Step 2.
 
 ### Step 4: Final Review
 
-Run one adversarial final review over the target or final diff. Use local Codex review directly; if Claude independent scoring already identified unresolved concrete issues, include them in the review prompt.
+Run one adversarial final review over the target or final diff. Include cognitive-complexity risks in the review prompt: deep nesting, callback chains, repeated negations, long condition chains, boolean-mode behavior, mixed responsibilities, unnecessary mutable state, dead branches, and future-only paths. Use local Codex review directly; if Claude independent scoring already identified unresolved concrete issues, include them in the review prompt.
 
 Apply valid final-review findings immediately and rerun the verification command. Do not rescore after this final-review fix; report the last score as pre-final-review score if changes were made in this step.
 

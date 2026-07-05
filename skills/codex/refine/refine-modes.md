@@ -122,7 +122,7 @@ Special rules:
 | Dimension | Weight | Evaluation Criteria |
 |-----------|--------|---------------------|
 | Correctness | 25% | Does the code implement intended behavior correctly and match the spec? |
-| Simplicity | 20% | Is the implementation the simplest coherent solution? Are unnecessary abstractions, layers, options, state, indirection, cleverness, dead code, unused imports, and future-only branches avoided? |
+| Simplicity | 20% | Is the implementation the simplest coherent solution? Is the main path clear before edge cases? Are unnecessary abstractions, layers, options, state, indirection, cleverness, dead code, unused imports, future-only branches, deep nesting, boolean-mode behavior, repeated negations, and long condition chains avoided? |
 | Readability | 15% | Are names and local control flow easy to follow? |
 | Structure | 15% | Are responsibilities separated with limited duplication and clear ownership boundaries? |
 | Error Handling | 5% | Are external or boundary failures handled with useful context? |
@@ -133,6 +133,9 @@ Special rules:
 - if tests are not passing, overall score is capped at `60`
 - if required acceptance criteria are missing in implementation, the relevant correctness item is `0`
 - if simpler code can remove a layer or branch without losing required behavior, `Simplicity` is capped at `70` until that option is considered or rejected with evidence
+- if a reader must trace deep nesting, callback chains, repeated negations, or long `if`/`switch` chains to understand the main path, `Simplicity` is capped at `70` until the flow is flattened or a domain constraint justifies it
+- if one function mixes parsing, branching, I/O, mutation, and formatting when those responsibilities can be split along domain rules, `Structure` is capped at `75` and `Simplicity` is capped at `70`
+- if boolean flags or mode strings create multiple divergent behaviors inside one function, `Simplicity` is capped at `70` until separate named functions or a simpler dispatch shape are considered
 - if TDD is active and a behavior item was implemented without RED evidence first, `Test Coverage` is capped at `70`
 - if TDD is active and the final code round does not enumerate state-machine/failure-mode coverage before marking the following `test` stage not applicable, `Test Coverage` is capped at `70`
 - if the issue closure ledger has any open applicable `critical` issue, overall score is capped at `60`

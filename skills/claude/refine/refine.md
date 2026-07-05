@@ -17,6 +17,7 @@ argument-hint: "[path|--path path] [--mode m] [--target N] [--rounds N] [--score
 - **판단 위임 금지**: main은 종료 여부, PROPOSE_COMPARE 채택, audit cap 보정, KEEP/ROLLBACK 판정을 사용자·서브에이전트·codex 결과에 떠넘기지 않는다. 조기 종료·날조 수치와 동급 함정으로 취급하며, "어느 안이 나은지 사용자가 정해 달라" 또는 "reviewer가 통과라서 그대로 종료" 같은 위임형 결론은 절차 위반이다.
 - **doc:\* 모드 사전 audit 필수**: 차원 채점 전 Audit 1(구조), Audit 2(contract/stale-term), Audit 3(Missing-Info/Back-Question) 모두 필수로 수행하라 (refine-steps.md `## doc:* 사전 audit` 섹션, refine-modes.md `## 모든 doc:* 공통 규칙`). 셋 중 하나라도 생략하고 점수를 매기면 절차 위반 → 해당 라운드 SCORE 무효.
 - **doc:\* 완료 gate**: 삭제된 field/enum/table/API route/model 개념이 active contract 텍스트로 남아있는 동안에는 종료 금지. out-of-scope 또는 migration-history 섹션으로 명시 분리되지 않으면 종합 점수가 TARGET을 넘어도 미완료로 처리한다.
+- **code/test/integrate 단순성 gate**: Simplicity 채점은 인지복잡도 점검을 포함한다. main path가 3단+ 중첩, 긴 if/switch 체인, 반복 부정, boolean flag/mode string 분기, 한 함수의 parsing/I/O/mutation/formatting 혼재, 불필요한 mutable state, dead/future-only branch에 묻히면 해당 차원을 70 이하로 cap하고 DIAGNOSE에 포함한다. 더 단순한 동치 구현을 적용하거나 근거와 함께 기각하기 전까지 완료로 보지 않는다.
 
 모드: doc:idea / doc:design / doc:spec / doc:plan / doc:skill / doc:test / code / test / integrate
 메타 모드: doc, next, auto
