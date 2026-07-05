@@ -1,0 +1,4 @@
+interface:
+  display_name: "Refine Lite"
+  short_description: "Fast lightweight code and test refinement loop."
+  default_prompt: "Use refine-lite on the target file to score, batch-fix, verify, and report a small code or test improvement."

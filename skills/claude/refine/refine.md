@@ -10,11 +10,11 @@ argument-hint: "[path|--path path] [--mode m] [--target N] [--rounds N] [--score
 **한 라운드 = 모든 약점 일괄 수정**. 한 라운드에 한 약점 모델은 폐기됨. DIAGNOSE에서 70 미만 모든 차원/문항을 식별하고, PROPOSE에서 각각의 수정안을 작성하고, APPLY에서 동시에 반영한다.
 
 **⚠ HARD CONSTRAINT**
-- 절차를 임의로 변경하지 마라. main thread 단독 채점 금지 — 채점은 main이 아닌 별도 채점 주체가 수행한다: named Agent(claude-scorer) **또는 Workflow 채점 파이프라인** (refine-steps.md `## 오케스트레이션 & 모델 정책`). codex 역할(scorer/proposer/verifier/reviewer)은 Agent가 **아니라 CLI job**으로 호출한다 — `codex:codex-rescue`는 Bash 전용이라 `SendMessage`가 없어 조율/정상 종료가 안 되기 때문 (SSOT: refine-steps.md `## Step 0 멤버 구성`, `## Codex CLI job 호출 공통 규칙`).
+- 절차를 임의로 변경하지 마라. main thread 단독 채점 금지 — 채점은 main이 아닌 별도 채점 주체가 수행한다: named Agent(claude-scorer) **또는 Workflow 채점 파이프라인** (refine-steps.md `## 오케스트레이션 & 모델 정책`). codex 역할(scorer/조건부 proposer/reviewer)은 Agent가 **아니라 CLI job**으로 호출한다 — `codex:codex-rescue`는 Bash 전용이라 `SendMessage`가 없어 조율/정상 종료가 안 되기 때문 (SSOT: refine-steps.md `## Step 0 멤버 구성`, `## Codex CLI job 호출 공통 규칙`).
 - 매 라운드 시작 시 `Read("~/.claude/commands/refine-steps.md")` 로 절차를 다시 읽어라. 기억에 의존하지 마라.
 - 절차 변경이 필요하면: (1) 파일을 먼저 수정하고 (2) 사용자에게 알린 뒤 (3) 수정된 절차를 따라라.
 - 데이터 날조 절대 금지. 출처 없는 수치 = 해당 차원 0점.
-- **판단 위임 금지**: main은 종료 여부, PROPOSE_COMPARE 채택, audit cap 보정, KEEP/ROLLBACK 판정을 사용자·서브에이전트·codex 결과에 떠넘기지 않는다. 조기 종료·날조 수치와 동급 함정으로 취급하며, "어느 안이 나은지 사용자가 정해 달라" 또는 "verifier/reviewer가 통과라서 그대로 종료" 같은 위임형 결론은 절차 위반이다.
+- **판단 위임 금지**: main은 종료 여부, PROPOSE_COMPARE 채택, audit cap 보정, KEEP/ROLLBACK 판정을 사용자·서브에이전트·codex 결과에 떠넘기지 않는다. 조기 종료·날조 수치와 동급 함정으로 취급하며, "어느 안이 나은지 사용자가 정해 달라" 또는 "reviewer가 통과라서 그대로 종료" 같은 위임형 결론은 절차 위반이다.
 - **doc:\* 모드 사전 audit 필수**: 차원 채점 전 Audit 1(구조), Audit 2(contract/stale-term), Audit 3(Missing-Info/Back-Question) 모두 필수로 수행하라 (refine-steps.md `## doc:* 사전 audit` 섹션, refine-modes.md `## 모든 doc:* 공통 규칙`). 셋 중 하나라도 생략하고 점수를 매기면 절차 위반 → 해당 라운드 SCORE 무효.
 - **doc:\* 완료 gate**: 삭제된 field/enum/table/API route/model 개념이 active contract 텍스트로 남아있는 동안에는 종료 금지. out-of-scope 또는 migration-history 섹션으로 명시 분리되지 않으면 종합 점수가 TARGET을 넘어도 미완료로 처리한다.
 
@@ -93,7 +93,7 @@ Step 0: 초기화
   - ⚡ PREP: Codex 병렬 사전 작업 발사 (모든 모드 필수, DOC_PATH·MODE 확정 직후 가장 먼저) — refine-steps.md `## Step 0 PREP` 참조.
     codex 작업을 background CLI job으로 띄워 대상을 미리 정독·분석하게 한다 (doc:*는 사전 audit까지 위임).
     비차단 — 발사 후 아래 단계(차원 로드·테스트·lint)와 병렬 진행. 첫 SCORE 진입 전 PREP_CHECK 출력 필수.
-    이후 모든 codex 호출(scorer/proposer/verifier/reviewer)이 산출물을 재사용.
+    이후 모든 codex 호출(scorer/proposer/reviewer)이 산출물을 재사용.
   - 🧑‍🤝‍🧑 멤버 구성 — 팀은 세션당 자동(implicit)이라 TeamCreate 불필요(v2.1.178+에서 제거됨). SCORE/PROPOSE/APPLY의 **claude 계열 Agent(claude-scorer/cross-reviewer)만** `Agent({ name })`로 named spawn(Round 2+는 SendMessage로 재사용). **codex 역할은 CLI job** (refine-steps.md `## Step 0 멤버 구성`).
   - Read("~/.claude/commands/refine-modes.md")로 해당 모드의 차원 테이블 확인 → DIMENSIONS 변수에 저장
   - code/integrate: 테스트 실행 + lint (PREP와 병렬)
@@ -104,27 +104,26 @@ while round < MAX_ROUNDS:
   │ ⚠ Read("~/.claude/commands/refine-steps.md") 실행  │
   │   매 라운드마다 절차를 다시 읽어라!                    │
   └─────────────────────────────────────────────────────┘
-  ROUND_CHECK 출력(생략 시 그 라운드 SCORE 무효):
-    ROUND_CHECK:
-    ☑ refine-steps.md 재독: round={N}, lines={wc -l 값}, mtime={stat 값}
-    ☑ mode dimensions loaded: {MODE} (refine-modes.md)
+  이번 라운드 LEDGER를 열고 재독 행을 채운다(refine-steps.md `## ROUND LEDGER` — 생략 시 그 라운드 SCORE 무효):
+    ━━ ROUND {N} LEDGER ━━
+    ☑ 재독: round={N}, lines={wc -l 값}, mtime={stat 값}, dimensions={MODE} 유지(refine-modes.md)
 
   Step 1: SCORE (refine-steps.md 참조)
     - claude 측 채점(Workflow 파이프라인 우선, 불가 시 named Agent(claude-scorer)) + codex-scorer **CLI job 발사** — 병렬.
       Agent 경로의 Round 2+는 SendMessage 재사용(context 유지), Workflow 경로는 args.priorScores로 delta 채점
-    - 채점 결과가 2개면 named agent Agent(cross-reviewer) 교차 리뷰, 1개면 생략(그 결과 채택 — audit cap 보정은 main)
+    - 채점 결과가 2개면 named agent Agent(cross-reviewer) 교차 리뷰, 1개면 생략하고 그 결과 채택(audit cap 보정은 main) — codex만 실패하면(claude가 Workflow 원점수든 Agent 단일 보고든 동일하게) lazy-consensus(opus, 그 라운드 1회성)를 스폰해 과대평가를 재검토하고 단독 채택
     - 종합 점수 산출
 
   Step 2: DIAGNOSE — 70 미만인 모든 차원/문항을 식별 (배치)
 
-  Step 3: PROPOSE — dual-track: codex-proposer(**CLI job**) 발사 ∥ claude 수정안 작성 → PROPOSE_COMPARE 항목별 채택(claude|codex|merge|재작성)
-    → codex-verifier(**CLI job**)가 채택본 묶음 검증 (proposer 실패 시 claude 단독 작성 + verifier 검증으로 fallback)
+  Step 3: PROPOSE — codex-proposer(**CLI job**) 조건부 발사(Round==1 | 직전 Result==ROLLBACK | 정체 감지 발동 | codex가 claude보다 20점+ 낮게 본 차원이 이번 DIAGNOSE 포함 시) ∥ claude 수정안 작성 → PROPOSE_COMPARE 항목별 채택(claude|codex|merge|재작성|조건 미충족—claude 단독)
+    → 채택본 검증은 APPLY(Step 4) codex-reviewer가 통합 수행 (조건 미충족·proposer 실패 시 claude 단독 초안으로 fallback)
 
-  Step 4: APPLY — N개 수정안 일괄 Edit 반영 + lint + cross-doc 동기화 + codex-reviewer(**CLI job**) 묶음 교차 리뷰
+  Step 4: APPLY — N개 수정안 일괄 Edit 반영 + lint + cross-doc 동기화 + codex-reviewer(**CLI job**)의 채택본 항목별 정확성/완전성/부작용 검증(PROPOSE의 분리 검증 통합) + 묶음 diff 교차 리뷰
 
   Step 5: 반복 판단 (RE-SCORE는 별도 단계 없음 — 다음 라운드 SCORE가 RE-SCORE 역할. KEEP/ROLLBACK 판정 절차(해시 비교·patch 역적용) SSOT: refine-steps.md `## APPLY` 8번)
     종료 조건: (1) 종합 >= TARGET AND 70 미만 차원 없음 AND 결함 cap으로 정확히 70에 묶인 차원 없음 (2) round >= MAX_ROUNDS
-    — 단 doc:* 완료 gate·blocking open question이 걸려 있거나, audit/절차/검증 결함 cap 때문에 어떤 차원이 정확히 70으로 제한된 상태거나, 미해소 `[unverified-carryover]` 마커 또는 미해소 `[unverified-consensus]` 마커가 있으면 (1)을 충족해도 종료 금지 (cap 70은 `70 미만 차원 없음` 게이트 미통과로 간주; 결함을 해소해 71+로 재채점되어야 통과. unverified-carryover는 codex 검증/리뷰 PASS 확인 전까지 종료 금지; unverified-consensus는 다음 라운드 cross-reviewer 재교차검증이 `[unverified-consensus-resolved]`로 확인될 때까지 종료 금지)
+    — 단 doc:* 완료 gate·blocking open question이 걸려 있거나, audit/절차/검증 결함 cap 때문에 어떤 차원이 정확히 70으로 제한된 상태거나, 미해소 `[unverified-carryover]` 마커 또는 미해소 `[unverified-consensus]` 마커가 있으면 (1)을 충족해도 종료 금지 (cap 70은 `70 미만 차원 없음` 게이트 미통과로 간주; 결함을 해소해 71+로 재채점되어야 통과. unverified-carryover는 codex 검증/리뷰 PASS(2라운드 연속 미해소 시 발동하는 대체 검증자 PASS 포함) 확인 전까지 종료 금지 — 단 3라운드 연속 미해소로 `[unverified-final]`로 전환된 항목은 그 캐비앗 표기를 유지한 채 종료를 허용한다(refine-steps.md `## Codex CLI job 호출 공통 규칙 > ### 절차` 7번); unverified-consensus는 다음 라운드 cross-reviewer 재교차검증이 `[unverified-consensus-resolved]`로 확인될 때까지 종료 금지)
     — **SCORE 직후 (1)을 즉시 충족하고 위 예외도 전부 해당 없으면, DIAGNOSE/PROPOSE/APPLY를 건너뛰고 곧장 Step 6으로 진행한다**(이 경우 Result=SKIP, 허용 조건 (4))
     ⛔ 금지된 종료 사유 — 아래 이유로 종료하거나 "다음 단계로 넘어갈까요?" 질문하면 규칙 위반:
       - "구조적 한계/병목" → FOCUS 전환하거나 대안 찾아라
@@ -137,7 +136,7 @@ while round < MAX_ROUNDS:
 
 Step 6: 정리 + 로그 기록 + 최종 리포트 (SSOT: refine-steps.md `## Step 0 멤버 구성 > ### 종료`)
   - named agent(claude-scorer/cross-reviewer)는 결과 반환 후 세션 종료 시 자동 정리 — 별도 TeamDelete/shutdown_request 불필요
-  - PREP/scorer/proposer/verifier/reviewer codex CLI job 미완료 시 cancel
+  - PREP/scorer/proposer/reviewer codex CLI job 미완료 시 cancel
   - 이 run의 /tmp 산출물 삭제: `/tmp/refine_*_${RUN}*`, `/tmp/codex_*_${RUN}*` — RUN 스코프 한정, 다른 세션 파일 금지
   - .refine.log에 기록 + STATUS.md 갱신 + 최종 리포트 출력
   - ⛔ STEP6_CHECK 출력 후 종료:
@@ -165,7 +164,7 @@ Step 6: 정리 + 로그 기록 + 최종 리포트 (SSOT: refine-steps.md `## Ste
 Result 의미:
 - `KEEP`: APPLY가 실제 파일 변경을 만들었고 다음 SCORE에서 동일 채점 기반의 종합이 유지·상승했거나, 하락이 이번 라운드 diff와 무관하다는 근거가 있어 keep-override로 판정한 경우.
 - `ROLLBACK`: APPLY가 실제 파일 변경을 만들었고 다음 SCORE에서 동일 채점 기반의 종합이 하락했으며, 하락 원인이 이번 라운드 diff에 연결되어 APPLY 8번 절차로 묶음 전체를 되돌린 경우.
-- `SKIP`: **라운드에서 APPLY된 항목이 0건**인 경우에만 쓴다 — Result는 라운드 단위 필드다. 허용 조건: (1) `SCORE_ONLY`, (2) auto/next에서 해당 stage가 `해당없음`으로 판정됨(STATUS.md 상태로 기록), (3) 외부 blocking requirement·전 항목 deferred로 적용 가능한 수정안이 0건, (4) 라운드 시작 SCORE 시점부터 이미 목표 달성 상태라 DIAGNOSE 자체를 생략(Step 5 fast-path)했거나, DIAGNOSE를 수행했지만 DIAGNOSE_CHECK 결과 약점이 0건이라 APPLY할 항목이 없는 경우. **항목 단위 defer**(PROPOSE 충돌 deferred, Step 5 진동 감지의 차원 제외)는 Result가 아니라 `Items` 줄에 `deferred: {항목}`으로 표기하며, 진동 감지는 `.refine.log`에 `[skip-oscillation] dimension=<name> rounds=4 next_focus=<name>`를 기록한다. `SKIP`은 성공이 아니며, out-of-scope가 아닌 미해결 항목은 다음 DIAGNOSE 또는 owner stage에 남긴다.
+- `SKIP`: **라운드에서 APPLY된 항목이 0건**인 경우에만 쓴다 — Result는 라운드 단위 필드다. 허용 조건: (1) `SCORE_ONLY`, (2) auto/next에서 해당 stage가 `해당없음`으로 판정됨(STATUS.md 상태로 기록), (3) 외부 blocking requirement·전 항목 deferred로 적용 가능한 수정안이 0건, (4) 라운드 시작 SCORE 시점부터 이미 목표 달성 상태라 DIAGNOSE 자체를 생략(Step 5 fast-path)했거나, DIAGNOSE를 수행했지만 LEDGER 진단 행 결과 약점이 0건이라 APPLY할 항목이 없는 경우. **항목 단위 defer**(PROPOSE 충돌 deferred, Step 5 진동 감지의 차원 제외)는 Result가 아니라 `Items` 줄에 `deferred: {항목}`으로 표기하며, 진동 감지는 `.refine.log`에 `[skip-oscillation] dimension=<name> rounds=4 next_focus=<name>`를 기록한다. `SKIP`은 성공이 아니며, out-of-scope가 아닌 미해결 항목은 다음 DIAGNOSE 또는 owner stage에 남긴다.
 
 ## 최종 리포트
 
