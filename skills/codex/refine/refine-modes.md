@@ -122,7 +122,7 @@ Special rules:
 | Dimension | Weight | Evaluation Criteria |
 |-----------|--------|---------------------|
 | Correctness | 25% | Does the code implement intended behavior correctly and match the spec? |
-| Simplicity | 20% | Is the implementation the simplest coherent solution? Is the main path clear before edge cases? Are unnecessary abstractions, layers, options, state, indirection, cleverness, dead code, unused imports, future-only branches, deep nesting, boolean-mode behavior, repeated negations, and long condition chains avoided? |
+| Simplicity | 20% | Is the implementation the simplest coherent solution? Run an explicit cognitive-complexity pass: is the main path clear before edge cases, without unnecessary abstractions, layers, options, state, indirection, dead code, future-only branches, deep nesting, boolean-mode behavior, repeated negations, or long condition chains? |
 | Readability | 15% | Are names and local control flow easy to follow? |
 | Structure | 15% | Are responsibilities separated with limited duplication and clear ownership boundaries? |
 | Error Handling | 5% | Are external or boundary failures handled with useful context? |

@@ -18,6 +18,7 @@ argument-hint: "[path|--path path] [--mode m] [--target N] [--rounds N] [--score
 - **doc:\* 모드 사전 audit 필수**: 차원 채점 전 Audit 1(구조), Audit 2(contract/stale-term), Audit 3(Missing-Info/Back-Question) 모두 필수로 수행하라 (refine-steps.md `## doc:* 사전 audit` 섹션, refine-modes.md `## 모든 doc:* 공통 규칙`). 셋 중 하나라도 생략하고 점수를 매기면 절차 위반 → 해당 라운드 SCORE 무효.
 - **doc:\* 완료 gate**: 삭제된 field/enum/table/API route/model 개념이 active contract 텍스트로 남아있는 동안에는 종료 금지. out-of-scope 또는 migration-history 섹션으로 명시 분리되지 않으면 종합 점수가 TARGET을 넘어도 미완료로 처리한다.
 - **code/test/integrate 단순성 gate**: Simplicity 채점은 인지복잡도 점검을 포함한다. main path가 3단+ 중첩, 긴 if/switch 체인, 반복 부정, boolean flag/mode string 분기, 한 함수의 parsing/I/O/mutation/formatting 혼재, 불필요한 mutable state, dead/future-only branch에 묻히면 해당 차원을 70 이하로 cap하고 DIAGNOSE에 포함한다. 더 단순한 동치 구현을 적용하거나 근거와 함께 기각하기 전까지 완료로 보지 않는다.
+- **역할 분리**: claude 측 독립 채점·제안은 Sonnet Workflow를 우선 사용하고, fallback 단일 worker도 `sonnet`으로 고정한다. proposer는 텍스트만 반환하며 실제 APPLY·KEEP/ROLLBACK·최종 종료 판단은 main이 근거와 ledger를 검증해 수행한다.
 
 모드: doc:idea / doc:design / doc:spec / doc:plan / doc:skill / doc:test / code / test / integrate
 메타 모드: doc, next, auto
@@ -90,7 +91,7 @@ Step 0: 초기화
   - MODE 확정 (부트스트랩보다 먼저 — 부트스트랩의 산출물 형식·대조 기준이 모드에 의존)
   - DOC_PATH 읽기. **확정 경로에 파일이 없거나 빈 파일이면 부트스트랩 생성**: claude ∥ codex 독립 생성 → 약식 대조 → 사용자와
     논의 선택 (refine-steps.md `## Step 0 부트스트랩 생성`) → 확정 DOC_PATH 경로에 선택본 기록 후 평소 루프(Round 1 SCORE) 진입
-  - 모델/오케스트레이션 정책 확인 (refine-steps.md `## 오케스트레이션 & 모델 정책`)
+  - 모델/오케스트레이션 정책 확인: Sonnet Workflow reviewer/proposer가 가능한지, fable/opus main 및 bounded role 경로가 실행 가능한지 기록한다 (refine-steps.md `## 오케스트레이션 & 모델 정책`)
   - ⚡ PREP: Codex 병렬 사전 작업 발사 (모든 모드 필수, DOC_PATH·MODE 확정 직후 가장 먼저) — refine-steps.md `## Step 0 PREP` 참조.
     codex 작업을 background CLI job으로 띄워 대상을 미리 정독·분석하게 한다 (doc:*는 사전 audit까지 위임).
     비차단 — 발사 후 아래 단계(차원 로드·테스트·lint)와 병렬 진행. 첫 SCORE 진입 전 PREP_CHECK 출력 필수.

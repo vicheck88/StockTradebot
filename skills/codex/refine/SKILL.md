@@ -5,23 +5,25 @@ description: "Iteratively evaluate and improve a document, skill, command, code 
 
 # Refine
 
-Iteratively evaluate and improve documents, prompt/skill instructions, code, tests, or integrated project state. Claude Code is the default independent reviewer when the local `claude` CLI is installed and non-interactive review succeeds; otherwise use Codex baseline plus adversarial scoring. A round is batch-oriented: diagnose every below-threshold or open issue, propose fixes for the whole compatible set, apply them together, then rescore.
+Iteratively evaluate and improve documents, prompt/skill instructions, code, tests, or integrated project state. The Sol Ultra main owns acceptance; an independent Sonnet Workflow reviewer and proposer supply read-only evidence and proposal text when available. A round is batch-oriented: diagnose every below-threshold or open issue, propose fixes for the whole compatible set, apply them together, then rescore.
 
 Use `refine` only when the user wants measurable quality to improve over repeated rounds or across lifecycle stages. For a small code/test file that only needs quick score -> batch fix -> final review without doc audits, ledgers, or status files, use `refine-lite` instead. For a one-shot code review, debugging investigation, or known failing test fix, use the more specific review/debug/QA workflow instead.
 
 ## Hard Constraints
 
 - Finish parameter parsing before doing other work.
+- Require the active main session to be `gpt-5.6-sol:ultra` before PREP. If the known route is not Sol Ultra, stop before spawning work and ask the user to switch; if route metadata is unavailable, mark the gate unverifiable and do not claim Ultra executed.
 - Do not improvise the procedure. Read [refine-steps.md](./refine-steps.md) at the start of every round and follow it; emit the required `ROUND_CHECK`.
 - After mode confirmation, read [refine-modes.md](./refine-modes.md) and use that mode's weighted dimensions.
 - If the target path is missing or empty after parameter parsing and the mode clearly supports creation, run the Step 0 bootstrap procedure before Round 1 scoring; do not score a nonexistent artifact.
 - Do not fabricate metrics, coverage, pass rates, or implementation status. Unsupported claims score `0` for that dimension.
 - Do not do single-lens scoring. Every SCORE must include a Codex `baseline scorer` view and an independent `reviewer scorer` view.
-- Default `reviewer scorer` is Claude Code via [scripts/claude-review.sh](./scripts/claude-review.sh) when `claude` is installed, authenticated, and non-interactive review succeeds. The wrapper uses `sonnet` by default for speed; escalate to `opus` only through `CLAUDE_REVIEW_MODEL`, `MODEL_POLICY`, or the high-risk rules in [refine-steps.md](./refine-steps.md).
-- Keep the default Claude review wrapper timeout at `1800` seconds, matching Claude Code `/refine`'s Codex agent timeout. Override it only when the user explicitly sets `CLAUDE_REVIEW_TIMEOUT_SECONDS`.
-- If Claude Code is not installed, not authenticated, times out, returns invalid review output, or cannot inspect the target, fall back to a local Codex `adversarial scorer` and record the reason as `CLAUDE_REVIEW: unavailable (...) -> codex fallback`.
+- Default `reviewer scorer` is the Sonnet Workflow wrapper at `$CODEX_HOME/skills/refine/scripts/claude-review.sh` (fall back to `$HOME/.codex/skills/refine/...`) when `claude`, `jq`, and Workflow are available. A direct single-model Claude answer is not a valid reviewer result.
+- For each proposal batch, attempt the paired Sonnet Workflow proposer at `$CODEX_HOME/skills/refine/scripts/claude-propose.sh` when that wrapper is installed; verify its presence during tool check. It returns proposal text only. The assigned Codex writer alone edits target files.
+- The installed wrappers default to `1800` seconds; an invocation may lower that only when the user explicitly sets the timeout. If a local execution policy requires a tighter cap, record that override rather than silently weakening the workflow.
+- If Workflow is unavailable, times out, returns invalid/non-Sonnet output, or cannot inspect the target, use the documented independent Codex adversarial fallback and record the exact reason.
 - Do not claim Claude reviewed unless the Claude review command succeeded and its output was used in Phase 2 Cross-Review.
-- If the user explicitly allows delegation or asks for parallel agent work, use bounded Codex sub-agents for extra scorer/verifier/reviewer tasks. Otherwise do not spawn Codex sub-agents; Claude Code review is a CLI reviewer, not a Codex sub-agent.
+- Sol Ultra may assign only the declared bounded prep, audit, scorer, proposer, writer, adjudicator, verifier, and reviewer roles. Each owns one concrete lane; Claude Workflow is a CLI reviewer/proposer, not a Codex sub-agent.
 - A round must be batch-based. Identify all dimensions/questions below `70`, all unresolved audit failures, and all open applicable issue-ledger items; propose and apply all compatible fixes in the same round. A single-weakness round is valid only when fixes conflict, the user narrowed `FOCUS` to one item, or a blocker makes the other items impossible; record that reason.
 - For every `doc:*` mode, scoring must include a structural audit before dimension scoring: section map, first-class concept map, orphan/duplicate section check, peer coverage check, and reader-path check. A doc score that only checks field/API/code consistency is invalid.
 - For every `doc:*` mode, scoring must include a contract/stale-term audit after the structural audit: identify active contract terms, removed or out-of-scope terms, schema/API/Pydantic examples, and run a text sweep for stale terms across the target and peer docs. This audit must also check implementation hazards such as reserved SQL/ORM names, mutable list index identity, unenforced invariants, ambiguous ID/URL encoding, and unbounded hot-row payloads. A doc score that misses a prose/schema contradiction or predictable implementation trap is invalid.
@@ -30,7 +32,7 @@ Use `refine` only when the user wants measurable quality to improve over repeate
 - For `code`, `test`, and `integrate`, every applicable reviewer finding, user-raised issue, and unresolved contract hazard must be tracked in an issue closure ledger. A stage cannot pass while an applicable issue remains open without concrete code, test, and integration evidence, or an explicit blocker/not-applicable rationale.
 - For `code`, `test`, and `integrate`, Simplicity scoring must include a cognitive-complexity pass: inspect nesting depth, long condition chains, boolean flags or mode strings that create divergent behavior, mixed responsibilities inside one function, repeated negations, unnecessary mutable state, and future-only branches. Cap or diagnose the relevant Simplicity/Readability/Structure dimension until the simpler equivalent is applied or rejected with evidence.
 - Before the first SCORE, run the Codex PREP step from [refine-steps.md](./refine-steps.md): package context with a unique `RUN` token, launch any available read-only prep/audit work, and emit `PREP_CHECK`. If a prep job is unavailable, record the failure and continue with inline context; missing prep is not a stop reason.
-- Use `MODEL_POLICY` only as role-to-model routing input. In Codex, it may influence which model/tool you choose for local, delegated, Claude reviewer, or Codex companion work, but it never overrides evidence requirements, stop gates, or the final score owner. Prefer the speed-first defaults in [refine-steps.md](./refine-steps.md): cheap prep/scout, mid-tier scoring/proposal, and strong models only for verifier/reviewer or high-risk escalation.
+- Use `MODEL_POLICY` only as role-to-model routing input. It never overrides evidence requirements, stop gates, or the final score owner. Use Luna for prep/scouting, Terra for audit/scoring/proposal/writing, Sol xhigh for adjudication/verification/final review, and Sol Ultra only for the main.
 - For `code` mode, set TDD automatically when design/spec/test artifacts exist unless the user passes `--no-tdd`. With TDD active, capture RED before GREEN and emit `TDD_CHECK`; skipped RED caps Test Coverage as defined in [refine-modes.md](./refine-modes.md).
 - A dimension held exactly at `70` by an audit, verification, TDD, or issue-ledger cap is not completion-ready; diagnose the capped finding until the dimension can rescore above the cap or the item is explicitly blocked/not applicable.
 - If the procedure itself must change, update the skill files first, tell the user, then follow the updated procedure.
@@ -69,10 +71,10 @@ Accepted patterns:
 - `refine <path> --mode code --reviewer claude-auto`
 - `refine <path> --mode code --reviewer codex`
 - `refine <path> --mode code --focus correctness,test-coverage`
-- `refine <path> --mode code --model-policy codex-scorer=gpt-5.4:high`
-- `refine <path> --mode doc:skill --model-policy codex-prep=spark:low`
-- `refine <path> --mode integrate --model-policy codex-reviewer=gpt-5.5:xhigh`
-- `refine <path> --mode code --model-policy claude-reviewer=opus`
+- `refine <path> --mode code --model-policy codex-scorer=gpt-5.6-terra:xhigh`
+- `refine <path> --mode doc:skill --model-policy codex-prep=gpt-5.6-luna:low`
+- `refine <path> --mode integrate --model-policy codex-main=gpt-5.6-sol:ultra`
+- `refine <path> --mode code --model-policy claude-proposer=sonnet:xhigh`
 - `refine <path> --mode code --tdd`
 - `refine <path> --mode code --no-tdd`
 - `refine . --mode integrate`
@@ -89,7 +91,7 @@ Extract from the user request:
 - `SCORE_ONLY`: score without editing; still run Step 0, doc:* audits, SCORE, final cleanup, and append a `[score-only]` marker with scores to the log
 - `FOCUS`: comma-separated dimensions to prioritize
 - `REVIEWER`: `claude-auto` by default; `claude-auto` and `claude` attempt Claude Code first then fall back to Codex adversarial scoring; `codex` skips Claude and uses Codex-only scoring
-- `MODEL_POLICY`: optional role-to-model routing hints such as `codex-scorer=gpt-5.4:high`, `codex-prep=spark:low`, or `claude-reviewer=opus`; rightmost repeated role wins
+- `MODEL_POLICY`: optional role-to-model routing hints; Claude reviewer/proposer routes require Sonnet and the rightmost repeated role wins
 - `TDD`: `--tdd` forces TDD on, `--no-tdd` forces it off, otherwise infer from code mode plus available design/spec/test artifacts
 - `AUTO_CONTINUE`: default `true`; if the user asks before each round or uses `--ask`, set `false`
 - `FROM`, `TO`: optional lifecycle range
@@ -144,7 +146,7 @@ Step 0: initialization
   - read the target
   - read refine-modes.md and load the dimension table for MODE
   - read refine-steps.md and perform the mode-critical tool check
-  - run Step 0 PREP from refine-steps.md: choose RUN, prepare a compact context package, launch available read-only prep/audit work, and emit PREP_CHECK
+  - resolve effective routes and emit `MODEL_ROUTE_CHECK`, then run Step 0 PREP from refine-steps.md
   - for code or integrate modes, run the most relevant tests and lint checks early
   - determine the log path
 
@@ -163,13 +165,13 @@ Finalize:
   - emit the final report
 ```
 
-Stop only when:
+Pass only when:
 - weighted score >= target and no dimension is below `70`
 - no dimension is stuck at an audit, verification, TDD, or issue-ledger cap of exactly `70`
 - no doc:* stale active contract or unresolved contract-level back-question blocks completion
-- for `code`, `test`, and `integrate`, all applicable issue closure ledger items are `integrated`, `not_applicable`, or `blocked` with evidence
-- `MAX_ROUNDS` is reached
-- a blocking external dependency, denied approval, or missing requirement prevents further valid improvement
+- issue-ledger statuses are mode-compatible: `fixed|tested|integrated` for `code`, `tested|integrated` for `test`, `integrated` for `integrate`, or evidence-backed `not_applicable`
+
+Non-passing termination is `STOPPED_AT_MAX_ROUNDS` or `BLOCKED`; never report either as complete.
 
 Do not stop just because improvements are harder, the score seems "good enough", tool setup is inconvenient, or progress is slow. If progress stalls for three rounds, shift focus. If the score oscillates on one dimension for four rounds, deprioritize that dimension and continue.
 
@@ -196,7 +198,8 @@ During use, report:
 Final report shape:
 
 ```text
-=== REFINE COMPLETE (<MODE>) ===
+=== REFINE <PASSED|STOPPED_AT_MAX_ROUNDS|BLOCKED|SCORE_ONLY> (<MODE>) ===
+verdict: <passed|target not reached|exact blocker|score only>
 start: <initial>/100 -> final: <final>/100 (<delta>)
 rounds: <completed>/<attempted> (rollbacks <n>)
 dimensions: <dimension start -> final (delta)>

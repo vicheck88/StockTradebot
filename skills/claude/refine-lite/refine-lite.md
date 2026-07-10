@@ -29,7 +29,7 @@ argument-hint: "[path] [--target N] [--rounds N] [--mode code|test]"
 
 입력: PATH, MODE(자동 감지 포함).
 - PATH에 파일이 없으면 대화에 명시 요구사항이 있을 때만 그 요구사항대로 새로 작성하고 수용 기준을 산출에 1-3줄로 기록한다 — 이 작성은 **Round 0**으로 기록하고 MAX_ROUNDS 카운트는 Round 1부터 시작한다. 명시 요구사항이 없으면 요구사항을 사용자에게 요청하고 응답을 대기한다.
-- PATH에 파일이 있으면 수정 전 `backup="/tmp/refine-lite-backup-$(date +%s)-$(basename -- "{PATH}")"; cp -- "{PATH}" "$backup"`로 되돌림 기준점을 남기고 곧장 Round 1로 진행한다.
+- PATH에 파일이 있으면 수정 전 `backup="/tmp/refine-lite-backup-$(date +%s)-$(basename -- "{PATH}")"; cp -- "{PATH}" "$backup"`로 되돌림 기준점과 원본 hash를 남기고 곧장 Round 1로 진행한다. 적용 batch마다 별도 snapshot/hash를 남겨, 새 검증 실패 또는 점수 하락 시 writer 출력 hash가 일치할 때만 그 batch를 rollback한다.
 
 산출: 확정된 대상 파일(신규 작성 시 수용 기준 1-3줄 포함), 기존 파일이면 백업 사본 경로. 다음 분기: 파일이 확정됐으면 항상 Step 1(ROUND=1)로.
 
@@ -63,13 +63,13 @@ SendMessage({ to: "{활성 lite-scorer}", summary: "Round {N} 재채점 요청",
   message: "적용한 수정: {Step 3 수정 요약}. 전체 차원을 처음부터 full로 재채점하라 — 직전 점수를 재사용하지 말고 근거를 새로 남겨라." })
 ```
 
-채점과 병행해 프로젝트 테스트 러너(리포지토리에 이미 설정된 pytest/jest 등 — PATH가 속한 프로젝트 기준)를 실행한다 — 러너를 찾지 못하면 리포트에 러너=not_found로 남기고 Step 2의 테스트 게이트를 생략한다. Python 대상이면 pre-commit도 실행한다.
-산출: 차원별 점수, 종합 점수, 파일:라인 이슈 목록, 테스트/pre-commit 결과. 다음 분기: 항상 Step 2로.
+채점과 병행해 프로젝트 테스트 러너(리포지토리에 이미 설정된 pytest/jest 등 — PATH가 속한 프로젝트 기준)를 실행한다 — 러너를 찾지 못하면 리포트에 러너=not_found로 남기고 Step 2의 테스트 게이트를 생략한다. Python 대상이면 pre-commit도 실행하고 `flake8 --select=CCR001 --max-cognitive-complexity=15 <PATH>`가 있으면 인지복잡도를 측정한다(없으면 `cc=not_available`).
+산출: 차원별 점수, 종합 점수, 파일:라인 이슈 목록, 테스트/pre-commit/cc 결과. 다음 분기: 항상 Step 2로.
 
 ### Step 2 — 게이트
 
 입력: Step 1 산출. 산출: 통과/미통과 판정.
-- **통과 → Step 4**: 테스트 100% 통과(러너가 없는 프로젝트면 이 조건은 생략) AND (Python 대상이면 pre-commit 통과) AND 종합 >= TARGET AND 70 미만 차원 없음.
+- **통과 → Step 4**: 테스트 100% 통과(러너가 없는 프로젝트면 이 조건은 생략) AND (Python 대상이면 pre-commit 통과) AND (cc=not_available이면 생략, 그 외 CCR001 위반 0) AND 종합 >= TARGET AND 70 미만 차원 없음.
 - **미통과 → Step 3**: 위 중 하나라도 불만족 — 테스트 미통과는 점수와 무관하게 미달로 확정한다. 단 ROUND >= MAX_ROUNDS면 이미 채점 상한에 도달했으므로 Step 3(일괄 수정)를 건너뛰고 곧장 Step 4로 진행한다(예: `--rounds 1`에서 채점 1회 후 초과 수정 방지).
 
 ### Step 3 — 일괄 수정
@@ -96,13 +96,13 @@ else
 fi
 ```
 
-`task`는 `--background` 없이 호출하면 동기 실행이라 결과가 바로 `$CODEX_LOG`에 남는다 — 리뷰 전용이므로 읽기 전용으로 호출한다. `$CODEX_SCRIPT`가 빈 값이면 위 가드가 `not_installed`로 결정적으로 분류해 `$CODEX_LOG`에 남기고, 그 외 호출 실패는 `$CODEX_LOG` 내용을 근거로 사유(spawn_failed|timeout)를 Step 5에 남기고 다음 단계로 진행한다(`|| true`). 지적의 반영은 main이 수행한다 — 결정적·기계적 수정(포맷터/린터 자동수정)은 main이 즉시 적용하고, 비기계적 수정(코드/문장 재구성)은 sonnet 워커에게 브리핑으로 위임해 그 산출물을 반영한다. 유효한 지적이 있으면 위 원칙대로 반영하고 테스트를 재실행한 뒤(Python 대상이면 pre-commit도 재실행) lite-scorer에 delta 재채점 1회를 요청한다(라운드 카운트 없음, delta = codex 반영으로 값이 바뀔 수 있는 차원만 재평가하고 나머지는 직전 점수 유지) — Step 5는 이 재채점을 반영한 최종본 기준 점수를 보고한다.
+`task`는 `--background` 없이 호출하면 동기 실행이라 결과가 바로 `$CODEX_LOG`에 남는다 — 리뷰 전용이므로 읽기 전용으로 호출한다. `$CODEX_SCRIPT`가 빈 값이면 위 가드가 `not_installed`로 결정적으로 분류해 `$CODEX_LOG`에 남기고, 그 외 호출 실패는 `$CODEX_LOG` 내용을 근거로 사유(spawn_failed|timeout)를 Step 5에 남기고 다음 단계로 진행한다(`|| true`). 지적의 반영은 main이 수행한다 — 결정적·기계적 수정(포맷터/린터 자동수정)은 main이 즉시 적용하고, 비기계적 수정(코드/문장 재구성)은 sonnet 워커에게 브리핑으로 위임해 그 산출물을 반영한다. 유효한 지적이 있으면 위 원칙대로 반영하고 테스트·pre-commit·cc를 재실행한 뒤 lite-scorer에 전체 차원 재채점 1회를 요청한다(라운드 카운트 없음). 최종 Step 2 gate를 다시 평가해 검증 실패·점수 하락·미해결 blocking finding이 있는 이전 PASS를 보존하지 않는다.
 산출: codex 리뷰 요약(또는 미실행 사유), 반영 시 delta 재채점 결과. 다음 분기: 항상 Step 5로.
 
 ### Step 5 — 리포트
 
 대화 리포트로 결과를 낸다(로그·STATUS 파일 대신 이 리포트 하나로 완결):
-- 판정: `PASSED`(Step 2 게이트 통과) 또는 `STOPPED_AT_MAX_ROUNDS`(게이트 미통과, ROUND>=MAX_ROUNDS로 종료 — 아래 남은 이슈 참조) 중 실제 게이트 결과와 일치하는 값 하나만 쓴다. 판정 기준은 라운드 루프가 Step 4로 넘어가기 직전의 Step 2 게이트 결과다 — Step 4의 codex 피드백 반영·delta 재채점은 점수는 갱신하되 이 판정을 바꾸지 않는다.
+- 판정: `PASSED`(Step 4 반영 후 전체 재채점과 최종 게이트 통과) 또는 `STOPPED_AT_MAX_ROUNDS`(최종 게이트 미통과, ROUND>=MAX_ROUNDS로 종료 — 아래 남은 이슈 참조) 중 실제 최종 게이트 결과와 일치하는 값 하나만 쓴다. Step 4의 리뷰 반영·delta 재채점에서 검증 실패, 점수 하락, 미해결 blocking finding이 발생하면 이전 PASS를 보존하지 말고 최종 게이트를 미통과로 판정한다.
 - 시작 → 최종 종합 점수, 차원별 점수 (Step 4에서 반영이 있었다면 그 delta 재채점을 반영한 최종본 기준 점수)
 - 실행한 라운드 수, 테스트 러너 사용 여부(러너=not_found면 그렇게 표기)
 - 남은 이슈(있으면 파일:라인까지)

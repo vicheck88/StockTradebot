@@ -22,7 +22,7 @@ Examples:
 - `test`: coverage tooling such as `@vitest/coverage-v8`
 - `code` or `integrate`: lint and formatter commands used by the project
 - `code`: lockfile consistency checks when the project depends on them
-- all modes unless `REVIEWER=codex`: Claude review wrapper [scripts/claude-review.sh](./scripts/claude-review.sh) and the local `claude` CLI; the wrapper timeout must default to `1800` seconds to match Claude Code `/refine`'s Codex agent timeout
+- all modes unless `REVIEWER=codex`: the Sonnet Workflow review wrapper at `$CODEX_HOME/skills/refine/scripts/claude-review.sh` and, when present, the paired `claude-propose.sh` proposer, plus local `claude` and `jq`; their default timeout is `1800` seconds unless the user overrides it
 
 Report the result in this shape:
 
@@ -31,7 +31,7 @@ TOOL_CHECK:
 - <tool>: installed (<version or command>)
 - <tool>: missing -> installed (<version or command>)
 - <tool>: blocked (<reason and next action>)
-- claude-review: available (<claude --version>; model <sonnet|opus|override>; timeout 1800s or configured override) or unavailable (<reason>) -> codex fallback, or skipped (--reviewer codex)
+- claude-ultracode: available (<claude --version>; Sonnet Workflow + jq; timeout 1800s or configured override) or unavailable (<reason>) -> codex fallback, or skipped (--reviewer codex)
 ```
 
 ## Step 0 Bootstrap Creation
@@ -70,7 +70,7 @@ AUDIT_OUT="/tmp/codex_audit_${RUN}.md"
 ```
 
 2. Build an inline context package. Prefer a diff when refining changed work; otherwise concatenate the target files. Keep the package around `150KB` or smaller when practical.
-3. If a Codex companion CLI or sub-agent route is available and the user allowed delegation, launch read-only prep in the background. The prep task writes `PREP_OUT`; doc modes may also write `AUDIT_OUT`; code/integrate prep should fold defect scouting into the same prep task instead of launching a separate scout. If no such route is available, mark prep unavailable and continue.
+3. Sol Ultra authorizes one bounded read-only Luna prep lane (and Terra audit lane for doc modes). The prep task writes `PREP_OUT`; code/integrate scouting folds into prep. If the independent lane is unavailable, mark it unavailable and continue from deterministic context.
 4. Never use fixed names such as `/tmp/refine_ctx.txt`, `/tmp/codex_prenotes.md`, or `/tmp/codex_audit.md`.
 5. Treat a completed prep job with an empty output file as failed. Do not reuse stale or empty prep output.
 
@@ -102,24 +102,19 @@ For round `2+`, do not force every scorer to rediscover the whole target. Provid
 
 ## MODEL_POLICY and TDD
 
-`MODEL_POLICY` is an optional role-to-model routing hint. Parse repeated `--model-policy role=model[:effort]` values with the rightmost entry winning for the same role. Claude roles accept `role=model`; Codex companion task roles accept `role=model:effort`. `effort` is only meaningful for Codex companion `task` jobs that support `--effort`; it is not used by `scripts/claude-review.sh`, local inline Codex scoring, or `refine-lite`. It may affect which model/tool you choose for scorer, proposer, verifier, or reviewer work, but it never overrides evidence, audits, caps, or stop gates.
+`MODEL_POLICY` is routing input only. Parse repeated `role=model[:effort]` values with the rightmost entry winning. Claude reviewer/proposer roles require Sonnet (`high` for doc modes, `xhigh` otherwise); `codex-main` is always `gpt-5.6-sol:ultra`. Reject unknown roles, non-Sonnet Claude routes, and unsupported efforts rather than silently ignoring them.
 
-Speed-first defaults:
+Required default routes:
 
 | Role | Default model | Default effort | Notes |
 |------|---------------|----------------|-------|
-| `claude-reviewer` | `sonnet` | n/a | independent Claude scorer; override with `opus` for hard review |
-| `codex-prep` | `spark` | `low` | maps to `gpt-5.3-codex-spark`; fastest reusable context notes |
-| `codex-scout` | `spark` | `low` | fold into prep for code/integrate defect scouting |
-| `codex-audit` | `gpt-5.4-mini` | `medium` | doc:* structural/contract/back-question audit |
-| `codex-scorer` for doc:* | `gpt-5.4-mini` | `medium` | repeated scoring where speed matters |
-| `codex-scorer` for code/test/integrate | `gpt-5.4` | `high` | stronger implementation judgment |
-| `codex-proposer` for doc:* | `gpt-5.4-mini` | `medium` | fast document/prompt proposals |
-| `codex-proposer` for code/test | `gpt-5.4` | `high` | patch/test proposals need stronger reasoning |
-| `codex-verifier` | `gpt-5.4` | `high` | adversarial validation of accepted proposals |
-| `codex-reviewer` | `gpt-5.4` | `high` | final diff review unless high-risk escalation applies |
+| `claude-reviewer` / `claude-proposer` | `sonnet` | `high` doc / `xhigh` code | Workflow only; proposal text never edits targets |
+| `codex-main` | `gpt-5.6-sol` | `ultra` | required orchestrator and final acceptance owner |
+| `codex-prep` / `codex-scout` | `gpt-5.6-luna` | `low` | one reusable prep lane |
+| `codex-audit` / `codex-scorer` / `codex-proposer` / `codex-writer` | `gpt-5.6-terra` | `high` doc / `xhigh` code | bounded work lanes |
+| `codex-adjudicator` / `codex-verifier` / `codex-reviewer` | `gpt-5.6-sol` | `xhigh` | independent evidence and final-diff lanes |
 
-Escalate `claude-reviewer` to `opus` and Codex verifier/reviewer/scorer roles to `gpt-5.5:xhigh` only when at least one condition applies: `integrate` mode, security/auth/payment/data-loss risk, schema or migration changes, large multi-module diff, reviewer score disagreement above `20`, repeated issue across two rounds, or explicit user `--model-policy`. Do not run routine prep/scout on `gpt-5.5:xhigh`; that defeats the speed goal.
+Do not route leaf roles to Ultra or substitute the main when an independent lane fails. Each leaf has one 1800-second deadline and one replacement; report it unavailable after a second failure.
 
 When using the Codex companion CLI for a role with a default or user-selected model/effort, pass routing as runtime flags, not prompt text:
 
@@ -252,7 +247,7 @@ If the user explicitly authorized delegation or asked for parallel agent work, e
 When `REVIEWER` is `claude-auto` or `claude`, attempt Claude before local adversarial fallback:
 
 1. Build a concise read-only prompt containing `MODE`, target path, round number, dimensions with weights, scoring anchors, the context package or delta package, and the exact evidence requirement.
-2. Run [scripts/claude-review.sh](./scripts/claude-review.sh) from this skill directory or by absolute path. Let its default timeout remain `1800` seconds unless the user explicitly overrides `CLAUDE_REVIEW_TIMEOUT_SECONDS`; this matches Claude Code `/refine`'s Codex agent timeout and avoids premature reviewer fallback on large targets. Let the wrapper default `CLAUDE_REVIEW_MODEL` to `sonnet`; set `CLAUDE_REVIEW_MODEL=opus` only when `MODEL_POLICY` or the escalation rules select `opus`.
+2. Run [scripts/claude-review.sh](./scripts/claude-review.sh) from this skill directory or by absolute path. Let its default timeout remain `1800` seconds unless the user explicitly overrides `CLAUDE_REVIEW_TIMEOUT_SECONDS`. The wrapper must use the Sonnet Workflow route; reject `CLAUDE_REVIEW_MODEL` values other than `sonnet` rather than silently routing to another model.
 3. Treat exit `0` with parseable dimension scores as the `reviewer scorer`.
 4. Treat exit `11` as a caller/prompt error, not as reviewer unavailability: fix the prompt or wrapper invocation, then rerun the reviewer before scoring.
 5. Treat missing CLI, auth failure, timeout, exit `10`, empty output, unparseable scores, or `UNAVAILABLE` output as unavailable and immediately run Codex local adversarial scoring instead.

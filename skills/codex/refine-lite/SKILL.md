@@ -15,7 +15,7 @@ Refine Lite is the small-code sibling of `refine`: one independent score view, u
 
 Do not create `.refine.log`, `STATUS.md`, lifecycle state, or persistent ledgers for this skill.
 
-Do not use `MODEL_POLICY` or effort routing in `refine-lite`. It deliberately relies on the current Codex session plus the optional Claude review wrapper; role-specific `--model`/`--effort` routing belongs to the full `refine` skill's Codex companion task path.
+Require `gpt-5.6-sol:ultra` as the lite main route. Keep the graph bounded: Terra xhigh scores and writes, Sol xhigh performs the final review, and the Ultra main only orchestrates and decides gates. Verify the requested model/effort route is available before Step 0; if unavailable, record `BLOCKED` and do not replace an independent role with the main.
 
 ## Parameters
 
@@ -43,18 +43,15 @@ Anchors: `0-20` absent, `21-40` abstract only, `41-60` more than half unmet, `61
 
 ### Step 0: Target
 
-Read the target and nearby conventions. If creating a missing file, implement the initial requested artifact first and record it mentally as Round 0; do not count it against `MAX_ROUNDS`.
+Read the target and nearby conventions. If creating a missing file, have the Terra writer implement the initial artifact as Round 0; do not count it against `MAX_ROUNDS`. For an existing target, snapshot it under a unique `/tmp/refine-lite-backup-<run>-<basename>` path and record pre-change hashes before the first edit.
 
 Determine the most relevant verification command from local project files. Prefer existing package scripts, pytest config, test runner config, Makefile targets, or pre-commit config over inventing commands.
 
 ### Step 1: Score
 
-Produce one baseline Codex score and one independent review score when practical:
+Assign one reusable Terra xhigh scorer to score all four dimensions. A scorer failure may be retried once; a second failure is `BLOCKED`, not a main-session score. Run the verification command concurrently and run the project cognitive-complexity check, or `flake8 --select=CCR001 --max-cognitive-complexity=15 <targets>` when available; otherwise report `cc=not_available`.
 
-- Preferred independent scorer: `$HOME/.codex/skills/refine/scripts/claude-review.sh` with a read-only prompt. Keep its default timeout unless the environment sets `CLAUDE_REVIEW_TIMEOUT_SECONDS`.
-- Fallback: local Codex adversarial scorer that attempts to falsify the baseline score.
-
-Never claim Claude reviewed unless the wrapper exits `0` and its output is actually used. If the wrapper is missing, Claude is not authenticated, the result is empty, or output is not score-like, write the reason as `independent scorer: codex fallback (<reason>)`.
+- The independent scorer is the assigned Terra xhigh lane; it must produce evidence-backed scores separate from the Ultra main. Do not substitute a Claude wrapper or the main session for this role.
 
 Run the target verification command in parallel when feasible. For Python targets, run pre-commit only when a pre-commit configuration exists and the target is inside that project.
 
@@ -64,6 +61,7 @@ Pass only when all are true:
 
 - verification command passes, if a faithful command exists
 - Python pre-commit passes, if applicable
+- cognitive-complexity checks have no violations when available
 - weighted score is at least `TARGET_SCORE`
 - no dimension is below `70`
 
@@ -75,20 +73,22 @@ Fix all selected issues in one batch, with failing tests first. In `test` mode, 
 
 For every code/test batch, include a small simplification pass when applicable: prefer guard clauses and early returns where they clarify the main path, split functions that mix parsing, branching, I/O, mutation, and formatting, remove dead or duplicate branches, reduce shared mutable state, and replace boolean flags or mode strings with named functions when behavior truly diverges. Do not add a new abstraction unless it removes real branch/state complexity.
 
-After editing, rerun the relevant verification command and rescore only the dimensions affected by the diff while carrying unchanged dimensions forward. Increment the round and return to Step 2.
+Assign one Terra xhigh writer to apply the whole compatible batch. Snapshot the batch and writer-output hashes; rerun verification, pre-commit, cognitive-complexity, and a full four-dimension rescore. If a check newly fails or any score regresses, restore only the batch when hashes still match; otherwise report the outside-edit conflict as `BLOCKED`. Increment the round and return to Step 2.
 
 ### Step 4: Final Review
 
-Run one adversarial final review over the target or final diff. Include cognitive-complexity risks in the review prompt: deep nesting, callback chains, repeated negations, long condition chains, boolean-mode behavior, mixed responsibilities, unnecessary mutable state, dead branches, and future-only paths. Use local Codex review directly; if Claude independent scoring already identified unresolved concrete issues, include them in the review prompt.
+Assign one Sol xhigh final reviewer over the target or final diff. Include cognitive-complexity risks in the review prompt: deep nesting, callback chains, repeated negations, long condition chains, boolean-mode behavior, mixed responsibilities, unnecessary mutable state, dead branches, and future-only paths. Apply valid findings through the same writer, rerun all checks, then request one full rescore before deciding the final gate.
 
-Apply valid final-review findings immediately and rerun the verification command. Do not rescore after this final-review fix; report the last score as pre-final-review score if changes were made in this step.
+Never preserve an earlier PASS after final-review changes fail verification, regress a score, or leave a blocking finding open.
 
 ### Step 5: Report
 
-Report:
+Report only after the post-final-review full rescore and gate evaluation:
 
 - start score to final score, with dimensions
 - rounds used
 - verification commands and results
+- pre-commit and cognitive-complexity commands and results
+- configured versus effective routes and any unavailable lane
 - final-review summary or unavailable reason
 - remaining issues with file/line references, if any
