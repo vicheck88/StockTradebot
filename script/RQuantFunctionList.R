@@ -16,7 +16,7 @@ recentBizDay <- function(){
   biz_day = GET(url) %>%
     read_html(encoding = 'EUC-KR') %>%
     html_nodes(xpath =
-                 '//*[@id="time"]') %>% 
+                 '//*[@id="time"]') %>%
     html_text() %>%
     str_match(('[0-9]+.[0-9]+.[0-9]+') ) %>%
     str_replace_all('\\.', '')
@@ -24,7 +24,7 @@ recentBizDay <- function(){
 
 loginKRX <- function(user_id, password, h) {
   login_url <- "https://data.krx.co.kr/contents/MDC/COMS/client/MDCCOMS001D1.cmd"
-  
+
   response <- POST(
     login_url,
     handle = h,  # Use the handle to persist cookies
@@ -44,9 +44,9 @@ loginKRX <- function(user_id, password, h) {
     ),
     encode = "form"
   )
-  
+
   json_data <- fromJSON(content(response, as = "text", encoding = "UTF-8"))
-  
+
   if (json_data$`_error_code` == "CD001") {
     message("Login successful! Member: ", json_data$MBR_NO)
     return(TRUE)
@@ -60,7 +60,7 @@ getOTP<-function(otpBody,h){
   # 산업별 현황 OTP 발급
   gen_otp_url =
     'https://data.krx.co.kr/comm/fileDn/GenerateOTP/generate.cmd'
-  
+
   otp_response <- POST(
     gen_otp_url,
     handle = h,  # Same handle = same session cookies
@@ -168,12 +168,12 @@ KRXDataMerge<-function(businessDay, loginInfo){
   down_sector <- down_sector %>%
     select(-`한글 종목명`) %>%
     rename(종목명 = `한글 종목약명`)
-  
+
   down_monitoring<-KRXMonitoringStat(krxHandle)
   down_monitoring$관리종목<-str_replace_all(down_monitoring$관리종목,'O','관리종목')
   down_monitoring$관리종목<-str_replace_all(down_monitoring$관리종목,'X','-')
   down_monitoring<-down_monitoring[,c(1,2,5)]
-  
+
   down_ind_KOSPI<-KRXIndividualStat(businessDay,"STK",krxHandle)
   down_ind_KOSDAQ<-KRXIndividualStat(businessDay,"KSQ",krxHandle)
   down_ind<-rbind(down_ind_KOSPI,down_ind_KOSDAQ)
@@ -181,7 +181,7 @@ KRXDataMerge<-function(businessDay, loginInfo){
   down_ind_dividen <- down_ind_dividen %>% select(-"종가")
   #데이터 정리(개별종목, 산업현황 데이터 병합)
   setdiff(down_sector[,'종목명'],down_ind[,'종목명']) #겹치지 않은 종목 ->제외(일반적이지 않은 종목들)
-  
+
   KOR_ticker = merge(down_sector, down_ind,
                      by = intersect(names(down_sector),names(down_ind)),
                      all = FALSE
@@ -190,8 +190,8 @@ KRXDataMerge<-function(businessDay, loginInfo){
   KOR_ticker<-merge(KOR_ticker,down_ind_dividen,by=c("종목코드","종목명"),all=FALSE)
   setDT(KOR_ticker)
   setorder(KOR_ticker,'시가총액') #시가총액으로 정렬
-  
-  KOR_ticker <- KOR_ticker[!grepl('스팩', KOR_ticker$'종목명'),] 
+
+  KOR_ticker <- KOR_ticker[!grepl('스팩', KOR_ticker$'종목명'),]
   KOR_ticker <- KOR_ticker[str_sub(KOR_ticker$'종목코드', -1, -1) == 0,] #우선주
   KOR_ticker$일자<-as.Date(businessDay,format='%Y%m%d')
   KOR_ticker<-subset(KOR_ticker,select = c('일자','종목코드','종목명','시장구분','업종명','종가','시가총액',
@@ -214,9 +214,9 @@ WICSSectorInfo<-function(businessDay){
       '?ceil_yn=0&dt=',businessDay,'&sec_cd=',i)
     data = fromJSON(url)
     data = data$list
-    
+
     data_sector[[i]] = data
-    
+
     Sys.sleep(1)
   }
   data_sector = do.call(rbind, data_sector)
@@ -239,27 +239,27 @@ adjustedPriceFromNaver<-function(interval, cnt, code){
       url = paste0(
         'https://fchart.stock.naver.com/sise.nhn?symbol='
         ,code,'&timeframe=',interval,'&count=',cnt+1,'&requestType=0')
-      
+
       # 이 후 과정은 위와 동일함
       # 데이터 다운로드
       data = GET(url)
       data_html = read_html(data, encoding = 'EUC-KR') %>%
         html_nodes("item") %>%
-        html_attr("data") 
-      
+        html_attr("data")
+
       # 데이터 나누기
       price = read_delim(I(data_html), delim = '|')
-      
+
       # 필요한 열만 선택 후 클렌징
-      price = price[c(1, 5)] 
+      price = price[c(1, 5)]
       price = data.frame(price)
       colnames(price) = c('Date', code)
       price[, 1] = ymd(price[, 1])
-      
+
       rownames(price) = price[, 1]
       price[, 1] = NULL
       return(price)
-      
+
     }, error = function(e) {
       # 오류 발생시 해당 종목명을 출력
       warning(paste0("Error in Ticker: ", code))
@@ -271,73 +271,120 @@ getLastBizdayofMonth<-function(cnt){
   return(rownames(adjustedPriceFromNaver('month',cnt,'005930')))
 }
 
-#Fnguide에서 데이터 받기
+# FnGuide 신버전 JSON API에서 재무제표 받기
 getFSHtmlFromFnGuide<-function(codeList, reportGB='D'){
+  consolType<-c(D='C', B='S')[[reportGB]]
+  if(is.null(consolType)) stop("reportGB must be 'D' or 'B'", call.=FALSE)
+
+  baseUrl<-'https://wcomp.fnguide.com/CompanyInfo'
+  endpoints<-c(
+    '포괄손익계산서'='getFinIncome',
+    '재무상태표'='getFinBalance',
+    '현금흐름표'='getFinCashFlow'
+  )
   htmlData<-list()
-  i<-1
+
   for(code in codeList){
-    url = paste0(
-      'https://comp.fnguide.com/SVO2/ASP/'
-      ,'SVD_Finance.asp?pGB=1&gicode=A',
-      code,'&ReportGB=',reportGB)
-    # 이 후 과정은 위와 동일함
-    # 데이터 다운로드 후 테이블 추출
-    data = GET(url,
-              user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")) %>%
-      read_html() %>%
-      html_table()
-    htmlData[[code]]<-data
+    codeData<-list(Y=list(), Q=list())
+
+    for(type in c('Y','Q')){
+      for(statement in names(endpoints)){
+        response<-GET(
+          paste0(baseUrl,'/',endpoints[[statement]]),
+          query=list(
+            cmp_cd=code,
+            freq_typ=type,
+            consol_typ=consolType
+          ),
+          user_agent("Mozilla/5.0"),
+          timeout(15)
+        )
+        stop_for_status(response)
+
+        if(grepl('/Error/',response$url)){
+          codeData<-list(Y=list(), Q=list())
+          break
+        }
+
+        payload<-fromJSON(content(response,as='text',encoding='UTF-8'))
+        if(is.null(payload$dataset$header) || is.null(payload$dataset$data)){
+          stop(paste0("Unexpected FnGuide response for ",code),call.=FALSE)
+        }
+        codeData[[type]][[statement]]<-payload$dataset
+      }
+      if(length(codeData[[type]])==0) break
+    }
+    htmlData[[code]]<-codeData
   }
   return(htmlData)
 }
-#Fnguide에서 받은 데이터 정리하기
+
+# FnGuide JSON을 기존 DB 입력 형식으로 변환하기
 cleanFSHtmlToDataFrame<-function(type,htmlData){
-  data<-htmlData[[1]]
-  if(length(data)==0) return(NULL)
-  if(type=="Y") r=1 else r=2
-  idxList<-0:2*2+r
-  # 3개 재무제표를 하나로 합치기    
-  data_IS<-data[[idxList[1]]]
-  data_BS<-data[[idxList[2]]]
-  data_CF<-data[[idxList[3]]]
-  data_IS<-data_IS[, 1:(ncol(data_IS)-2)]
-  
-  data_IS$name<-'포괄손익계산서'
-  data_BS$name<-'재무상태표'
-  data_CF$name<-'현금흐름표'
-  data_fs<-as.data.table(rbind(data_IS,data_BS,data_CF))
-  # 데이터 클랜징
-  data_fs[, 1] = gsub('계산에 참여한 계정 펼치기','',data_fs[,1][[1]])
-  
-  rownames(data_fs) = NULL
-  ftype<-data_fs[,1][[1]]
-  data_fs<-data_fs[,-1]
-  
-  Name<-data_fs[,length(names(data_fs)),with=FALSE][[1]]
-  data_fs<-data_fs[,-length(names(data_fs)),with=FALSE]
-  data_fs<-data_fs[,lapply(.SD,function(x){as.numeric(str_replace_all(x,',',''))})]
-  data_fs[,c("계정","항목","code"):=list(ftype,Name,names(htmlData))]
-  data_fs<-subset(data_fs,select=c(7,6,5,1,2,3,4))
-  date<-names(data_fs)[4:7]
-  date<-str_replace_all(date,'/','.')
-  names(data_fs)[4:7]<-date
-  if(type=='Q') {names(data_fs)[4:7]<-date} else{
-    month<-substr(date,6,7)
-    if(month[length(date)]!=month[1]) data_fs<-data_fs[,-length(names(data_fs)),with=FALSE]
+  emptyData<-data.table(
+    종목코드=character(),
+    종류=character(),
+    계정=character(),
+    일자=character(),
+    값=numeric()
+  )
+  if(!type %in% c('Y','Q')) stop("type must be 'Y' or 'Q'",call.=FALSE)
+  if(length(htmlData)==0 || length(htmlData[[1]][[type]])==0) return(emptyData)
+
+  code<-names(htmlData)[1]
+  result<-list()
+
+  for(statement in names(htmlData[[1]][[type]])){
+    dataset<-htmlData[[1]][[type]][[statement]]
+    header<-as.data.table(dataset$header)
+    data<-as.data.table(dataset$data)
+    if(nrow(header)==0 || nrow(data)==0) next
+
+    header<-head(header,4)
+    if(type=='Y') header<-header[LINE==0]
+
+    valueColumns<-intersect(header$CD,names(data))
+    if(length(valueColumns)==0) next
+
+    dateMap<-setNames(
+      str_replace_all(str_extract(header$YYMM,'^[0-9]{4}/[0-9]{2}'),'/','.'),
+      header$CD
+    )
+    statementData<-data[,c('NAME',valueColumns),with=FALSE]
+    setnames(statementData,'NAME','계정')
+    statementData[,계정:=trimws(계정)]
+    accountMap<-c(
+      '매출액(수익)'='매출액',
+      '(지배주주지분)당기순이익'='지배주주순이익',
+      '자산총계'='자산',
+      '부채총계'='부채',
+      '자본총계'='자본'
+    )
+    accountIndex<-match(statementData$계정,names(accountMap))
+    statementData$계정[!is.na(accountIndex)]<-accountMap[accountIndex[!is.na(accountIndex)]]
+    statementData<-melt.data.table(
+      statementData,
+      id.vars='계정',
+      variable.name='기간',
+      value.name='값'
+    )
+    statementData[,일자:=dateMap[as.character(기간)]]
+    statementData[,값:=as.numeric(str_replace_all(값,',',''))*100000000]
+    statementData<-statementData[!is.na(값) & !is.na(일자) & 계정!='']
+    statementData[,c('종목코드','종류'):=list(code,statement)]
+    result[[statement]]<-statementData[,.(종목코드,종류,계정,일자,값)]
   }
-  data_fs<-melt.data.table(data_fs,1:3)
-  names(data_fs)<-c("종목코드","종류","계정","일자","값")
-  data_fs<-na.omit(data_fs)
-  data_fs$값<-data_fs$값*100000000
-  data_fs<-data_fs[,.(값=sum(값)),by=eval(names(data_fs)[-5])]
-  data_fs<-data_fs[!duplicated(data_fs), ]
+
+  if(length(result)==0) return(emptyData)
+  data_fs<-rbindlist(result,use.names=TRUE)
+  data_fs<-data_fs[,.(값=sum(값)),by=.(종목코드,종류,계정,일자)]
   return(data_fs)
 }
 
 getCurrentPrice<-function(code){
   url = paste0('https://comp.fnguide.com/SVO2/ASP/SVD_main.asp?pGB=1&gicode=A',code)
   data = GET(url)
-  
+
   price = read_html(data) %>%
     html_node(xpath = '//*[@id="svdMainChartTxt11"]') %>%
     html_text() %>%
@@ -469,7 +516,7 @@ extractFSEntities<-function(corpData,data){
   code<-corpData$종목코드
   data<-data[data$종목코드==code]
   data<-unique(data,by=c("종목코드","종류","계정","일자"),fromLast=T)
-  
+
   if(length(unique(data$일자))==4){
     data<-sumQuarterData(data)
   }
@@ -481,15 +528,15 @@ extractFSEntities<-function(corpData,data){
     capex<-data[계정 %in% c("유형자산의증가","무형자산의증가")][,sum(값)]-data[계정 %in% c("유형자산의감소","무형자산의감소")][,sum(값)]
     if(!is.na(capex)) fcf<-ocf-capex
   } else fcf<-0
-  
-  
+
+
   value_type <- c('지배주주순이익','자본','자본금','영업활동으로인한현금흐름',
                   '재무활동으로인한현금흐름','투자활동으로인한현금흐름','매출액','매출총이익','영업이익',
                   '유동자산','부채','유상증자','자산','유동부채','당기순이익')
-  
+
   tmp<-data[data[,계정 %in% value_type]]$값
   names(tmp)<-data[data[,계정 %in% value_type]]$계정
-  
+
   corpData[,':='(자산=tmp['자산'],유동자산=tmp['유동자산'],부채=tmp['부채'],유동부채=tmp['유동부채'],
                    자본=tmp['자본'],자본금=tmp['자본금'],매출액=tmp['매출액'],매출총이익=tmp['매출총이익'],
                    영업이익=tmp['영업이익'],지배주주순이익=tmp['지배주주순이익'],당기순이익=tmp['당기순이익'],
@@ -498,7 +545,7 @@ extractFSEntities<-function(corpData,data){
                    투자활동으로인한현금흐름=tmp['투자활동으로인한현금흐름'],
                    잉여현금흐름=fcf,
                    유상증자=tmp['유상증자'])]
-  
+
   return(corpData)
 }
 
@@ -527,7 +574,7 @@ addMomentum<-function(businessDay, codeList){
         Return<-Return.calculate(priceList)
         Return<-Return[!is.na(Return)]
         volatility<-sd(Return)*sqrt(length(Return))
-        
+
         monthPrice<-adjustedPriceFromNaver('month',14,code)[,1]
         latestValue<-monthPrice[13]
         monthlyMomentum<-latestValue/monthPrice[-12:-13]-1
@@ -546,4 +593,3 @@ winsorizing<-function(val){
                  quantile(val,0.99,na.rm=TRUE),val)
   return(newval)
 }
-

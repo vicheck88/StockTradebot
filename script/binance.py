@@ -28,6 +28,7 @@ spotURL='https://api.binance.com'
 headers = {
     'X-MBX-APIKEY': accessKey
 }
+requestTimeout = (5, 15)
 
 
 # In[3]:
@@ -36,7 +37,8 @@ headers = {
 def sendMessage(message,count=0):
   url=f"https://api.telegram.org/bot{telegramApi['token']}/sendMessage?chat_id={telegramApi['chatId']}&text={message}"
   try:
-    res=rq.post(url)
+    res=rq.post(url,timeout=requestTimeout)
+    res.raise_for_status()
     print(f'sendMessage: {res.status_code}')
   except Exception as e:
     print(f'error: {e}')
@@ -49,15 +51,23 @@ def sendMessage(message,count=0):
 
 
 def request(url,method):
-  if method=='get': return rq.get(url,headers=headers)
-  elif method=='post': return rq.post(url,headers=headers)
-  elif method=='delete': return rq.delete(url,headers=headers)
+  response=rq.request(method.upper(),url,headers=headers,timeout=requestTimeout)
+  if not response.ok:
+    try:
+      error=response.json()
+      raise RuntimeError(f"Binance API error {error.get('code')}: {error.get('msg')}")
+    except ValueError:
+      response.raise_for_status()
+  return response
 def createSignature(message):
   return hmac.new(key=secretKey.encode('utf-8'), msg=message.encode('utf-8'),digestmod=hashlib.sha256).hexdigest()
 def requestData(mainUrl,subUrl,method,message,addSignature=True):
   url = f'{mainUrl}{subUrl}?{message}'
   if addSignature: url+=f'&signature={createSignature(message)}'
-  return request(url,method).json()
+  try:
+    return request(url,method).json()
+  except ValueError as e:
+    raise RuntimeError(f'Binance returned invalid JSON for {subUrl}') from e
 
 
 # In[5]:
@@ -197,7 +207,7 @@ def convertAccountUnit(asset,investInfo):
   ratio=1 if asset=='USDT' else float(getCurrentPrice(f'{asset}USDT')['price'])
   for asset in investInfo: investInfo[asset]*=ratio
   return investInfo
-  
+
 def determineInvestInfo(disparity,currentInvestInfo,isIncreasing,maxLeverage):
   d=disparity-100
   ratio=math.floor(d)/2
@@ -270,7 +280,7 @@ def setCurrentTakeProfitLimitPrice(symbol,curPrice,currentPosition,averagePrice,
     priceList.append(midPrice)
   if fullPrice>curPrice:
     print(f'set takeProfit price at {fullPrice}')
-    print(orderFutureWithTimeLimit(symbol,'BUY',availablePosition,fullPrice,timeLimit)) 
+    print(orderFutureWithTimeLimit(symbol,'BUY',availablePosition,fullPrice,timeLimit))
     priceList.append(fullPrice)
   print(f"buy setting finished: price at {','.join(str(v) for v in [midPrice,fullPrice])}")
 
@@ -281,13 +291,13 @@ def setCurrentStopLimitPrice(symbol,curPrice,levelNum,currentPosition,averagePri
   print(f'set stopPrice at {math.floor(averagePrice*0.99)}: close price')
   print(setPositionClosePrice(symbol,'SELL',math.floor(averagePrice*0.99),'MARK_PRICE'))
   print(f"stopmarket setting finished: price at {','.join(str(v) for v in [averagePrice,math.floor(averagePrice*0.99)])}")
-  
+
 def setCurrentStopmarketPrice(symbol,curPrice,maxLeverage,totalPositionAmount,averagePrice):
   amountPerStop=floorToDecimal(totalPositionAmount/maxLeverage,3)
   stopPriceList=[round(averagePrice*(1+r/100),1) for r in range(maxLeverage*2-1,1,-2)]
   realStopPriceList=[]
   for price in stopPriceList:
-    if(curPrice>price): 
+    if(curPrice>price):
       print(f'set stopPrice at {price}')
       print(setStopMarketPrice(symbol,'SELL',price,amountPerStop,'MARK_PRICE'))
       realStopPriceList.append(price)
@@ -339,9 +349,9 @@ try:
     sendMessage("binance future BUY")
     sendMessage(f'disparity: {disparity}')
     sendMessage(updatedChangeInfo)
-    
+
     print('transfer spot into future')
-    for b in freeBalances: 
+    for b in freeBalances:
       print(f"transfer asset: {b['asset']}")
       sendMessage(transfer('main','umfuture',b['asset'],float(b['free'])))
     assetList=[v for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols]
@@ -352,7 +362,7 @@ try:
       sendMessage(f'averagePriceList: {averagePrice}')
       sendMessage(f'averagePrice: {averagePrice}')
       sendMessage(f'price: {curPrice} newPositionAmount: {newPositionAmount}')
-      
+
       print('order new position')
       orderResponse=orderFutureWithTimeLimit(symbol,'BUY',newPositionAmount,curPrice,1000)
       sendMessage(orderResponse)
@@ -361,7 +371,7 @@ try:
       print('transfer remaining future assets into spot account')
       transfer('umfuture','main',asset['asset'],float(asset['availableBalance']))
       time.sleep(100)
-      
+
   averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
   positionAmountList=[v for v in getCurrentPosition() if v['symbol']==symbol and float(v['positionAmt'])>0]
   maximumPositionAmount=floorToDecimal(float(updatedChangeInfo['total'])*leverage/curPrice,3)
@@ -373,22 +383,22 @@ try:
       # currentPositionAmount=floorToDecimal(float(updatedChangeInfo['total'])*currentLeverage/curPrice,3)
       setCurrentStopLimitPrice(position['symbol'],curPrice,stopLimitLevelNum,float(position['positionAmt']),averagePrice,'OPPONENT')
       # setCurrentStopmarketPrice(symbol,curPrice,leverage,maximumPositionAmount,averagePrice)
-  
+
   earnList=dict([(v['asset'],v['productId']) for v in getFlexibleSimpleEarnList()['rows']])
   futureBalances=dict([(v['asset'],float(v['availableBalance'])) for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols])
   currentEarnAmount=getSimpleEarnPosition()
 
   for asset,amt in futureBalances.items():
-    if asset in earnList: 
-      amount=amt   
+    if asset in earnList:
+      amount=amt
       if amt<0.1:
-        earnAsset=[v for v in currentEarnAmount['rows'] if v['asset']==asset]  
+        earnAsset=[v for v in currentEarnAmount['rows'] if v['asset']==asset]
         if earnAsset and float(earnAsset[0]['totalAmount'])>0.1:
           redeemFlexibleSimpleEarnProduct(earnAsset[0]['productId'],0.1)
           transfer('main','umfuture',asset,0.1)
           amount+=0.1
       sendMessage(transfer('umfuture','main',asset,amount))
-      
+
   currentEarnAmount=getSimpleEarnPosition()
   spotBalances=dict([(v['asset'],float(v['free'])) for v in getAccount()['balances'] if float(v['free'])>0])
   for asset,amt in spotBalances.items():
@@ -407,4 +417,3 @@ except Exception as e:
   msg=f'Failed to finish the program: {traceback.format_exc()}'
   sendMessage(msg)
   print(msg)
-
