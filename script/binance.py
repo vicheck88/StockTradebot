@@ -18,7 +18,7 @@ import numpy as np
 # In[2]:
 
 
-with open('/Users/chhan/config.json','r') as f: config=json.load(f)
+with open('/home/pi/config.json','r') as f: config=json.load(f)
 telegramApi=config['telegram']
 config=config['binance_key']
 accessKey=config['access_key']
@@ -358,8 +358,7 @@ try:
     if assetList:
       asset=assetList[0]
       newPositionAmount=floorToDecimal(float(asset['availableBalance'])*leverage/curPrice*avoidInsufficientErrorRatio,3)
-      averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30))
-      sendMessage(f'averagePriceList: {averagePrice}')
+      averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
       sendMessage(f'averagePrice: {averagePrice}')
       sendMessage(f'price: {curPrice} newPositionAmount: {newPositionAmount}')
 
@@ -371,7 +370,6 @@ try:
       print('transfer remaining future assets into spot account')
       transfer('umfuture','main',asset['asset'],float(asset['availableBalance']))
       time.sleep(100)
-
   averagePrice=floorToDecimal(getCoinFutureMarkMovingAvg(symbol,'1d',30),1)
   positionAmountList=[v for v in getCurrentPosition() if v['symbol']==symbol and float(v['positionAmt'])>0]
   maximumPositionAmount=floorToDecimal(float(updatedChangeInfo['total'])*leverage/curPrice,3)

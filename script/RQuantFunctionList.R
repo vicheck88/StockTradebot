@@ -51,8 +51,7 @@ loginKRX <- function(user_id, password, h) {
     message("Login successful! Member: ", json_data$MBR_NO)
     return(TRUE)
   } else {
-    message("Login failed: ", json_data$`_error_message`)
-    return(FALSE)
+    stop("KRX login failed: ", json_data$`_error_message`, call. = FALSE)
   }
 }
 
@@ -83,6 +82,9 @@ downloadKRXFile<-function(otp,h){
     body = list(code = otp),  # body, not query!
     encode = "form"
   )
+  if (length(content(response, as = "raw")) == 0) {
+    stop("KRX CSV download returned an empty response", call. = FALSE)
+  }
   html<-read_html(response,encoding="CP949")
   return(read_csv(html_text(html)))
 }

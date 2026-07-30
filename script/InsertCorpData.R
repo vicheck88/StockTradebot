@@ -12,7 +12,26 @@ conn<-dbConnect(RPostgres::Postgres(),dbname=dbConfig$database,host=dbConfig$hos
 source("~/stockInfoCrawler/StockTradebot/script/RQuantFunctionList.R",encoding="utf-8")
 
 #source("~/StockTradebot/script/telegramAPI.R") #macOS에서 읽는 경우
-source("./telegramAPI.R") #라즈베리에서 읽는 경우
+source("~/stockInfoCrawler/StockTradebot/script/telegramAPI.R") #라즈베리에서 읽는 경우
+
+isFatalDatabaseError<-function(error, connection){
+  message<-conditionMessage(error)
+  invalidConnection<-tryCatch(!dbIsValid(connection),error=function(e) TRUE)
+  invalidConnection || grepl(
+    paste(
+      "Lost connection to database",
+      "server closed the connection unexpectedly",
+      "could not connect to server",
+      "Connection refused",
+      "connection pointer is NULL",
+      "Input/output error",
+      "could not read block",
+      sep="|"
+    ),
+    message,
+    ignore.case=TRUE
+  )
+}
 
 #전월 말 날짜 구하기
 print(paste0(Sys.time()," : Starting to get date"))
@@ -65,6 +84,8 @@ print(paste0(Sys.time()," : Starting to write FS (total: ",length(corpList)," co
 successCount<-0; failCount<-0
 for(code in corpList){
   tryCatch({
+    if(!dbIsValid(conn)) stop("Database connection is not valid",call.=FALSE)
+
     # 연결재무 (ReportGB=D)
     htmlData<-getFSHtmlFromFnGuide(code, reportGB='D')
     fsQ<-cleanFSHtmlToDataFrame('Q',htmlData[code])
@@ -101,6 +122,15 @@ for(code in corpList){
     successCount<<-successCount+1
     print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "Success: ",code," Q:",nrow(newfsQ)," Y:",nrow(newfsY)))
   },error=function(e){
+    if(isFatalDatabaseError(e,conn)){
+      fatalText<-paste0(
+        Sys.time()," : FATAL: Database connection failed while processing ",
+        code," | ",conditionMessage(e)
+      )
+      print(fatalText)
+      try(sendMessage(fatalText,0),silent=TRUE)
+      stop(fatalText,call.=FALSE)
+    }
     failCount<<-failCount+1
     print(paste0(Sys.time()," : [",which(corpList==code),"/",length(corpList),"] ", "FAIL: ",code," | ",conditionMessage(e)))
   })
