@@ -102,8 +102,8 @@ def transfer(transferFrom:str,transferTo:str,asset,amount):
   msg=f'asset={asset}&amount={amount}&type={t}&timestamp={getCurrentTime()}'
   return requestData(spotURL,'/sapi/v1/asset/transfer','post',msg)
 
-def getFlexibleSimpleEarnList():
-  return requestData(spotURL,'/sapi/v1/simple-earn/flexible/list','get',f'timestamp={getCurrentTime()}')
+def getFlexibleSimpleEarnList(asset):
+  return requestData(spotURL,'/sapi/v1/simple-earn/flexible/list','get',f'asset={asset}&timestamp={getCurrentTime()}')
 def getSimpleEarnAccount():
   return requestData(spotURL,'/sapi/v1/simple-earn/account','get',f'timestamp={getCurrentTime()}')
 def getSimpleEarnPosition():
@@ -336,7 +336,9 @@ try:
 
   if accountChangeInfo['earn']<0 and abs(accountChangeInfo['earn'])>minOrderLimit:
     print('redeem simple earn assets and transfer it into spot account')
-    prodId=[v for v in getFlexibleSimpleEarnList()['rows'] if v['asset'] in cashsymbols][0]['productId']
+    earnProducts=getFlexibleSimpleEarnList(cashsymbols[0])['rows']
+    if not earnProducts: raise RuntimeError(f'No flexible Simple Earn product for {cashsymbols[0]}')
+    prodId=earnProducts[0]['productId']
     amount= 0 if accountChangeInfo['investRatio']==1 else -accountChangeInfo['earn']
     sendMessage(redeemFlexibleSimpleEarnProduct(prodId,floorToDecimal(amount,8)))
 
@@ -382,7 +384,7 @@ try:
       setCurrentStopLimitPrice(position['symbol'],curPrice,stopLimitLevelNum,float(position['positionAmt']),averagePrice,'OPPONENT')
       # setCurrentStopmarketPrice(symbol,curPrice,leverage,maximumPositionAmount,averagePrice)
 
-  earnList=dict([(v['asset'],v['productId']) for v in getFlexibleSimpleEarnList()['rows']])
+  earnList=dict([(v['asset'],v['productId']) for v in getFlexibleSimpleEarnList(cashsymbols[0])['rows']])
   futureBalances=dict([(v['asset'],float(v['availableBalance'])) for v in getFutureAccount()['assets'] if float(v['availableBalance'])>0 and v['asset'] in cashsymbols])
   currentEarnAmount=getSimpleEarnPosition()
 
