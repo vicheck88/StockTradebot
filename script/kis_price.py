@@ -263,7 +263,7 @@ def main():
     app_secret = main_acc["appsecret"]
 
     token = get_token(api_url, app_key, app_secret)
-    print(f"Token: {token[:20]}...", file=sys.stderr)
+    print("KIS access token acquired.", file=sys.stderr)
 
     results = {}
     for code in sys.argv[1:]:

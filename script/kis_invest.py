@@ -131,9 +131,35 @@ def kis_headers(app_key: str, app_secret: str, token: str, tr_id: str) -> dict:
     }
 
 
+def kis_get(url: str, *, headers: dict, params: dict, endpoint: str,
+            retries: int = 3) -> dict:
+    """GET 요청의 KIS 오류를 숨기지 않고, 일시적 rate limit만 재시도한다."""
+    last_error = "unknown error"
+    for attempt in range(retries):
+        response = requests.get(url, headers=headers, params=params, timeout=10)
+        try:
+            data = response.json()
+        except ValueError as error:
+            raise RuntimeError(
+                f"KIS {endpoint} returned a non-JSON response (HTTP {response.status_code})"
+            ) from error
+
+        if data.get("rt_cd") == "0":
+            return data
+
+        message = f"{data.get('msg_cd', '-')}: {data.get('msg1', 'unknown error')}"
+        last_error = message
+        if data.get("msg_cd") == "EGW00215" and attempt < retries - 1:
+            time.sleep(attempt + 1)
+            continue
+        raise RuntimeError(f"KIS {endpoint} failed ({message})")
+
+    raise RuntimeError(f"KIS {endpoint} failed after {retries} attempts ({last_error})")
+
+
 def get_balance(api_url: str, app_key: str, app_secret: str, token: str, acc_no: str) -> tuple[list[Position], dict]:
     cano, prdt = acc_no[:8], acc_no[8:]
-    resp = requests.get(
+    data = kis_get(
         f"{api_url}/uapi/domestic-stock/v1/trading/inquire-balance",
         headers=kis_headers(app_key, app_secret, token, "TTTC8434R"),
         params={
@@ -143,9 +169,8 @@ def get_balance(api_url: str, app_key: str, app_secret: str, token: str, acc_no:
             "FNCG_AMT_AUTO_RDPT_YN": "N", "PRCS_DVSN": "01",
             "CTX_AREA_FK100": "", "CTX_AREA_NK100": "",
         },
-        timeout=10,
+        endpoint="balance inquiry",
     )
-    data = resp.json()
     positions = []
     for x in data.get("output1", []):
         qty = int(x.get("hldg_qty", 0))
@@ -166,7 +191,7 @@ def get_balance(api_url: str, app_key: str, app_secret: str, token: str, acc_no:
 
 def get_orderable_cash(api_url: str, app_key: str, app_secret: str, token: str, acc_no: str) -> int:
     cano, prdt = acc_no[:8], acc_no[8:]
-    resp = requests.get(
+    data = kis_get(
         f"{api_url}/uapi/domestic-stock/v1/trading/inquire-psbl-order",
         headers=kis_headers(app_key, app_secret, token, "TTTC8908R"),
         params={
@@ -174,23 +199,19 @@ def get_orderable_cash(api_url: str, app_key: str, app_secret: str, token: str, 
             "PDNO": "", "ORD_UNPR": "0", "ORD_DVSN": "01",
             "CMA_EVLU_AMT_ICLD_YN": "Y", "OVRS_ICLD_YN": "N",
         },
-        timeout=10,
+        endpoint="orderable-cash inquiry",
     )
-    data = resp.json()
     out = data.get("output", {})
     return int(out.get("ord_psbl_cash", 0))
 
 
 def get_current_price(api_url: str, app_key: str, app_secret: str, token: str, code: str) -> int:
-    resp = requests.get(
+    data = kis_get(
         f"{api_url}/uapi/domestic-stock/v1/quotations/inquire-price",
         headers=kis_headers(app_key, app_secret, token, "FHKST01010100"),
         params={"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": code},
-        timeout=10,
+        endpoint=f"price inquiry ({code})",
     )
-    data = resp.json()
-    if data.get("rt_cd") != "0":
-        return 0
     return int(data["output"]["stck_prpr"])
 
 
@@ -198,7 +219,7 @@ def get_tech(api_url: str, app_key: str, app_secret: str, token: str, code: str,
     from datetime import timedelta
     end = datetime.now()
     start = end - timedelta(days=200)
-    resp = requests.get(
+    data = kis_get(
         f"{api_url}/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice",
         headers=kis_headers(app_key, app_secret, token, "FHKST03010100"),
         params={
@@ -207,9 +228,8 @@ def get_tech(api_url: str, app_key: str, app_secret: str, token: str, code: str,
             "FID_INPUT_DATE_2": end.strftime("%Y%m%d"),
             "FID_PERIOD_DIV_CODE": "D", "FID_ORG_ADJ_PRC": "0",
         },
-        timeout=10,
+        endpoint=f"daily chart inquiry ({code})",
     )
-    data = resp.json()
     rows = data.get("output2", [])
     closes = []
     for r in reversed(rows):

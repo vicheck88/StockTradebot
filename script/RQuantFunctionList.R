@@ -164,37 +164,36 @@ KRXDataMergeHan2<-function(){
 KRXDataMerge<-function(businessDay, loginInfo){
   krxHandle <- handle("https://data.krx.co.kr")
   loginKRX(loginInfo$id,loginInfo$password,krxHandle)
-  down_sector_KOSPI<-KRXIndStat('STK', krxHandle)
-  down_sector_KOSDAQ<-KRXIndStat('KSQ', krxHandle)
-  down_sector<-rbind(down_sector_KOSPI,down_sector_KOSDAQ)
-  down_sector <- down_sector %>%
-    select(-`한글 종목명`) %>%
-    rename(종목명 = `한글 종목약명`)
+  # 기준일 시세 파일을 기준 집합으로 쓴다. 상장종목 마스터는 현재 기준
+  # 시장구분(KOSDAQ GLOBAL 등)을 반환하므로 과거 시세와 내부 조인하면
+  # 실제 거래 종목이 누락될 수 있다.
+  down_ind_KOSPI<-KRXIndividualStat(businessDay,"STK",krxHandle)
+  down_ind_KOSDAQ<-KRXIndividualStat(businessDay,"KSQ",krxHandle)
+  down_ind<-as.data.table(rbind(down_ind_KOSPI,down_ind_KOSDAQ))
+  if(anyDuplicated(down_ind$종목코드)) {
+    stop("KRX individual-stat data contains duplicate ticker codes", call.=FALSE)
+  }
 
   down_monitoring<-KRXMonitoringStat(krxHandle)
   down_monitoring$관리종목<-str_replace_all(down_monitoring$관리종목,'O','관리종목')
   down_monitoring$관리종목<-str_replace_all(down_monitoring$관리종목,'X','-')
-  down_monitoring<-down_monitoring[,c(1,2,5)]
+  down_monitoring<-as.data.table(down_monitoring)[,.(종목코드,관리종목)]
+  down_monitoring<-unique(down_monitoring,by='종목코드')
 
-  down_ind_KOSPI<-KRXIndividualStat(businessDay,"STK",krxHandle)
-  down_ind_KOSDAQ<-KRXIndividualStat(businessDay,"KSQ",krxHandle)
-  down_ind<-rbind(down_ind_KOSPI,down_ind_KOSDAQ)
   down_ind_dividen<-KRXIndDividen(businessDay, "ALL",krxHandle)
-  down_ind_dividen <- down_ind_dividen %>% select(-"종가")
-  #데이터 정리(개별종목, 산업현황 데이터 병합)
-  setdiff(down_sector[,'종목명'],down_ind[,'종목명']) #겹치지 않은 종목 ->제외(일반적이지 않은 종목들)
+  down_ind_dividen<-as.data.table(down_ind_dividen)[,.(종목코드,주당배당금,배당수익률)]
+  down_ind_dividen<-unique(down_ind_dividen,by='종목코드')
 
-  KOR_ticker = merge(down_sector, down_ind,
-                     by = intersect(names(down_sector),names(down_ind)),
-                     all = FALSE
-  )
-  KOR_ticker<-merge(KOR_ticker,down_monitoring,by=c("종목코드","종목명"),all=FALSE)
-  KOR_ticker<-merge(KOR_ticker,down_ind_dividen,by=c("종목코드","종목명"),all=FALSE)
+  # 보조 데이터는 종목코드로 left join한다. 관리/배당 데이터가 일시적으로
+  # 누락돼도 기준일 시세 종목을 제거하지 않는다.
+  KOR_ticker<-merge(down_ind,down_monitoring,by='종목코드',all.x=TRUE,sort=FALSE)
+  KOR_ticker[is.na(관리종목) | 관리종목=='',관리종목:='-']
+  KOR_ticker<-merge(KOR_ticker,down_ind_dividen,by='종목코드',all.x=TRUE,sort=FALSE)
   setDT(KOR_ticker)
   setorder(KOR_ticker,'시가총액') #시가총액으로 정렬
 
   KOR_ticker <- KOR_ticker[!grepl('스팩', KOR_ticker$'종목명'),]
-  KOR_ticker <- KOR_ticker[str_sub(KOR_ticker$'종목코드', -1, -1) == 0,] #우선주
+  KOR_ticker <- KOR_ticker[str_sub(KOR_ticker$'종목코드', -1, -1) == 0,] #보통주 코드만
   KOR_ticker$일자<-as.Date(businessDay,format='%Y%m%d')
   KOR_ticker<-subset(KOR_ticker,select = c('일자','종목코드','종목명','시장구분','업종명','종가','시가총액',
                                            '주당배당금','배당수익률','관리종목'))

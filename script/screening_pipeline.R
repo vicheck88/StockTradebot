@@ -34,6 +34,8 @@ FINANCIAL_HOLDING_CODES <- c(
 
 args <- commandArgs(trailingOnly = TRUE)
 output_path <- if (length(args) > 0) args[1] else "screening_result.json"
+script_arg <- commandArgs()[grepl("^--file=", commandArgs())][1]
+script_dir <- dirname(normalizePath(sub("^--file=", "", script_arg)))
 
 log_step <- function(step, msg, ...) {
   cat(sprintf("[%s] %s\n", step, sprintf(msg, ...)))
@@ -632,10 +634,8 @@ log_step("추출", "대형 %d + 중소형 %d = 총 %d",
 # ============================================================
 if (FETCH_CONSENSUS) {
   consensus_sourced <- tryCatch({
-    source("fnguide_consensus.R"); TRUE
-  }, error = function(e) tryCatch({
-    source("script/fnguide_consensus.R"); TRUE
-  }, error = function(e) FALSE))
+    source(file.path(script_dir, "fnguide_consensus.R")); TRUE
+  }, error = function(e) FALSE)
 
   if (consensus_sourced) {
     large_codes <- result[is_large == TRUE]$종목코드
