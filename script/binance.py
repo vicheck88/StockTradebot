@@ -29,6 +29,17 @@ headers = {
     'X-MBX-APIKEY': accessKey
 }
 requestTimeout = (5, 15)
+signedRequestRecvWindow = 10000
+readRequestAttempts = 3
+
+
+class BinanceAPIError(RuntimeError):
+  def __init__(self,statusCode,code,message):
+    self.statusCode=statusCode
+    self.code=code
+    if code is None: text=f'Binance API HTTP {statusCode}: {message}'
+    else: text=f'Binance API error {code}: {message}'
+    super().__init__(text)
 
 
 # In[3]:
@@ -55,19 +66,38 @@ def request(url,method):
   if not response.ok:
     try:
       error=response.json()
-      raise RuntimeError(f"Binance API error {error.get('code')}: {error.get('msg')}")
     except ValueError:
-      response.raise_for_status()
+      raise BinanceAPIError(response.status_code,None,response.reason)
+    raise BinanceAPIError(response.status_code,error.get('code'),error.get('msg'))
   return response
 def createSignature(message):
   return hmac.new(key=secretKey.encode('utf-8'), msg=message.encode('utf-8'),digestmod=hashlib.sha256).hexdigest()
 def requestData(mainUrl,subUrl,method,message,addSignature=True):
-  url = f'{mainUrl}{subUrl}?{message}'
-  if addSignature: url+=f'&signature={createSignature(message)}'
-  try:
-    return request(url,method).json()
-  except ValueError as e:
-    raise RuntimeError(f'Binance returned invalid JSON for {subUrl}') from e
+  method=method.upper()
+  attempts=readRequestAttempts if method=='GET' else 1
+  for attempt in range(attempts):
+    currentMessage=message
+    if attempt>0 and addSignature:
+      currentMessage='&'.join([
+        f'timestamp={getCurrentTime()}' if part.startswith('timestamp=') else part
+        for part in message.split('&')
+      ])
+    if addSignature:
+      currentMessage+=f'&recvWindow={signedRequestRecvWindow}'
+    url=f'{mainUrl}{subUrl}'
+    if currentMessage: url+=f'?{currentMessage}'
+    if addSignature: url+=f'&signature={createSignature(currentMessage)}'
+    try:
+      return request(url,method).json()
+    except BinanceAPIError as e:
+      retryable=e.code==-1021 or e.statusCode>=500
+      if not retryable or attempt==attempts-1: raise
+    except rq.RequestException:
+      if attempt==attempts-1: raise
+    except ValueError as e:
+      if attempt==attempts-1:
+        raise RuntimeError(f'Binance returned invalid JSON for {subUrl}') from e
+    time.sleep(attempt+1)
 
 
 # In[5]:
@@ -75,7 +105,7 @@ def requestData(mainUrl,subUrl,method,message,addSignature=True):
 
 def getCurrentTime():
   subUrl='/api/v3/time'
-  return request(spotURL+subUrl,'get').json()['serverTime']
+  return requestData(spotURL,subUrl,'get','',addSignature=False)['serverTime']
 def getCoinPriceHistory(symbol,unit,count):
   msg=f'symbol={symbol}&interval={unit}&limit={count}'
   return requestData(spotURL,'/api/v3/klines','get',msg,addSignature=False)
@@ -125,11 +155,11 @@ def orderFutureWithTimeLimit(symbol,side,quantity,price,timeLimit):
 def orderFutureMarketType(symbol,side,quantity):
   return requestData(futureURL,'/fapi/v1/order','post',f'symbol={symbol}&side={side}&type=MARKET&quantity={quantity}&timestamp={getCurrentTime()}')
 def setStopMarketPrice(symbol,side,stopPrice,quantity,workingType):
-  return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP_MARKET&price={stopPrice}&quantity={quantity}&reduceOnly=false&workingType={workingType}&timestamp={getCurrentTime()}')
+  return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP_MARKET&triggerPrice={stopPrice}&quantity={quantity}&reduceOnly=false&workingType={workingType}&timestamp={getCurrentTime()}')
 def setPositionClosePrice(symbol,side,stopPrice,workingType):
-  return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP_MARKET&triggerprice={stopPrice}&closePosition=true&workingType={workingType}&timestamp={getCurrentTime()}')
+  return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP_MARKET&triggerPrice={stopPrice}&closePosition=true&workingType={workingType}&timestamp={getCurrentTime()}')
 def setStopLimitPrice(symbol,side,stopPrice,quantity,workingType,priceMatch):
-  return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP&triggerprice={stopPrice}&quantity={quantity}&reduceOnly=false&workingType={workingType}&priceMatch={priceMatch}&timestamp={getCurrentTime()}')
+  return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP&triggerPrice={stopPrice}&quantity={quantity}&reduceOnly=false&workingType={workingType}&priceMatch={priceMatch}&timestamp={getCurrentTime()}')
 def getCurrentPosition():
   return requestData(futureURL,'/fapi/v3/positionRisk','get',f'timestamp={getCurrentTime()}')
 def getAllOpenOrders():
@@ -342,7 +372,7 @@ try:
     amount= 0 if accountChangeInfo['investRatio']==1 else -accountChangeInfo['earn']
     sendMessage(redeemFlexibleSimpleEarnProduct(prodId,floorToDecimal(amount,8)))
 
-  freeBalances=[v for v in getAccount()['balances'] if v['free']!='0']
+  freeBalances=[v for v in getAccount()['balances'] if v['asset'] in cashsymbols and float(v['free'])>0]
   print(f'free balances: {freeBalances}')
   updatedChangeInfo=getAccountChange(coinsymbols,cashsymbols,isIncreasing,disparity,leverage)
   print(f'balance change: {updatedChangeInfo}')
