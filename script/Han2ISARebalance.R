@@ -50,6 +50,12 @@ averageTop7Price<-mean(prices[,1])
 currentTop7Price<-tail(prices,1)[,1]
 top7CurrentDisparity<-100*currentTop7Price/averageTop7Price-100
 
+semiconductorTrackCode<-'381180'
+prices<-adjustedPriceFromNaver('day',200,semiconductorTrackCode)
+averageSemiconductorPrice<-mean(prices[,1])
+currentSemiconductorPrice<-tail(prices,1)[,1]
+semiconductorCurrentDisparity<-100*currentSemiconductorPrice/averageSemiconductorPrice-100
+
 
 symbols = c('QQQ','SPY')
 getSymbols(symbols, src = 'yahoo')
@@ -65,12 +71,14 @@ SPYcurrentDisparity<-(100*currentSPYPrice/SPY.Adjusted.MA.200)-100
 
 
 nasdaqLevCode<-'418660' #TIGER 미국나스닥100레버리지(합성)
-top7LevCode<-'465610' #ACE 미국빅테TOP7Plus레버리지(합성)
+top7LevCode<-'465610' #ACE 미국빅테크TOP7 Plus레버리지(합성)
+semiconductorLevCode<-'423920' #TIGER 미국필라델피아반도체레버리지(합성)
 sofrCode<-'456880' #ACE 미국달러SOFR금리(합성)
 highYieldCode<-'468380' #KODEX iShares미국하이일드액티브
 
 currentTop7LevPrice<-getCurrentPrice(apiConfig,account,token,top7LevCode)
 currentNasdaqLevPrice<-getCurrentPrice(apiConfig,account,token,nasdaqLevCode)
+currentSemiconductorLevPrice<-getCurrentPrice(apiConfig,account,token,semiconductorLevCode)
 currentSofrPrice<-getCurrentPrice(apiConfig,account,token,sofrCode)
 currentHighyieldPrice<-getCurrentPrice(apiConfig,account,token,highYieldCode)
 
@@ -83,7 +91,7 @@ if(currentBalance$status_code!='200'){
 totalBalanceSum<-currentBalance$sheet[,sum(as.numeric(evlu_amt))]+getOrderableAmount(apiConfig,account,token,nasdaqLevCode)
 curStockRatio<-0
 if(nrow(currentBalance$sheet)>0){
-  curStockBalance<-sum(as.numeric(currentBalance$sheet[pdno %in% c('418660','465610'),evlu_amt]))
+  curStockBalance<-sum(as.numeric(currentBalance$sheet[pdno %in% c('418660','465610','423920'),evlu_amt]))
   if(length(curStockBalance)>0) curStockRatio<-curStockBalance/totalBalanceSum
 }
 
@@ -102,38 +110,52 @@ if(stockRatio>=1) {
   stockRatio<-max(abs(stockRatio),curStockRatio)
 }
 
-if(QQQcurrentDisparity>20) stockRatio<-0
-top7NasdaqDiff<-top7CurrentDisparity-nasdaqCurrentDisparity
-top7InvestRatio<-max(0,min(0.2,floor(top7NasdaqDiff)/10)*stockRatio)
-nasdaqInvestRatio<-stockRatio-top7InvestRatio
+if(QQQcurrentDisparity<0 || QQQcurrentDisparity>20) stockRatio<-0
+if(top7CurrentDisparity>=semiconductorCurrentDisparity){
+  satelliteDisparity<-top7CurrentDisparity
+  satelliteCap<-0.2
+  top7InvestRatio<-max(0,min(satelliteCap,floor(satelliteDisparity-nasdaqCurrentDisparity)/10)*stockRatio)
+  semiconductorInvestRatio<-0
+} else{
+  satelliteDisparity<-semiconductorCurrentDisparity
+  satelliteCap<-0.3
+  top7InvestRatio<-0
+  semiconductorInvestRatio<-max(0,min(satelliteCap,floor(satelliteDisparity-nasdaqCurrentDisparity)/10)*stockRatio)
+}
+nasdaqInvestRatio<-stockRatio-top7InvestRatio-semiconductorInvestRatio
 
 
 if(hour(Sys.time())==12){
   message<-paste0("TIGER 미국SnP500 가격: ",currentSnpPrice,"\n")
   message<-paste0(message,"TIGER 미국나스닥100 가격: ",currentNasdaqPrice,"\n")
   message<-paste0(message,"ACE 미국빅테크TOP7Plus 가격: ",currentTop7Price,"\n\n")
+  message<-paste0(message,"TIGER 미국필라델피아반도체나스닥 가격: ",currentSemiconductorPrice,"\n\n")
   message<-paste0(message,"TIGER 미국SnP500 200 MA: ",round(averageSnpPrice,2),"\n")
   message<-paste0(message,"TIGER 미국나스닥100 200 MA: ",round(averageNasdaqPrice,2),"\n")
-  message<-paste0(message,"ACE 미국빅테크TOP7Plus 200 MA: ",round(averageTop7Price,2),"\n\n")
+  message<-paste0(message,"ACE 미국빅테크TOP7Plus 200 MA: ",round(averageTop7Price,2),"\n")
+  message<-paste0(message,"TIGER 미국필라델피아반도체나스닥 200 MA: ",round(averageSemiconductorPrice,2),"\n\n")
   message<-paste0(message,"TIGER 미국SnP500 Disparity: ", round(snpCurrentDisparity,2),"\n")
   message<-paste0(message,"TIGER 미국나스닥100 Disparity: ", round(nasdaqCurrentDisparity,2),"\n")
-  message<-paste0(message,"ACE 미국빅테크TOP7Plus Disparity: ", round(top7CurrentDisparity,2),"\n\n")
+  message<-paste0(message,"ACE 미국빅테크TOP7Plus Disparity: ", round(top7CurrentDisparity,2),"\n")
+  message<-paste0(message,"TIGER 미국필라델피아반도체나스닥 Disparity: ", round(semiconductorCurrentDisparity,2),"\n\n")
   message<-paste0(message,"QQQ Disparity: ", round(QQQcurrentDisparity,2),"\n")
   message<-paste0(message,"SPY Disparity: ", round(SPYcurrentDisparity,2),"\n\n")
   message<-paste0(message,"TIGER 미국나스닥100레버리지 비율: ",nasdaqInvestRatio,"\n")
-  message<-paste0(message,"ACE 미국빅테크TOP7Plus 비율: ",top7InvestRatio)
+  message<-paste0(message,"ACE 미국빅테크TOP7 Plus레버리지 비율: ",top7InvestRatio,"\n")
+  message<-paste0(message,"TIGER 미국필라델피아반도체레버리지 비율: ",semiconductorInvestRatio)
   sendMessage(message)
 }
 
 
 nasdaqBalanceSum<-totalBalanceSum*nasdaqInvestRatio
 top7BalanceSum<-totalBalanceSum*top7InvestRatio
-bondBalanceSum<-totalBalanceSum-top7BalanceSum-nasdaqBalanceSum
+semiconductorBalanceSum<-totalBalanceSum*semiconductorInvestRatio
 
-goalBalanceSheet<-data.table(종목코드=top7TrackCode,종목명='ACE 미국빅테크TOP7 Plus',현재가=currentTop7LevPrice,목표금액=top7BalanceSum,주문구분='00')
+goalBalanceSheet<-data.table(종목코드=top7LevCode,종목명='ACE 미국빅테크TOP7 Plus레버리지(합성)',현재가=currentTop7LevPrice,목표금액=top7BalanceSum,주문구분='00')
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=nasdaqLevCode,종목명='TIGER 미국나스닥100레버리지(합성)',현재가=currentNasdaqLevPrice,목표금액=nasdaqBalanceSum,주문구분='00'))
+goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=semiconductorLevCode,종목명='TIGER 미국필라델피아반도체레버리지(합성)',현재가=currentSemiconductorLevPrice,목표금액=semiconductorBalanceSum,주문구분='00'))
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='ACE 미국달러SOFR금리(합성)',현재가=currentSofrPrice,목표금액=0,주문구분='00'))
-goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=highYieldCode,종목명='KODEX iShares미국하이일드액티브',현재가=currentHighyieldPrice,목표금액=bondBalanceSum,주문구분='00'))
+goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=highYieldCode,종목명='KODEX iShares미국하이일드액티브',현재가=currentHighyieldPrice,목표금액=0,주문구분='00'))
 
 
 if(length(currentBalance$sheet)>0){
@@ -160,9 +182,6 @@ for(i in 1:nrow(combinedSheet)){
   if(row$목표금액>0){
     qty<-row[,floor((availableAmount-평가금액)/현재가)]
     combinedSheet[i,목표금액:=row$평가금액+qty*row$현재가]
-  } else{
-    qty<-row[,floor(remainingPortion/현재가)]
-    combinedSheet[i,목표금액:=qty*row$현재가]
   }
   remainingPortion<-remainingPortion-combinedSheet[i,목표금액]
 }
