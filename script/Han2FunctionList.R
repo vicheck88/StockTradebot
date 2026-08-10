@@ -36,20 +36,32 @@ getHashkey<-function(body){
 }
 
 isHoliday<-function(today){
-  base="http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo"
-  year = year(Sys.Date())
-  month = month(Sys.Date())
-  key="PEWQgyukEMto9hnKQ1YpebLFfE%2F3VGib2d2TZ1XvjKICjFbNfZ8BeQNspNF9avuO%2B%2F4zqnDj2P4rgk2KjjkDgQ%3D%3D"
-  url<-paste(base,'?serviceKey=',key,'&pageNo=1&numOfRows=10&solYear=',year,'&solMonth=',sprintf("%02d",month),sep="")
-  resp=GET(url)$response
-  if(is.null(content$response)) return(TRUE)
-  data<-resp$body
-  holidayList<-c()
-  if(data$totalCount==1) holidayList=c(data$items$item$locdate)
-  else if(data$totalCount>1){
-    holidayList<-rbindlist(data$items$item)$locdate
-  }
-  return(today %in% holidayList)
+  tryCatch({
+    today<-as.character(today)
+    year<-substr(today,1,4)
+    month<-substr(today,5,6)
+    base<-"http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo"
+    key<-"fa78d410f1b0e894bec67bc81ba0cff0c0c784dc97b037512ac567fc2bf1ebd6"
+    url<-paste(base,'?serviceKey=',key,'&pageNo=1&numOfRows=31&solYear=',year,'&solMonth=',month,'&_type=json',sep="")
+    response<-httr::GET(url,httr::timeout(10))
+    if(response$status_code!=200) return(TRUE)
+
+    body<-httr::content(response)$response$body
+    if(is.null(body)) return(TRUE)
+    totalCount<-as.integer(body$totalCount)
+    if(is.na(totalCount) || totalCount==0) return(FALSE)
+
+    items<-body$items$item
+    holidayList<-if(totalCount==1) {
+      as.character(items$locdate)
+    } else {
+      as.character(rbindlist(items,fill=TRUE)$locdate)
+    }
+    return(today %in% holidayList)
+  },error=function(e){
+    warning(paste0("Holiday API error: ",conditionMessage(e)),call.=FALSE)
+    return(TRUE)
+  })
 }
 
 isKoreanTradeOpen<-function(token,apiConfig,account,date){
