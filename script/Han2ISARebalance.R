@@ -155,8 +155,8 @@ bondBalanceSum<-totalBalanceSum-top7BalanceSum-nasdaqBalanceSum-semiconductorBal
 goalBalanceSheet<-data.table(종목코드=top7LevCode,종목명='ACE 미국빅테크TOP7 Plus레버리지(합성)',현재가=currentTop7LevPrice,목표금액=top7BalanceSum,주문구분='00')
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=nasdaqLevCode,종목명='TIGER 미국나스닥100레버리지(합성)',현재가=currentNasdaqLevPrice,목표금액=nasdaqBalanceSum,주문구분='00'))
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=semiconductorLevCode,종목명='TIGER 미국필라델피아반도체레버리지(합성)',현재가=currentSemiconductorLevPrice,목표금액=semiconductorBalanceSum,주문구분='00'))
-goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='ACE 미국달러SOFR금리(합성)',현재가=currentSofrPrice,목표금액=0,주문구분='00'))
-goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=highYieldCode,종목명='KODEX iShares미국하이일드액티브',현재가=currentHighyieldPrice,목표금액=bondBalanceSum,주문구분='00'))
+goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목명='ACE 미국달러SOFR금리(합성)',현재가=currentSofrPrice,목표금액=bondBalanceSum,주문구분='00'))
+goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=highYieldCode,종목명='KODEX iShares미국하이일드액티브',현재가=currentHighyieldPrice,목표금액=0,주문구분='00'))
 
 
 if(length(currentBalance$sheet)>0){
@@ -174,18 +174,23 @@ combinedSheet[is.na(목표금액)]$목표금액<-0
 combinedSheet[is.na(평가금액)]$평가금액<-0
 combinedSheet[is.na(보유수량)]$보유수량<-0
 
-setorder(combinedSheet,-목표금액)
+residualCode<-sofrCode
+stockCodes<-c(top7LevCode,nasdaqLevCode,semiconductorLevCode)
+combinedSheet[,allocationOrder:=fifelse(종목코드 %in% stockCodes,1L,fifelse(종목코드==residualCode,2L,3L))]
+setorder(combinedSheet,allocationOrder,-목표금액)
 remainingPortion<-totalBalanceSum
 for(i in 1:nrow(combinedSheet)){
   row<-combinedSheet[i,]
   remTable<-combinedSheet[-(1:i),]
-  availableAmount<-min(row$목표금액,remainingPortion)
-  if(row$목표금액>0){
+  if(row$종목코드==residualCode){
+    qty<-row[,floor((remainingPortion-평가금액)/현재가)]
+    combinedSheet[i,목표금액:=row$평가금액+qty*row$현재가]
+  } else if(row$목표금액>0){
+    availableAmount<-min(row$목표금액,remainingPortion)
     qty<-row[,floor((availableAmount-평가금액)/현재가)]
     combinedSheet[i,목표금액:=row$평가금액+qty*row$현재가]
   } else{
-    qty<-row[,floor(remainingPortion/현재가)]
-    combinedSheet[i,목표금액:=qty*row$현재가]
+    combinedSheet[i,목표금액:=0]
   }
   remainingPortion<-remainingPortion-combinedSheet[i,목표금액]
 }
