@@ -32,41 +32,24 @@ if(isKoreanTradeOpen(token,apiConfig,account,today)=="N") stop("Market closed")
 cancelResult<-cancelAllOrders(apiConfig,account,token)
 for(res in cancelResult) sendMessage(res)
 
-snpTrackCode<-'360750'
-prices<-adjustedPriceFromNaver('day',200,snpTrackCode)
-averageSnpPrice<-mean(prices[,1])
-currentSnpPrice<-tail(prices,1)[,1]
-snpCurrentDisparity<-100*currentSnpPrice/averageSnpPrice-100
-
-nasdaqTrackCode<-'133690'
-prices<-adjustedPriceFromNaver('day',200,nasdaqTrackCode)
-averageNasdaqPrice<-mean(prices[,1])
-currentNasdaqPrice<-tail(prices,1)[,1]
-nasdaqCurrentDisparity<-100*currentNasdaqPrice/averageNasdaqPrice-100
-
-top7TrackCode<-'465580'
-prices<-adjustedPriceFromNaver('day',200,top7TrackCode)
-averageTop7Price<-mean(prices[,1])
-currentTop7Price<-tail(prices,1)[,1]
-top7CurrentDisparity<-100*currentTop7Price/averageTop7Price-100
-
-semiconductorTrackCode<-'381180'
-prices<-adjustedPriceFromNaver('day',200,semiconductorTrackCode)
-averageSemiconductorPrice<-mean(prices[,1])
-currentSemiconductorPrice<-tail(prices,1)[,1]
-semiconductorCurrentDisparity<-100*currentSemiconductorPrice/averageSemiconductorPrice-100
-
-
-symbols = c('QQQ','SPY')
+symbols = c('QQQ','SPY','SOXX','MAGS')
 getSymbols(symbols, src = 'yahoo')
 qqqPrices = tail(Ad(QQQ),200)
 spyPrices = tail(Ad(SPY),200)
-currentQQQPrice=tail(qqqPrices,1)
-currentSPYPrice=tail(spyPrices,1)
+soxxPrices = tail(Ad(SOXX),200)
+magsPrices = tail(Ad(MAGS),200)
+currentQQQPrice=as.numeric(tail(qqqPrices,1))
+currentSPYPrice=as.numeric(tail(spyPrices,1))
+currentSOXXPrice=as.numeric(tail(soxxPrices,1))
+currentMAGSPrice=as.numeric(tail(magsPrices,1))
 QQQ.Adjusted.MA.200<-mean(qqqPrices)
 SPY.Adjusted.MA.200<-mean(spyPrices)
+SOXX.Adjusted.MA.200<-mean(soxxPrices)
+MAGS.Adjusted.MA.200<-mean(magsPrices)
 QQQcurrentDisparity<-(100*currentQQQPrice/QQQ.Adjusted.MA.200)-100
 SPYcurrentDisparity<-(100*currentSPYPrice/SPY.Adjusted.MA.200)-100
+SOXXcurrentDisparity<-(100*currentSOXXPrice/SOXX.Adjusted.MA.200)-100
+MAGScurrentDisparity<-(100*currentMAGSPrice/MAGS.Adjusted.MA.200)-100
 
 
 
@@ -96,9 +79,7 @@ if(nrow(currentBalance$sheet)>0){
 }
 
 
-#disp 1 ~ 2: 0.5
-#disp 2 ~ 20: 1
-#disp 20 ~ : 0
+# QQQ 괴리율로 전체 주식 비중 결정
 stockRatio<- 0.5*(ifelse(QQQcurrentDisparity>0, ceiling(QQQcurrentDisparity), floor(QQQcurrentDisparity)))
 if(stockRatio>=1) {
   stockRatio<-1
@@ -107,39 +88,42 @@ if(stockRatio>=1) {
 }else if(stockRatio<0){
     stockRatio<-min(abs(stockRatio),curStockRatio)
 } else{
-  stockRatio<-max(abs(stockRatio),curStockRatio)
+    stockRatio<-max(abs(stockRatio),curStockRatio)
 }
 
-if(QQQcurrentDisparity>20) stockRatio<-0
-if(top7CurrentDisparity>=semiconductorCurrentDisparity){
-  satelliteDisparity<-top7CurrentDisparity
-  satelliteCap<-0.2
-  top7InvestRatio<-max(0,min(satelliteCap,floor(satelliteDisparity-nasdaqCurrentDisparity)/10)*stockRatio)
+# QQQ 괴리율 15~25% 구간에서 전체 주식 비중을 점진적으로 축소
+overheatRatio<-max(0,min(1,(25-QQQcurrentDisparity)/10))
+# 과열로 주식 비중이 0이 된 뒤에는 QQQ 괴리율이 20% 이하가 될 때까지 재진입하지 않음
+if(curStockRatio==0 && QQQcurrentDisparity>20) overheatRatio<-0
+stockRatio<-stockRatio*overheatRatio
+
+# 위성종목 괴리율에서 QQQ 괴리율을 뺀 상대 강도로 위성 비중 결정
+top7Spread<-MAGScurrentDisparity-QQQcurrentDisparity
+semiconductorSpread<-SOXXcurrentDisparity-QQQcurrentDisparity
+
+# MAGS: 8~10%p에서 최대 20%, 15%p에서 0%
+top7SatelliteRatio<-max(0,min(0.2,top7Spread/8*0.2,(15-top7Spread)/5*0.2))
+# SOXX: 10%p 이상에서 최대 30%
+semiconductorSatelliteRatio<-max(0,min(0.3,semiconductorSpread/10*0.3))
+
+if(top7Spread>=semiconductorSpread){
+  top7InvestRatio<-top7SatelliteRatio*stockRatio
   semiconductorInvestRatio<-0
 } else{
-  satelliteDisparity<-semiconductorCurrentDisparity
-  satelliteCap<-0.3
   top7InvestRatio<-0
-  semiconductorInvestRatio<-max(0,min(satelliteCap,floor(satelliteDisparity-nasdaqCurrentDisparity)/10)*stockRatio)
+  semiconductorInvestRatio<-semiconductorSatelliteRatio*stockRatio
 }
 nasdaqInvestRatio<-stockRatio-top7InvestRatio-semiconductorInvestRatio
 
 
 if(hour(Sys.time())==12){
-  message<-paste0("TIGER 미국SnP500 가격: ",currentSnpPrice,"\n")
-  message<-paste0(message,"TIGER 미국나스닥100 가격: ",currentNasdaqPrice,"\n")
-  message<-paste0(message,"ACE 미국빅테크TOP7Plus 가격: ",currentTop7Price,"\n\n")
-  message<-paste0(message,"TIGER 미국필라델피아반도체나스닥 가격: ",currentSemiconductorPrice,"\n\n")
-  message<-paste0(message,"TIGER 미국SnP500 200 MA: ",round(averageSnpPrice,2),"\n")
-  message<-paste0(message,"TIGER 미국나스닥100 200 MA: ",round(averageNasdaqPrice,2),"\n")
-  message<-paste0(message,"ACE 미국빅테크TOP7Plus 200 MA: ",round(averageTop7Price,2),"\n")
-  message<-paste0(message,"TIGER 미국필라델피아반도체나스닥 200 MA: ",round(averageSemiconductorPrice,2),"\n\n")
-  message<-paste0(message,"TIGER 미국SnP500 Disparity: ", round(snpCurrentDisparity,2),"\n")
-  message<-paste0(message,"TIGER 미국나스닥100 Disparity: ", round(nasdaqCurrentDisparity,2),"\n")
-  message<-paste0(message,"ACE 미국빅테크TOP7Plus Disparity: ", round(top7CurrentDisparity,2),"\n")
-  message<-paste0(message,"TIGER 미국필라델피아반도체나스닥 Disparity: ", round(semiconductorCurrentDisparity,2),"\n\n")
-  message<-paste0(message,"QQQ Disparity: ", round(QQQcurrentDisparity,2),"\n")
-  message<-paste0(message,"SPY Disparity: ", round(SPYcurrentDisparity,2),"\n\n")
+  message<-paste0("QQQ 가격: ",round(currentQQQPrice,2)," | 200 MA: ",round(QQQ.Adjusted.MA.200,2)," | 괴리율: ",round(QQQcurrentDisparity,2),"%\n")
+  message<-paste0(message,"SPY 가격: ",round(currentSPYPrice,2)," | 200 MA: ",round(SPY.Adjusted.MA.200,2)," | 괴리율: ",round(SPYcurrentDisparity,2),"%\n")
+  message<-paste0(message,"SOXX 가격: ",round(currentSOXXPrice,2)," | 200 MA: ",round(SOXX.Adjusted.MA.200,2)," | 괴리율: ",round(SOXXcurrentDisparity,2),"%\n")
+  message<-paste0(message,"MAGS 가격: ",round(currentMAGSPrice,2)," | 200 MA: ",round(MAGS.Adjusted.MA.200,2)," | 괴리율: ",round(MAGScurrentDisparity,2),"%\n\n")
+  message<-paste0(message,"SOXX-QQQ 괴리율 차이: ",round(semiconductorSpread,2),"%p\n")
+  message<-paste0(message,"MAGS-QQQ 괴리율 차이: ",round(top7Spread,2),"%p\n")
+  message<-paste0(message,"전체 주식 비율: ",round(stockRatio,4),"\n\n")
   message<-paste0(message,"TIGER 미국나스닥100레버리지 비율: ",nasdaqInvestRatio,"\n")
   message<-paste0(message,"ACE 미국빅테크TOP7 Plus레버리지 비율: ",top7InvestRatio,"\n")
   message<-paste0(message,"TIGER 미국필라델피아반도체레버리지 비율: ",semiconductorInvestRatio)
