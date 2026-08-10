@@ -46,17 +46,24 @@ isHoliday<-function(today){
     response<-httr::GET(url,httr::timeout(10))
     if(response$status_code!=200) return(TRUE)
 
-    body<-httr::content(response)$response$body
-    if(is.null(body)) return(TRUE)
-    totalCount<-as.integer(body$totalCount)
-    if(is.na(totalCount) || totalCount==0) return(FALSE)
+    payload<-httr::content(response)
+    header<-payload$response$header
+    body<-payload$response$body
+    if(is.null(header$resultCode) || as.character(header$resultCode)!="00" || is.null(body)) return(TRUE)
+
+    totalCount<-suppressWarnings(as.integer(body$totalCount))
+    if(length(totalCount)!=1 || is.na(totalCount)) return(TRUE)
+    if(totalCount==0) return(FALSE)
 
     items<-body$items$item
+    if(is.null(items)) return(TRUE)
     holidayList<-if(totalCount==1) {
       as.character(items$locdate)
     } else {
       as.character(rbindlist(items,fill=TRUE)$locdate)
     }
+    holidayList<-holidayList[!is.na(holidayList) & nzchar(holidayList)]
+    if(length(holidayList)==0) return(TRUE)
     return(today %in% holidayList)
   },error=function(e){
     warning(paste0("Holiday API error: ",conditionMessage(e)),call.=FALSE)
