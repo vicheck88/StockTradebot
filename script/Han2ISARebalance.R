@@ -66,6 +66,10 @@ currentSemiconductorLevPrice<-getCurrentPrice(apiConfig,account,token,semiconduc
 currentSofrPrice<-getCurrentPrice(apiConfig,account,token,sofrCode)
 currentHighyieldPrice<-getCurrentPrice(apiConfig,account,token,highYieldCode)
 
+initialPrices<-c(currentTop7LevPrice,currentNasdaqLevPrice,
+                 currentSemiconductorLevPrice,currentSofrPrice,currentHighyieldPrice)
+if(any(!is.finite(initialPrices) | initialPrices<=0)) stop("Fail to get current prices")
+
 currentBalance<-getBalancesheet(token,apiConfig,account)
 
 if(currentBalance$status_code!='200'){
@@ -200,7 +204,7 @@ combinedSheet<-combinedSheet[,c('종목코드','종목명','보유수량','목�
 buySheet<-combinedSheet[보유수량<목표수량]
 sellSheet<-combinedSheet[보유수량>목표수량]
 
-sellRes<-orderStocks(token,apiConfig,account,sellSheet,priceTick=5) #매도 먼저
+sellRes<-orderStocks(token,apiConfig,account,sellSheet,excg="KRX",priceTick=5) #매도 먼저
 if(length(sellRes)>0){
   sendMessage("Sell orders")
   for(i in seq_len(nrow(sellRes))){
@@ -212,7 +216,7 @@ if(length(sellRes)>0){
   Sys.sleep(30)
 }
 
-buyRes<-orderStocks(token,apiConfig,account,buySheet,priceTick=5) #매수 다음
+buyRes<-orderStocks(token,apiConfig,account,buySheet,excg="KRX",priceTick=5) #매수 다음
 if(length(buyRes)>0){
   print("Buy orders")
   sendMessage("Buy orders")

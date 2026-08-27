@@ -112,10 +112,16 @@ getCurrentPrice<-function(apiConfig,account, token, code){
     tr_id='FHKST01010100'
   )
   query<-list(FID_COND_MRKT_DIV_CODE='J',FID_INPUT_ISCD=code)
-  response<-GET(priceUrl,add_headers(headers),query=query)
-  res<-fromJSON(rawToChar(response$content))
-  if(res$rt_cd!=0) return(-1)
-  return(as.numeric(res$output$stck_prpr))
+  for(attempt in 1:3){
+    price<-tryCatch({
+      response<-GET(priceUrl,add_headers(headers),query=query)
+      res<-fromJSON(rawToChar(response$content))
+      if(res$rt_cd!=0) NA_real_ else as.numeric(res$output$stck_prpr)
+    },error=function(e) NA_real_)
+    if(length(price)==1 && is.finite(price) && price>0) return(price)
+    if(attempt<3) Sys.sleep(0.3)
+  }
+  return(NA_real_)
 }
 getAvailablePurchaseAmount<-function(token,apiConfig,account){
   url<-paste0(apiConfig$url,'/uapi/overseas-stock/v1/trading/inquire-psamount') 
@@ -406,6 +412,12 @@ orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
   ## excg 미지정 시 SOR → KRX → NXT 순 fallback
   ## price는 caller(getCurrentPrice)가 이미 호가 정렬된 값을 넘김 — 추가 floor 안 함
   ##   (이전에 ETF 1,073,780 → 1,073,000으로 잘못 내려가는 버그가 있었음)
+  qty<-as.numeric(qty)
+  price<-as.numeric(price)
+  if(length(qty)!=1 || !is.finite(qty) || qty!=trunc(qty) ||
+     length(price)!=1 || !is.finite(price) || price<=0){
+    stop(paste0("Invalid order: ",code," qty=",qty," price=",price))
+  }
   if(qty==0) return(NULL)
   if(qty>0) tr_id="TTTC0012U"  # 현금 매수 (신버전)
   if(qty<0) tr_id="TTTC0011U"  # 현금 매도 (신버전)
@@ -445,13 +457,14 @@ orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
   return(res)  # 모두 실패 시 마지막 응답 반환
 }
 
-orderStocks<-function(token,apiConfig, account, stockTable,priceTick=NULL){
+orderStocks<-function(token,apiConfig, account, stockTable,excg=NULL,priceTick=NULL){
   if(nrow(stockTable)==0) return(NULL)
   #token<-getToken(apiConfig,account)
   res<-NULL
   for(i in 1:nrow(stockTable)){
     code<-stockTable[i,]$종목코드
     price<-getCurrentPrice(apiConfig,account,token,code)
+    if(length(price)!=1 || !is.finite(price) || price<=0) stop(paste0("Fail to get current price: ",code))
     curQty<-stockTable[i,]$보유수량
     hasTargetQty<-'목표수량' %in% names(stockTable)
     if(hasTargetQty){
@@ -479,7 +492,7 @@ orderStocks<-function(token,apiConfig, account, stockTable,priceTick=NULL){
       next;
     }
     print(paste("code:",code," name:",stockTable[i,]$종목명," qty:",qty," price:",price, " ordersum:",qty*price))
-    r<-orderStock(apiConfig,account,token,code,qty,price)
+    r<-orderStock(apiConfig,account,token,code,qty,price,excg=excg)
     r$idx<-i
     print(paste("rc_cd:",r$rt_cd," msg_cd:",r$msg_cd," msg:",r$msg1))
     res<-rbind(res,as.data.table(r))
