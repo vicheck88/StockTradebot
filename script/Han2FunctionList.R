@@ -445,7 +445,7 @@ orderStock<-function(apiConfig,account,token,code,qty,price,excg=NULL){
   return(res)  # 모두 실패 시 마지막 응답 반환
 }
 
-orderStocks<-function(token,apiConfig, account, stockTable){
+orderStocks<-function(token,apiConfig, account, stockTable,priceTick=NULL){
   if(nrow(stockTable)==0) return(NULL)
   #token<-getToken(apiConfig,account)
   res<-NULL
@@ -453,8 +453,27 @@ orderStocks<-function(token,apiConfig, account, stockTable){
     code<-stockTable[i,]$종목코드
     price<-getCurrentPrice(apiConfig,account,token,code)
     curQty<-stockTable[i,]$보유수량
-    priceSum<-min(getOrderableAmount(apiConfig,account,token,code), stockTable[i,]$목표금액-price*curQty)
-    qty<-floor(priceSum/price)
+    hasTargetQty<-'목표수량' %in% names(stockTable)
+    if(hasTargetQty){
+      requestedQty<-as.numeric(stockTable[i,]$목표수량)-curQty
+    } else{
+      requestedQty<-sign(stockTable[i,]$목표금액-price*curQty)
+    }
+    if(!is.null(priceTick) && is.finite(priceTick) && priceTick>0){
+      if(requestedQty>0) price<-ceiling(price/priceTick)*priceTick
+      if(requestedQty<0) price<-floor(price/priceTick)*priceTick
+    }
+    if(hasTargetQty){
+      qty<-requestedQty
+      if(qty>0){
+        orderableAmount<-getOrderableAmount(apiConfig,account,token,code)
+        if(is.null(orderableAmount) || !is.finite(orderableAmount)) stop(paste0("Fail to get orderable amount: ",code))
+        qty<-min(qty,floor(orderableAmount/price))
+      }
+    } else{
+      priceSum<-min(getOrderableAmount(apiConfig,account,token,code), stockTable[i,]$목표금액-price*curQty)
+      qty<-floor(priceSum/price)
+    }
     if(qty==0){
       print(paste0(code,": qty 0"))
       next;

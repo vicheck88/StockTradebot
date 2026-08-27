@@ -15,6 +15,7 @@ if (length(new.pkg)) {
 sapply(pkg,library,character.only=T)
 
 today<-str_replace_all(Sys.Date(),"-","")
+rebalanceThreshold<-0.01 # 목표 비율 대비 1%p 이상 벗어날 때만 리밸런싱
 
 if(wday(Sys.Date()) %in% c(1,7)) stop("Weekend")
 if(isHoliday(today)) stop("Holiday")
@@ -143,50 +144,66 @@ goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=sofrCode,종목
 goalBalanceSheet<-rbind(goalBalanceSheet,data.table(종목코드=highYieldCode,종목명='KODEX iShares미국하이일드액티브',현재가=currentHighyieldPrice,목표금액=0,주문구분='00'))
 
 
-if(length(currentBalance$sheet)>0){
+if(nrow(currentBalance$sheet)>0){
   currentBalanceSheet<-currentBalance$sheet[,c('pdno','prdt_name','hldg_qty','evlu_amt')]  
   names(currentBalanceSheet)<-c('종목코드','종목명','보유수량','평가금액')
   combinedSheet<-merge(goalBalanceSheet,currentBalanceSheet,by=c('종목코드','종목명'),all=T)
 } else{
-  totalBalanceSum<-0
   combinedSheet<-goalBalanceSheet
   combinedSheet[,c('평가금액','보유수량'):=0]
 }
 combinedSheet[,평가금액:=as.numeric(평가금액)]
 combinedSheet[,보유수량:=as.numeric(보유수량)]
-combinedSheet[is.na(목표금액)]$목표금액<-0
-combinedSheet[is.na(평가금액)]$평가금액<-0
-combinedSheet[is.na(보유수량)]$보유수량<-0
+combinedSheet[is.na(목표금액),목표금액:=0]
+combinedSheet[is.na(평가금액),평가금액:=0]
+combinedSheet[is.na(보유수량),보유수량:=0]
+
+combinedSheet[,목표비율:=목표금액/totalBalanceSum]
+combinedSheet[,현재비율:=평가금액/totalBalanceSum]
+combinedSheet[,비율차이:=현재비율-목표비율]
+maxRatioDifference<-max(abs(combinedSheet$비율차이))
+print(combinedSheet[,.(종목코드,종목명,
+                        목표비율=round(목표비율*100,2),
+                        현재비율=round(현재비율*100,2),
+                        비율차이=round(비율차이*100,2))])
+print(paste0("maximum allocation difference: ",round(maxRatioDifference*100,2),"%p"))
+if(maxRatioDifference<rebalanceThreshold){
+  print(paste0("Skip rebalance: every allocation is within ",rebalanceThreshold*100,"%p"))
+  revokeToken(apiConfig,account,token)
+  quit(save="no",status=0)
+}
+print(paste0("Start rebalance: allocation difference is at least ",rebalanceThreshold*100,"%p"))
 
 residualCode<-sofrCode
 stockCodes<-c(top7LevCode,nasdaqLevCode,semiconductorLevCode)
 combinedSheet[,allocationOrder:=fifelse(종목코드 %in% stockCodes,1L,fifelse(종목코드==residualCode,2L,3L))]
 setorder(combinedSheet,allocationOrder,-목표금액)
 remainingPortion<-totalBalanceSum
+combinedSheet[,목표수량:=보유수량]
 for(i in 1:nrow(combinedSheet)){
   row<-combinedSheet[i,]
   remTable<-combinedSheet[-(1:i),]
   if(row$종목코드==residualCode){
     qty<-row[,floor((remainingPortion-평가금액)/현재가)]
-    combinedSheet[i,목표금액:=row$평가금액+qty*row$현재가]
+    combinedSheet[i,`:=`(목표금액=row$평가금액+qty*row$현재가,목표수량=row$보유수량+qty)]
   } else if(row$목표금액>0){
     availableAmount<-min(row$목표금액,remainingPortion)
     qty<-row[,floor((availableAmount-평가금액)/현재가)]
-    combinedSheet[i,목표금액:=row$평가금액+qty*row$현재가]
+    combinedSheet[i,`:=`(목표금액=row$평가금액+qty*row$현재가,목표수량=row$보유수량+qty)]
   } else{
-    combinedSheet[i,목표금액:=0]
+    combinedSheet[i,`:=`(목표금액=0,목표수량=0)]
   }
   remainingPortion<-remainingPortion-combinedSheet[i,목표금액]
 }
-combinedSheet<-combinedSheet[,c('종목코드','종목명','보유수량','목표금액','평가금액')]
+combinedSheet<-combinedSheet[,c('종목코드','종목명','보유수량','목표수량','목표금액','평가금액')]
 
-buySheet<-combinedSheet[평가금액<목표금액]
-sellSheet<-combinedSheet[평가금액>목표금액]
+buySheet<-combinedSheet[보유수량<목표수량]
+sellSheet<-combinedSheet[보유수량>목표수량]
 
-sellRes<-orderStocks(token,apiConfig,account,sellSheet) #매도 먼저
+sellRes<-orderStocks(token,apiConfig,account,sellSheet,priceTick=5) #매도 먼저
 if(length(sellRes)>0){
   sendMessage("Sell orders")
-  for(i in nrow(sellRes)){
+  for(i in seq_len(nrow(sellRes))){
     row<-sellRes[i,]
     text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
     sendMessage(text,0)
@@ -195,11 +212,11 @@ if(length(sellRes)>0){
   Sys.sleep(30)
 }
 
-buyRes<-orderStocks(token,apiConfig,account,buySheet) #매수 다음
+buyRes<-orderStocks(token,apiConfig,account,buySheet,priceTick=5) #매수 다음
 if(length(buyRes)>0){
   print("Buy orders")
   sendMessage("Buy orders")
-  for(i in nrow(buyRes)){
+  for(i in seq_len(nrow(buyRes))){
     row<-buyRes[i,]
     text<-paste0("rt_cd: ",row$rt_cd," msg_cd: ",row$msg_cd," msg: ",row$msg1," code: ",row$code," qty: ",row$qty," price: ",row$price)
     sendMessage(text,0)
