@@ -41,7 +41,7 @@ isHoliday<-function(today){
     year<-substr(today,1,4)
     month<-substr(today,5,6)
     base<-"http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo"
-    key<-"fa78d410f1b0e894bec67bc81ba0cff0c0c784dc97b037512ac567fc2bf1ebd6"
+    key<-fromJSON("~/config.json")$holiday_token
     url<-paste(base,'?serviceKey=',key,'&pageNo=1&numOfRows=31&solYear=',year,'&solMonth=',month,'&_type=json',sep="")
     response<-httr::GET(url,httr::timeout(10))
     if(response$status_code!=200) return(NA)

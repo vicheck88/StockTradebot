@@ -22,8 +22,8 @@ isHoliday <- function(today){
     yyyy <- substr(today_str, 1, 4)
     mm <- substr(today_str, 5, 6)
     base <- "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo"
-    key <- "fa78d410f1b0e894bec67bc81ba0cff0c0c784dc97b037512ac567fc2bf1ebd6"  # 2026-03-17 재발급
-    url <- paste0(base, '?serviceKey=', key, '&pageNo=1&numOfRows=20&solYear=', yyyy, '&solMonth=', mm)
+    key <- fromJSON("~/config.json")$holiday_token
+    url <- paste0(base, '?serviceKey=', key, '&pageNo=1&numOfRows=20&solYear=', yyyy, '&solMonth=', mm, '&_type=json')
     resp <- httr::GET(url, httr::timeout(10))
     if(is.null(resp) || resp$status_code != 200){
       cat("isHoliday API fail (http ", ifelse(is.null(resp),"NULL",resp$status_code), ") → FALSE\n", sep="")
