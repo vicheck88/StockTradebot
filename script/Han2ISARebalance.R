@@ -18,7 +18,9 @@ today<-str_replace_all(Sys.Date(),"-","")
 rebalanceThreshold<-0.01 # 목표 비율 대비 1%p 이상 벗어날 때만 리밸런싱
 
 if(wday(Sys.Date()) %in% c(1,7)) stop("Weekend")
-if(isHoliday(today)) stop("Holiday")
+holiday<-isHoliday(today)
+if(isTRUE(holiday)) stop("Holiday")
+if(is.na(holiday)) warning("Holiday API unavailable; checking KIS market status",call.=FALSE)
 
 config<-fromJSON("~/config.json")
 #apiConfig<-config$api$config$dev
@@ -28,7 +30,7 @@ apiConfig<-config$api$config$prod
 account<-config$api$account$prod$isa
 
 token<-getToken(apiConfig,account)
-if(isKoreanTradeOpen(token,apiConfig,account,today)=="N") stop("Market closed")
+if(!isTRUE(isKoreanTradeOpen(token,apiConfig,account,today)=="Y")) stop("Market closed or status unavailable")
 
 cancelResult<-cancelAllOrders(apiConfig,account,token)
 for(res in cancelResult) sendMessage(res)
