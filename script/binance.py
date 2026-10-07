@@ -457,7 +457,7 @@ def isConfirmedPartialStop(order,symbol,stopPrice):
     and getAlgoTriggerPrice(order)==float(stopPrice)
   )
 
-def ensurePreBuyFullCloseStop(symbol,markPrice,averagePrice):
+def ensureFullCloseStop(symbol,markPrice,averagePrice):
   stopPrice=math.floor(averagePrice*0.99)
   if markPrice<=stopPrice:
     raise RuntimeError('Current mark price is at or below the BTC stop trigger')
@@ -467,8 +467,70 @@ def ensurePreBuyFullCloseStop(symbol,markPrice,averagePrice):
     return matching[0],False
   order=setPositionClosePrice(symbol,'SELL',stopPrice,'MARK_PRICE')
   if not isConfirmedFullCloseStop(order,symbol,stopPrice):
-    raise RuntimeError('Could not confirm the BTC full-close stop before the buy')
+    raise RuntimeError('Could not confirm the BTC full-close stop')
   return order,True
+
+def waitForPositiveOneWayPosition(symbol,timeoutSeconds):
+  start=time.monotonic()
+  deadline=start+timeoutSeconds
+  while True:
+    positionData=getCurrentPosition(symbol)
+    positionRow=next((v for v in positionData if v.get('symbol')==symbol),None)
+    positionAmount=float(positionRow.get('positionAmt',0) or 0) if positionRow else 0.0
+    if positionAmount>0:
+      if positionRow.get('positionSide')!='BOTH':
+        raise RuntimeError('Cannot safely protect a BTC BUY outside one-way mode')
+      return positionRow
+    remainingSeconds=deadline-time.monotonic()
+    if remainingSeconds<=0:
+      break
+    waitSeconds=min(5,remainingSeconds)
+    time.sleep(waitSeconds)
+  raise RuntimeError('Could not confirm a positive one-way BTC position after the BUY fill')
+
+def protectNewBuyPosition(symbol,order,averagePrice,timeoutSeconds):
+  if float(order.get('executedQty',0) or 0)<=0:
+    return
+  waitForPositiveOneWayPosition(symbol,timeoutSeconds)
+  markPrice=float(getCurrentFutureMarkPrice(symbol)['markPrice'])
+  ensureFullCloseStop(symbol,markPrice,averagePrice)
+
+def settleFutureBuy(symbol,orderResponse,clientOrderId,averagePrice):
+  orderId=orderResponse.get('orderId')
+  deadline=time.monotonic()+100
+  protectedQuantity=0.0
+  latestOrder=orderResponse
+  cancelRequested=False
+  try:
+    while True:
+      latestOrder=getFutureOrder(symbol,orderId=orderId) if orderId is not None else getFutureOrder(symbol,clientOrderId=clientOrderId)
+      orderId=latestOrder.get('orderId',orderId)
+      executedQuantity=float(latestOrder.get('executedQty',0) or 0)
+      if executedQuantity>protectedQuantity:
+        remainingSeconds=max(0,deadline-time.monotonic())
+        protectNewBuyPosition(symbol,latestOrder,averagePrice,min(10,remainingSeconds))
+        protectedQuantity=executedQuantity
+      if latestOrder.get('status') not in ('NEW','PARTIALLY_FILLED'):
+        return latestOrder
+      remainingSeconds=deadline-time.monotonic()
+      if remainingSeconds<=0:
+        cancelRequested=True
+        cancelFutureOrder(symbol,orderId=orderId,clientOrderId=None if orderId is not None else clientOrderId)
+        latestOrder=getFutureOrder(symbol,orderId=orderId) if orderId is not None else getFutureOrder(symbol,clientOrderId=clientOrderId)
+        orderId=latestOrder.get('orderId',orderId)
+        executedQuantity=float(latestOrder.get('executedQty',0) or 0)
+        if executedQuantity>protectedQuantity:
+          protectNewBuyPosition(symbol,latestOrder,averagePrice,10)
+          protectedQuantity=executedQuantity
+        if latestOrder.get('status') in ('NEW','PARTIALLY_FILLED'):
+          raise RuntimeError('The BTC BUY remainder is still open after cancellation')
+        return latestOrder
+      time.sleep(min(5,remainingSeconds))
+  except Exception:
+    if not cancelRequested and latestOrder.get('status') in ('NEW','PARTIALLY_FILLED'):
+      cancelRequested=True
+      cancelFutureOrder(symbol,orderId=orderId,clientOrderId=None if orderId is not None else clientOrderId)
+    raise
 
 def refreshPositionStops(symbol,curPrice,averagePrice,positionAmount,preBuyStopId=None):
   if float(positionAmount)<=0:
@@ -641,7 +703,8 @@ try:
     leverageResponse=changeFutureLeverage(symbol,leverage)
     if int(leverageResponse.get('leverage',0))!=int(leverage):
       raise RuntimeError('Could not confirm the configured futures leverage')
-    preBuyStop,preBuyStopCreated=ensurePreBuyFullCloseStop(symbol,markPrice,averagePrice)
+    if existingPosition>0:
+      preBuyStop,preBuyStopCreated=ensureFullCloseStop(symbol,markPrice,averagePrice)
     sendMessage("binance future BUY")
     sendMessage(f'disparity: {disparity}')
     sendMessage(updatedChangeInfo)
@@ -651,15 +714,13 @@ try:
     try:
       orderResponse=orderFutureWithTimeLimit(symbol,'BUY',newPositionAmount,curPrice,1000,clientOrderId)
     except Exception:
-      orderResponse=getFutureOrder(symbol,clientOrderId=clientOrderId)
-    sendMessage(orderResponse)
-    orderId=orderResponse.get('orderId')
-    time.sleep(100)
-    settledOrder=getFutureOrder(symbol,orderId=orderId) if orderId is not None else getFutureOrder(symbol,clientOrderId=clientOrderId)
-    if settledOrder.get('status') in ('NEW','PARTIALLY_FILLED'):
-      orderId=settledOrder.get('orderId',orderId)
-      cancelFutureOrder(symbol,orderId=orderId,clientOrderId=None if orderId is not None else clientOrderId)
-      settledOrder=getFutureOrder(symbol,orderId=orderId) if orderId is not None else getFutureOrder(symbol,clientOrderId=clientOrderId)
+      try:
+        orderResponse=getFutureOrder(symbol,clientOrderId=clientOrderId)
+      except Exception:
+        cancelFutureOrder(symbol,clientOrderId=clientOrderId)
+        raise
+    settledOrder=settleFutureBuy(symbol,orderResponse,clientOrderId,averagePrice)
+    sendMessage(settledOrder)
   elif buyBudget>0 and pendingBuy:
     sendMessage('Existing BTC BUY order is still open; no duplicate budget was transferred')
 

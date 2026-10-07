@@ -159,13 +159,63 @@ class BinanceBotTests(unittest.TestCase):
                 self._run_mocked_main(fill_ratio)
         self._run_mocked_main(1.0, bnb_minimum=100)
 
-    def _run_mocked_main(self, fill_ratio, bnb_minimum=5):
+    def test_existing_position_is_protected_before_additional_buy(self):
+        state = self._run_mocked_main(0.5, initial_position=0.25)
+        submit_index = next(i for i, event in enumerate(state['events']) if event[0] == 'submit')
+        stop_index = next(i for i, event in enumerate(state['events']) if event[0] == 'full_stop')
+        self.assertLess(stop_index, submit_index)
+        self.assertGreater(state['events'][stop_index][1], 0)
+
+    def test_partial_fill_is_protected_before_waiting_for_order_remainder(self):
+        state = self._run_mocked_main(0.5)
+        submit_index = next(i for i, event in enumerate(state['events']) if event[0] == 'submit')
+        stop_index = next(i for i, event in enumerate(state['events']) if event[0] == 'full_stop')
+        first_wait_index = next(i for i, event in enumerate(state['events']) if event[0] == 'sleep')
+        settled_message_index = next(i for i, event in enumerate(state['events'])
+                                     if event[0] == 'message' and i > submit_index)
+        self.assertLess(submit_index, stop_index)
+        self.assertLess(stop_index, first_wait_index)
+        self.assertLess(stop_index, settled_message_index)
+
+    def test_later_fill_reinstalls_a_full_stop_that_no_longer_exists(self):
+        state = self._run_mocked_main(
+            0.5, fill_progress=[0.25, 0.5], clear_stop_on_fill_increase=True,
+        )
+        self.assertEqual(sum(event[0] == 'full_stop' for event in state['events']), 2)
+
+    def test_fill_waits_for_lagging_position_snapshot_before_protection(self):
+        state = self._run_mocked_main(1.0, position_lag=2)
+        stop_index = next(i for i, event in enumerate(state['events']) if event[0] == 'full_stop')
+        position_queries_before_stop = [event for i, event in enumerate(state['events'])
+                                        if i < stop_index and event[0] == 'position_query' and event[1] > 0]
+        self.assertGreaterEqual(len(position_queries_before_stop), 3)
+
+    def test_stop_failure_cancels_only_the_open_buy_and_skips_fees_and_earn(self):
+        state = self._run_mocked_main(0.5, fail_full_stop=True, expect_failure=True)
+        self.assertEqual(state['order_cancels'], [('BTCUSDT', 700, None)])
+        self.assertFalse(state['spot_quote_buys'])
+        self.assertFalse(state['earn_deposits'])
+        self.assertFalse(any(row[2] == 'BNB' for row in state['transfers']))
+        self.assertTrue(any(str(message).startswith('Failed to finish') for message in state['messages']))
+
+    def test_unconfirmed_position_after_fill_cancels_open_buy_and_fails_closed(self):
+        state = self._run_mocked_main(0.5, position_lag=3, expect_failure=True)
+        self.assertEqual(state['order_cancels'], [('BTCUSDT', 700, None)])
+        self.assertFalse(state['algo_orders'])
+        self.assertFalse(state['spot_quote_buys'])
+        self.assertFalse(state['earn_deposits'])
+        self.assertTrue(any(str(message).startswith('Failed to finish') for message in state['messages']))
+
+    def _run_mocked_main(self, fill_ratio, bnb_minimum=5, initial_position=0.0,
+                         position_lag=0, fail_full_stop=False, expect_failure=False,
+                         fill_progress=None, clear_stop_on_fill_increase=False):
         env = self.env
         state = {
             'spot_usdt': 10000.0,
             'future_withdrawable': 0.0,
             'future_account_calls': 0,
             'position_calls': 0,
+            'position_queries_after_fill': 0,
             'order_queries': 0,
             'requested_qty': 0.0,
             'order_cancels': [],
@@ -178,7 +228,17 @@ class BinanceBotTests(unittest.TestCase):
             'bnb_minimum': bnb_minimum,
             'algo_orders': [],
             'algo_cancels': [],
+            'events': [],
             'new_bnb': 0.0,
+            'initial_position': initial_position,
+            'actual_position': initial_position,
+            'position_lag': position_lag,
+            'position_lag_remaining': 0,
+            'fail_full_stop': fail_full_stop,
+            'order_cancel_requested': False,
+            'fill_progress': fill_progress or [fill_ratio],
+            'last_executed_qty': 0.0,
+            'clear_stop_on_fill_increase': clear_stop_on_fill_increase,
         }
         env.update({
             'loadConfig': lambda: None,
@@ -199,7 +259,7 @@ class BinanceBotTests(unittest.TestCase):
                 {'asset': 'BNB', 'free': str(state['new_bnb'])},
             ]},
             'getAllOpenOrders': lambda: [],
-            'getCurrentPosition': lambda _symbol: self._position(state, fill_ratio),
+            'getCurrentPosition': lambda _symbol: self._position(state),
             'getFuturePositionMode': lambda: {'dualSidePosition': False},
             'changeFutureLeverage': lambda _symbol, lev: state['leverage_calls'].append(lev) or {'leverage': lev},
             'getAllAlgoOpenOrders': lambda: list(state['algo_orders']),
@@ -208,7 +268,7 @@ class BinanceBotTests(unittest.TestCase):
             'cancelAlgoOrder': lambda symbol, algo_id: self._cancel_algo(state, symbol, algo_id),
             'orderFutureWithTimeLimit': lambda symbol, side, qty, price, _days, _client: self._submit_future(state, symbol, side, qty, price),
             'getFutureOrder': lambda _symbol, orderId=None, clientOrderId=None: self._query_future(state, fill_ratio),
-            'cancelFutureOrder': lambda symbol, orderId=None, clientOrderId=None: state['order_cancels'].append((symbol, orderId, clientOrderId)),
+            'cancelFutureOrder': lambda symbol, orderId=None, clientOrderId=None: self._cancel_future(state, symbol, orderId, clientOrderId),
             'getFutureUserTrades': lambda _symbol, _order: self._future_trades(state, fill_ratio),
             'getSpotExchangeInfo': lambda _symbol: self._spot_exchange_info(state),
             'getSpotOrder': lambda _symbol, _client: {},
@@ -219,15 +279,25 @@ class BinanceBotTests(unittest.TestCase):
             'getFlexibleSimpleEarnList': lambda _asset: {'rows': [{'asset': 'USDT', 'productId': 'usdt-flex'}]},
             'subscribeFlexibleSimpleEarnProduct': lambda _product, amount: state['earn_deposits'].append(float(amount)) or {'success': True},
             'redeemFlexibleSimpleEarnProduct': lambda *args: {'success': True},
-            'sendMessage': lambda message, **_kwargs: state['messages'].append(message),
+            'sendMessage': lambda message, **_kwargs: self._send_message(state, message),
         })
-        env['time'] = SimpleNamespace(sleep=lambda _seconds: None)
+        env['time'] = SimpleNamespace(clock=0)
+
+        def sleep(seconds):
+            state['events'].append(('sleep', seconds))
+            env['time'].clock += seconds
+
+        env['time'].sleep = sleep
+        env['time'].monotonic = lambda: env['time'].clock
         env['getCurrentTime'] = lambda: 123456789
         run_actual_main(env)
 
         self.assertEqual(state['analysis_periods'], [60])
         self.assertEqual(state['leverage_calls'], [3])
-        self.assertFalse(any(str(message).startswith('Failed to finish') for message in state['messages']))
+        failed = any(str(message).startswith('Failed to finish') for message in state['messages'])
+        self.assertEqual(failed, expect_failure)
+        if expect_failure:
+            return state
         self.assertAlmostEqual(state['transfers'][0][3], 5000.0)
         self.assertEqual(state['transfers'][0][:3], ('main', 'umfuture', 'USDT'))
         future_order = [order for order in state.get('submitted', [])]
@@ -239,7 +309,8 @@ class BinanceBotTests(unittest.TestCase):
             self.assertFalse(state['spot_quote_buys'])
             self.assertFalse(any(row[2] == 'BNB' for row in state['transfers']))
             self.assertEqual(state['earn_deposits'], [10000.0])
-            self.assertEqual(state['algo_cancels'], [('BTCUSDT', 500)])
+            self.assertFalse(state['algo_orders'])
+            self.assertFalse(state['algo_cancels'])
         elif bnb_minimum > 5:
             self.assertFalse(state['spot_quote_buys'])
             self.assertFalse(any(row[2] == 'BNB' for row in state['transfers']))
@@ -257,6 +328,7 @@ class BinanceBotTests(unittest.TestCase):
             self.assertEqual(len(bnb_transfers), 1)
             self.assertAlmostEqual(bnb_transfers[0][3], state['new_bnb'])
             self.assertFalse(state['algo_cancels'])
+        return state
 
     @staticmethod
     def _future_account(state):
@@ -267,14 +339,31 @@ class BinanceBotTests(unittest.TestCase):
         ]}
 
     @staticmethod
-    def _position(state, fill_ratio):
+    def _send_message(state, message):
+        state['messages'].append(message)
+        state['events'].append(('message', message))
+
+    @staticmethod
+    def _position(state):
         state['position_calls'] += 1
-        if state['position_calls'] == 1 or fill_ratio == 0:
+        state['events'].append(('position_query', state['actual_position']))
+        if state['actual_position']<=0:
             return []
-        return [{'symbol': 'BTCUSDT', 'positionSide': 'BOTH', 'positionAmt': str(state['requested_qty'] * fill_ratio)}]
+        if state['position_lag_remaining']>0:
+            state['position_lag_remaining']-=1
+            state['position_queries_after_fill']+=1
+            return []
+        if state['requested_qty']>0:
+            state['position_queries_after_fill']+=1
+        return [{'symbol': 'BTCUSDT', 'positionSide': 'BOTH', 'positionAmt': str(state['actual_position'])}]
 
     @staticmethod
     def _add_full_stop(state, symbol, side, stop):
+        if state['actual_position']<=0:
+            raise RuntimeError('Binance API error -4509: closePosition requires an open position')
+        if state['fail_full_stop']:
+            raise RuntimeError('Could not create full-close stop')
+        state['events'].append(('full_stop', state['actual_position']))
         order = {'algoId': 500, 'symbol': symbol, 'side': side, 'type': 'STOP_MARKET',
                  'closePosition': True, 'triggerPrice': str(stop), 'algoStatus': 'NEW'}
         state['algo_orders'].append(order)
@@ -295,6 +384,7 @@ class BinanceBotTests(unittest.TestCase):
     @staticmethod
     def _submit_future(state, symbol, side, qty, price):
         state['requested_qty'] = float(qty)
+        state['events'].append(('submit', symbol, side, float(qty)))
         state['submitted'] = [(symbol, side, float(qty), float(price))]
         return {'symbol': symbol, 'side': side, 'status': 'NEW', 'orderId': 700,
                 'origQty': str(qty), 'executedQty': '0'}
@@ -302,16 +392,33 @@ class BinanceBotTests(unittest.TestCase):
     @staticmethod
     def _query_future(state, fill_ratio):
         state['order_queries'] += 1
-        qty = state['requested_qty'] * fill_ratio
+        ratio = state['fill_progress'][min(state['order_queries'] - 1, len(state['fill_progress']) - 1)]
+        qty = state['requested_qty'] * ratio
+        if qty>state['last_executed_qty'] and state['last_executed_qty']>0 and state['clear_stop_on_fill_increase']:
+            state['algo_orders']=[order for order in state['algo_orders'] if not order.get('closePosition')]
+        state['last_executed_qty']=qty
+        if qty>0:
+            state['actual_position']=state['initial_position']+qty
+            if state['position_queries_after_fill']==0:
+                state['position_lag_remaining']=state['position_lag']
+        else:
+            state['actual_position']=state['initial_position']
+        state['events'].append(('order_query', qty))
         quote = qty * 100
-        status = 'FILLED' if fill_ratio == 1 else ('PARTIALLY_FILLED' if fill_ratio > 0 else 'NEW')
-        if state['order_queries'] > 1:
-            status = 'CANCELED'
+        if state['order_cancel_requested']:
+            status='CANCELED'
+        else:
+            status = 'FILLED' if ratio == 1 else ('PARTIALLY_FILLED' if ratio > 0 else 'NEW')
         state['future_withdrawable'] = (5000.0 if fill_ratio == 0 else
                                         5000.0 * (1 - fill_ratio) + 5000.0 * fill_ratio - quote / 3 - quote * 0.0004)
         return {'symbol': 'BTCUSDT', 'status': status, 'orderId': 700,
                 'origQty': str(state['requested_qty']), 'executedQty': str(qty),
                 'cumQuote': str(quote), 'avgPrice': '100'}
+
+    @staticmethod
+    def _cancel_future(state, symbol, order_id, client_order_id):
+        state['order_cancels'].append((symbol, order_id, client_order_id))
+        state['order_cancel_requested']=True
 
     @staticmethod
     def _future_trades(state, fill_ratio):
