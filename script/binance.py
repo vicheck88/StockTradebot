@@ -12,6 +12,7 @@ from datetime import datetime,timezone,timedelta
 import time
 import math
 import traceback
+import uuid
 import numpy as np
 
 
@@ -187,8 +188,9 @@ def cancelFutureOrder(symbol,orderId=None,clientOrderId=None):
   return requestData(futureURL,'/fapi/v1/order','delete',f'symbol={symbol}&{orderRef}&timestamp={getCurrentTime()}')
 def setStopMarketPrice(symbol,side,stopPrice,quantity,workingType):
   return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP_MARKET&triggerPrice={stopPrice}&quantity={quantity}&reduceOnly=false&workingType={workingType}&timestamp={getCurrentTime()}')
-def setPositionClosePrice(symbol,side,stopPrice,workingType):
-  return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP_MARKET&triggerPrice={stopPrice}&closePosition=true&workingType={workingType}&timestamp={getCurrentTime()}')
+def setPositionClosePrice(symbol,side,stopPrice,workingType,clientAlgoId=None):
+  clientIdParam=f'&clientAlgoId={clientAlgoId}' if clientAlgoId else ''
+  return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP_MARKET&triggerPrice={stopPrice}&closePosition=true&workingType={workingType}{clientIdParam}&timestamp={getCurrentTime()}')
 def setStopLimitPrice(symbol,side,stopPrice,quantity,workingType,priceMatch):
   return requestData(futureURL,'/fapi/v1/algoOrder','post',f'algoType=CONDITIONAL&symbol={symbol}&side={side}&type=STOP&triggerPrice={stopPrice}&quantity={quantity}&reduceOnly=true&workingType={workingType}&priceMatch={priceMatch}&timestamp={getCurrentTime()}')
 def getCurrentPosition(symbol=None):
@@ -202,14 +204,34 @@ def getAllAlgoOpenOrders():
   return requestData(futureURL,'/fapi/v1/openAlgoOrders','get',f'timestamp={getCurrentTime()}')
 def cancelAlgoOrder(symbol,algoId):
   return requestData(futureURL,'/fapi/v1/algoOrder','delete',f'algoId={algoId}&timestamp={getCurrentTime()}')
-def closeAllAlgoOpenOrders():
-  openOrderSymbolList=set([v['symbol'] for v in getAllAlgoOpenOrders()])
+def getAlgoOrder(symbol,algoId=None,clientAlgoId=None):
+  orderRef=f'algoId={algoId}' if algoId is not None else f'clientAlgoId={clientAlgoId}'
+  return requestData(futureURL,'/fapi/v1/algoOrder','get',f'{orderRef}&timestamp={getCurrentTime()}')
+def closeAllAlgoOpenOrders(symbols=None):
+  openOrderSymbolList=set(symbols) if symbols is not None else set(v['symbol'] for v in getAllAlgoOpenOrders())
   for symbol in openOrderSymbolList:
     requestData(futureURL,'/fapi/v1/algoOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
-def closeAllOpenOrders():
-  openOrderSymbolList=set([v['symbol'] for v in getAllOpenOrders()])
+def closeAllOpenOrders(symbols=None):
+  openOrderSymbolList=set(symbols) if symbols is not None else set(v['symbol'] for v in getAllOpenOrders())
   for symbol in openOrderSymbolList:
     requestData(futureURL,'/fapi/v1/allOpenOrders','delete',f'symbol={symbol}&timestamp={getCurrentTime()}')
+
+def cancelAllFutureOrders():
+  ordinaryOrders=getAllOpenOrders()
+  algoOrders=getAllAlgoOpenOrders()
+  symbols=sorted(set(order['symbol'] for order in ordinaryOrders+algoOrders))
+  for symbol in symbols:
+    for cancel in (closeAllAlgoOpenOrders,closeAllOpenOrders):
+      try:
+        cancel([symbol])
+      except Exception as error:
+        print(f'futures cancel-all response unconfirmed: symbol={symbol}, endpoint={cancel.__name__}, error={type(error).__name__}, code={getattr(error,"code",None)}')
+  # DELETE timeouts may still have succeeded. Reads, never blind write retries, gate the strategy.
+  remainingOrdinary=getAllOpenOrders()
+  remainingAlgo=getAllAlgoOpenOrders()
+  if remainingOrdinary or remainingAlgo:
+    raise RuntimeError(f'Futures cancel-all incomplete: ordinary={len(remainingOrdinary)}, algo={len(remainingAlgo)}')
+  print(f'futures cancel-all confirmed: symbols={symbols}, ordinary=0, algo=0')
 
 
 # In[6]:
@@ -434,7 +456,10 @@ def getSpotFreeBalance(account,asset):
 def isFullCloseStop(order,symbol):
   orderType=order.get('type',order.get('orderType'))
   closePosition=order.get('closePosition') in (True,'true','True')
-  return order.get('symbol')==symbol and order.get('side')=='SELL' and orderType=='STOP_MARKET' and closePosition
+  return (
+    order.get('symbol')==symbol and order.get('side')=='SELL' and orderType=='STOP_MARKET'
+    and closePosition and order.get('positionSide')=='BOTH' and order.get('workingType')=='MARK_PRICE'
+  )
 
 def getAlgoTriggerPrice(order):
   return float(order.get('triggerPrice',order.get('stopPrice',0)) or 0)
@@ -452,23 +477,63 @@ def isConfirmedPartialStop(order,symbol,stopPrice):
   reduceOnly=order.get('reduceOnly') in (True,'true','True')
   return (
     order.get('symbol')==symbol and order.get('side')=='SELL' and orderType=='STOP'
-    and reduceOnly and order.get('algoId') is not None
+    and reduceOnly and order.get('positionSide')=='BOTH' and order.get('workingType')=='MARK_PRICE'
+    and order.get('algoId') is not None
     and order.get('algoStatus',order.get('status'))=='NEW'
     and getAlgoTriggerPrice(order)==float(stopPrice)
   )
 
-def ensureFullCloseStop(symbol,markPrice,averagePrice):
-  stopPrice=math.floor(averagePrice*0.99)
+def validateFullCloseStopPosition(symbol,stopPrice):
+  position=next((row for row in getCurrentPosition(symbol) if row.get('symbol')==symbol),None)
+  if not position or float(position.get('positionAmt',0) or 0)<=0 or position.get('positionSide')!='BOTH':
+    raise RuntimeError('Full-close stop requires a confirmed positive one-way position')
+  markPrice=float(getCurrentFutureMarkPrice(symbol)['markPrice'])
   if markPrice<=stopPrice:
     raise RuntimeError('Current mark price is at or below the BTC stop trigger')
+
+def isDefiniteAlgoRejection(error):
+  return (
+    isinstance(error,BinanceAPIError) and 400<=error.statusCode<500
+    and error.code is not None and error.code not in (-1000,-1006,-1007)
+  )
+
+def createConfirmedFullCloseStop(symbol,stopPrice):
+  validateFullCloseStopPosition(symbol,stopPrice)
+  clientAlgoId=f'btc-stop-{uuid.uuid4().hex[:24]}'
+  failure=None
+  try:
+    order=setPositionClosePrice(symbol,'SELL',stopPrice,'MARK_PRICE',clientAlgoId)
+    if isConfirmedFullCloseStop(order,symbol,stopPrice):
+      print(f'full stop confirmed: algoId={order["algoId"]}, trigger={stopPrice}')
+      return order
+  except Exception as error:
+    failure=error
+  # A timed-out POST may have succeeded. Resolve its unique ID without another POST.
+  try:
+    order=getAlgoOrder(symbol,clientAlgoId=clientAlgoId)
+  except BinanceAPIError as error:
+    if error.code==-2013 and isDefiniteAlgoRejection(failure):
+      raise failure
+    raise RuntimeError(f'Full-stop creation outcome unknown: clientAlgoId={clientAlgoId}') from error
+  except Exception as error:
+    raise RuntimeError(f'Full-stop creation outcome unknown: clientAlgoId={clientAlgoId}') from error
+  if isConfirmedFullCloseStop(order,symbol,stopPrice):
+    print(f'full stop reconciled: algoId={order["algoId"]}, trigger={stopPrice}')
+    return order
+  raise RuntimeError(f'Full-stop creation is not confirmed: clientAlgoId={clientAlgoId}, status={order.get("algoStatus")}') from failure
+
+def ensureFullCloseStop(symbol,markPrice,averagePrice):
+  stopPrice=math.floor(averagePrice*0.99)
+  validateFullCloseStopPosition(symbol,stopPrice)
   openOrders=getAllAlgoOpenOrders()
   matching=[order for order in openOrders if isConfirmedFullCloseStop(order,symbol,stopPrice)]
   if matching:
+    print(f'full stop reused: algoId={matching[0]["algoId"]}, trigger={stopPrice}')
     return matching[0],False
-  order=setPositionClosePrice(symbol,'SELL',stopPrice,'MARK_PRICE')
-  if not isConfirmedFullCloseStop(order,symbol,stopPrice):
-    raise RuntimeError('Could not confirm the BTC full-close stop')
-  return order,True
+  previous=[order for order in openOrders if isFullCloseStop(order,symbol)]
+  if previous:
+    raise RuntimeError('A different full-close stop appeared after the startup cancellation')
+  return createConfirmedFullCloseStop(symbol,stopPrice),True
 
 def waitForPositiveOneWayPosition(symbol,timeoutSeconds):
   start=time.monotonic()
@@ -535,36 +600,25 @@ def settleFutureBuy(symbol,orderResponse,clientOrderId,averagePrice):
 def refreshPositionStops(symbol,curPrice,averagePrice,positionAmount,preBuyStopId=None):
   if float(positionAmount)<=0:
     return
-  closeStopPrice=math.floor(averagePrice*0.99)
-  orders=[order for order in getAllAlgoOpenOrders() if order.get('symbol')==symbol and order.get('side')=='SELL']
-  fullStops=[order for order in orders if isFullCloseStop(order,symbol)]
-  matchingFull=[order for order in fullStops if isConfirmedFullCloseStop(order,symbol,closeStopPrice)]
-  if matchingFull:
-    keepFull=matchingFull[0]
-  else:
-    keepFull=setPositionClosePrice(symbol,'SELL',closeStopPrice,'MARK_PRICE')
-    if not isConfirmedFullCloseStop(keepFull,symbol,closeStopPrice):
-      raise RuntimeError('Could not confirm the BTC full-close stop')
+  ensureFullCloseStop(symbol,curPrice,averagePrice)
+  markPrice=float(getCurrentFutureMarkPrice(symbol)['markPrice'])
+  orders=getAllAlgoOpenOrders()
   partialStops=[
     order for order in orders
-    if order.get('type',order.get('orderType'))=='STOP' and not isFullCloseStop(order,symbol)
+    if isConfirmedPartialStop(order,symbol,getAlgoTriggerPrice(order))
   ]
+  quantity=floorToDecimal(float(positionAmount)/2,3) if markPrice>averagePrice else 0.0
+  matchingPartial=[order for order in partialStops
+                   if getAlgoTriggerPrice(order)==float(averagePrice)
+                   and float(order.get('quantity',0) or 0)==quantity]
+  keepPartial=matchingPartial[0] if matchingPartial and quantity>0 else None
   for order in partialStops:
-    algoId=order.get('algoId')
-    if algoId is None:
-      raise RuntimeError('Cannot safely replace a BTC partial stop without its algo ID')
-    cancelAlgoOrder(symbol,algoId)
-  if curPrice>averagePrice:
-    quantity=floorToDecimal(float(positionAmount)/2,3)
-    if quantity>0:
-      partial=setStopLimitPrice(symbol,'SELL',averagePrice,quantity,'MARK_PRICE','OPPONENT')
-      if not isConfirmedPartialStop(partial,symbol,averagePrice):
-        raise RuntimeError('Could not confirm the BTC reduce-only partial stop')
-  keepFullId=keepFull.get('algoId')
-  for order in fullStops:
-    algoId=order.get('algoId')
-    if algoId is not None and algoId!=keepFullId:
-      cancelAlgoOrder(symbol,algoId)
+    if keepPartial is None or order['algoId']!=keepPartial['algoId']:
+      cancelAlgoOrder(symbol,order['algoId'])
+  if quantity>0 and keepPartial is None:
+    partial=setStopLimitPrice(symbol,'SELL',averagePrice,quantity,'MARK_PRICE','OPPONENT')
+    if not isConfirmedPartialStop(partial,symbol,averagePrice):
+      raise RuntimeError('Could not confirm the BTC reduce-only partial stop')
 
 def buyFeeBnbFromSpot(quoteBudget):
   if quoteBudget<=0:
@@ -648,14 +702,23 @@ minOrderQuantityLimit=0.005
 
 try:
   #현재 이동평균선 확인 후 투자 비율 계산
+  stage='configuration and allocation'
   loadConfig()
   print(f'start program: {datetime.now()}')
+  stage='cancel all USD-M futures orders'
+  cancelAllFutureOrders()
+  stage='configuration and allocation'
   analysis=getClosedDailyMarkAnalysis(symbol,movingAveragePeriod)
   disparity=analysis['disparity']
   averagePrice=floorToDecimal(analysis['averagePrice'],1)
   averagePriceList=analysis['averagePriceList']
   print(f'average price: {averagePriceList}')
   isIncreasing=analysis['isIncreasing']
+  stage='protect existing BTC position after cancellation'
+  initialPosition=next((row for row in getCurrentPosition(symbol) if row.get('symbol')==symbol),None)
+  if initialPosition and float(initialPosition.get('positionAmt',0) or 0)>0:
+    ensureFullCloseStop(symbol,float(getCurrentFutureMarkPrice(symbol)['markPrice']),averagePrice)
+  stage='configuration and allocation'
   accountChangeInfo=getAccountChange(coinsymbols,cashsymbols,isIncreasing,disparity,leverage)
   minOrderLimit=float(getCurrentPrice(symbol)['price'])*minOrderQuantityLimit
   minEarnLimit=0.1
@@ -704,6 +767,7 @@ try:
     if int(leverageResponse.get('leverage',0))!=int(leverage):
       raise RuntimeError('Could not confirm the configured futures leverage')
     if existingPosition>0:
+      stage='protect existing position before BUY'
       preBuyStop,preBuyStopCreated=ensureFullCloseStop(symbol,markPrice,averagePrice)
     sendMessage("binance future BUY")
     sendMessage(f'disparity: {disparity}')
@@ -711,6 +775,7 @@ try:
     transfer('main','umfuture',cashsymbols[0],buyBudget)
     clientOrderId=f'btc-budget-{getCurrentTime()}'
     buyAttempted=True
+    stage='submit and protect BTC BUY fills'
     try:
       orderResponse=orderFutureWithTimeLimit(symbol,'BUY',newPositionAmount,curPrice,1000,clientOrderId)
     except Exception:
@@ -728,15 +793,17 @@ try:
   positionRow=next((v for v in positionData if v.get('symbol')==symbol),None)
   positionAmount=float(positionRow.get('positionAmt',0) or 0) if positionRow else 0.0
   if positionAmount>0:
+    stage='refresh position stops'
     if positionRow.get('positionSide')!='BOTH':
       raise RuntimeError('Cannot safely update BTC reduce-only stops outside one-way mode')
-    refreshPositionStops(symbol,curPrice,averagePrice,positionAmount)
+    refreshPositionStops(symbol,float(getCurrentFutureMarkPrice(symbol)['markPrice']),averagePrice,positionAmount)
   elif buyAttempted and settledOrder and settledOrder.get('status') not in ('NEW','PARTIALLY_FILLED') and preBuyStopCreated:
     algoId=preBuyStop.get('algoId')
     if algoId is not None:
       cancelAlgoOrder(symbol,algoId)
 
   if buyAttempted and settledOrder and settledOrder.get('status') in ('FILLED','CANCELED','EXPIRED','EXPIRED_IN_MATCH'):
+    stage='settled BUY fee allocation'
     executedQuantity=float(settledOrder.get('executedQty',0) or 0)
     if executedQuantity>0 and settledOrder.get('orderId') is not None:
       try:
@@ -759,6 +826,7 @@ try:
           except Exception:
             sendMessage('BNB purchase could not be confirmed; remaining USDT stays eligible for Simple Earn')
 
+  stage='Simple Earn allocation'
   earnList=dict([(v['asset'],v['productId']) for v in getFlexibleSimpleEarnList(cashsymbols[0])['rows']])
   futureBalances=dict([(v['asset'],float(v['maxWithdrawAmount'])) for v in getFutureAccount()['assets'] if float(v.get('maxWithdrawAmount',0))>0 and v['asset'] in cashsymbols])
   for asset,amt in futureBalances.items():
@@ -772,6 +840,7 @@ try:
     sendMessage(subscribeFlexibleSimpleEarnProduct(earnList[asset],amt))
   print('Finish the program')
 except Exception as e:
-  msg=f'Failed to finish the program: {traceback.format_exc()}'
+  msg=f'Failed to finish the program at {stage}: {traceback.format_exc()}'
   sendMessage(msg)
   print(msg)
+  raise
